@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * ActiveRecord set container/manager
+ *
+ * @package activerecord
+ */
+class ARSet implements IteratorAggregate {
+	
+	/**
+	 * Record list
+	 *
+	 * @var ActiveRecord[]
+	 */
+	private $data = array();
+	
+	/**
+	 * Filter that was being used to get this record set
+	 *
+	 * @var ARFilter
+	 */
+	private $filter = null;
+	
+	private $totalRecordCount = null;
+	
+	/**
+	 * Creates an empty record set (record container)
+	 *
+	 * @param ARFilter $recordSetFilter Filter that was used to create a record set
+	 */
+	public function __construct(ARSelectFilter $recordSetFilter) {
+		$this->filter = $recordSetFilter;
+	}
+	
+	/**
+	 * Adds a record to a record set
+	 *
+	 * @param ActiveRecord $record
+	 */
+	public function add(ActiveRecord $record) {
+		$this->data[] = $record;
+	}
+	
+	/**
+	 * Required definition of interface IteratorAggregate
+	 *
+	 * @return Iterator
+	 */
+	public function getIterator() {
+		return new ArrayIterator($this->data);
+	}
+	
+	/**
+	 * Creates an array representing a record set data
+	 * 
+	 * @param bool $recursive Convert to array all objects recursively?
+	 * @see ActiveRecord::toArray()
+	 * @return array
+	 */
+	public function toArray($recursive = true) {
+		$recordSetArray = array();
+		foreach ($this->data as $record) {
+			$recordSetArray[] = $record->toArray($recursive);
+		}
+		return $recordSetArray;
+	}
+	
+	/**
+	 * Gets a record instance by index (starting from 0)
+	 *
+	 * @param int $recordIndex
+	 * @return ActiveRecord
+	 */
+	public function get($recordIndex) {
+		return $this->data[$recordIndex];
+	}
+	
+	public function size() {
+		return count($this->data);
+	}
+	
+	public function setTotalRecordCount($count) {
+		$this->totalRecordCount = $count;
+	}
+	
+	public function getTotalRecordCount() {
+		if (!empty($this->totalRecordCount)) {
+			return $this->totalRecordCount;
+		} else {
+			return $this->size();
+		}
+	}
+	
+	/**
+	 * gets a filter that was used for creating a record set
+	 *
+	 * @return ARSelectFilter
+	 */
+	public function getFilter() {
+		return $this->filter;
+	}
+}
+
+?>
