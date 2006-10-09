@@ -1,4 +1,5 @@
 <?php
+
 require_once("ARException.php");
 
 /**
@@ -7,7 +8,8 @@ require_once("ARException.php");
  * @package activerecord.schema
  *
  */
-class ARSchemaException extends ARException {
+class ARSchemaException extends ARException
+{
 }
 
 ?>

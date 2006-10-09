@@ -1,4 +1,5 @@
 <?php
+
 require_once("schema/ARSchemaException.php");
 
 /**
@@ -6,10 +7,11 @@ require_once("schema/ARSchemaException.php");
  *
  * @package activerecord.schema
  */
-class ARSchemaNotFoundException extends ARSchemaException {
-	
-	public function __construct($className) {
-		parent::__construct("Schema (or class) not found (" . $className . ")");
+class ARSchemaNotFoundException extends ARSchemaException
+{
+	public function __construct($className)
+	{
+		parent::__construct("Schema (or class) not found (".$className.")");
 	}
 }
 

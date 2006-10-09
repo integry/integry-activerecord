@@ -7,62 +7,77 @@ require_once("filter/Condition.php");
  *
  * @package activerecord.query.filter
  */
-abstract class ARFilter {
-		
+abstract class ARFilter
+{
 	/**
 	 * WHERE condition container
 	 *
 	 * @var Condition
 	 */
 	protected $condition = null;
-	
+
 	/**
 	 * Creates a textual filter representation
-	 * 
+	 *
 	 * This string might be used as a part of SQL query
 	 *
 	 */
-	public function createString() {
-		if ($this->condition != null) {
-			return " WHERE " . $this->condition->createChain();
-		} else {
+	public function createString()
+	{
+		if ($this->condition != null)
+		{
+			return " WHERE ".$this->condition->createChain();
+		}
+		else
+		{
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Adds a constraint which will be used in SQL query
 	 *
 	 * @param string $condition
 	 */
-	public function setCondition(Condition $condition) {
+	public function setCondition(Condition $condition)
+	{
 		$this->condition = $condition;
 	}
-	
-	public function getCondition() {
+
+	public function getCondition()
+	{
 		return $this->condition;
 	}
-	
-	public function isConditionSet() {
-		if($this->condition instanceof Condition) {
+
+	public function isConditionSet()
+	{
+		if ($this->condition instanceof Condition)
+		{
 			return true;
-		} else {
+		}
+		else
+		{
 			return false;
 		}
 	}
-	
-	public function mergeCondition(Condition $cond) {
-		if ($this->condition != null) {
+
+	public function mergeCondition(Condition $cond)
+	{
+		if ($this->condition != null)
+		{
 			$this->condition->addAND($cond);
-		} else {
+		}
+		else
+		{
 			$this->condition = $cond;
 		}
 	}
-	
-	public function __toString() {
-		return $this->createString() . "\n<br/>";
+
+	public function __toString()
+	{
+		return $this->createString()."\n<br/>";
 	}
-	
+
 }
 
 ?>

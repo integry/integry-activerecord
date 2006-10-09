@@ -7,8 +7,8 @@ require_once("ARException.php");
  *
  * @package activerecord
  */
-class ARNotFoundException extends ARException {
-	
+class ARNotFoundException extends ARException
+{
 	/**
 	 * Type (class name) of requested record
 	 *
@@ -16,8 +16,9 @@ class ARNotFoundException extends ARException {
 	 */
 	private $className = "";
 	private $recordID = "";
-	
-	public function __construct($className, $recordID) {
+
+	public function __construct($className, $recordID)
+	{
 		parent::__construct("Instance of $className (ID: $recordID) not found!");
 	}
 }

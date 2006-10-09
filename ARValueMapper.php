@@ -3,103 +3,116 @@
 require_once("schema/ARField.php");
 
 /**
- * Binds a value to a schema field 
+ * Binds a value to a schema field
  * (it is just an ordinary row field value container)
  *
  * @package activerecord
  * @author Saulius Rupainis <saulius@integry.net>
  */
-class ARValueMapper {
-	
+class ARValueMapper
+{
 	/**
 	 * Schema field instance
 	 *
 	 * @var ARSchemaField
 	 */
 	private $field = null;
-	
+
 	/**
 	 * Value assigned to a schema field
 	 *
 	 * @var mixed
 	 */
 	private $value = null;
-	
+
 	/**
 	 * A mark to indicate if a record was modified
 	 *
 	 * @var bool
 	 */
 	private $isModified = false;
-	
+
 	private $isNull = false;
-	
-	public function __construct(ARField $field, $value = null) {
+
+	public function __construct(ARField $field, $value = null)
+	{
 		$this->field = $field;
 		$this->value = $value;
 	}
-	
+
 	/**
 	 * Gets a related schema field
 	 *
 	 * @return ARField
 	 */
-	public function getField() {
+	public function getField()
+	{
 		return $this->field;
 	}
-	
+
 	/**
 	 * Assignes a value to a field
 	 *
 	 * @param mixed $value
 	 */
-	public function set($value, $markAsModified = true) {
-		if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord)) {
+	public function set($value, $markAsModified = true)
+	{
+		if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord))
+		{
 			throw new ARException("Invalid parameter: must be an instance of ActiveRecord");
 		}
 		$this->value = $value;
-		
-		if($markAsModified) {
+
+		if ($markAsModified)
+		{
 			$this->isModified = true;
 		}
 	}
-	
-	public function setNull() {
+
+	public function setNull()
+	{
 		$this->isNull = true;
 		$this->isModified = true;
 	}
-	
-	public function isNull() {
+
+	public function isNull()
+	{
 		return $this->isNull;
 	}
-	
+
 	/**
 	 * Gets a field value
 	 *
 	 * @return mixed
 	 */
-	public function get() {
+	public function get()
+	{
 		return $this->value;
 	}
-	
+
 	/**
 	 * Returns true if field is being modified
 	 *
 	 * @return bool
 	 */
-	public function isModified() {
+	public function isModified()
+	{
 		return $this->isModified;
 	}
-	
+
 	/**
 	 * Checks if this instance has an assigned value
 	 *
 	 * @return bool
 	 */
-	public function hasValue() {
-		if($this->value != null) {
+	public function hasValue()
+	{
+		if ($this->value != null)
+		{
 			return true;
-		} else {
+		}
+		else
+		{
 			return false;
 		}
 	}

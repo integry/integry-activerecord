@@ -6,8 +6,8 @@
  * @package activerecord.schema
  *
  */
-interface ARForeignKey {
-
+interface ARForeignKey
+{
 }
 
 ?>

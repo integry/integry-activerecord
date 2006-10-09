@@ -6,7 +6,8 @@
  * @package activerecord.schema
  *
  */
-interface ARPrimaryKey {
+interface ARPrimaryKey
+{
 }
 
 ?>

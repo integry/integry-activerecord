@@ -2,66 +2,73 @@
 
 /**
  * Abstract condition element used in WHERE clause
- * 
- * It allows programmer to create schema independent conditional statems and use it 
- * with a filter (ARFilter subclass) that is applied to a record set (deletion, 
+ *
+ * It allows programmer to create schema independent conditional statems and use it
+ * with a filter (ARFilter subclass) that is applied to a record set (deletion,
  * select or etc.)
  *
  * @package activerecord.query.filter
  */
-abstract class Condition {
-	
+abstract class Condition
+{
+
 	/**
-	 * Operator string 
+	 * Operator string
 	 *
 	 * @var unknown_type
 	 */
 	protected $operatorString = "";
 	protected $ORCondList = array();
-	protected $ANDCondList = array(); 
-	
+	protected $ANDCondList = array();
+
 	/**
 	 * Abstract class for representing condition as a string
 	 *
 	 */
 	abstract public function toString();
-	
-	public function createChain() {
-		
-		$condStr = "(" . $this->toString();
-		foreach ($this->ANDCondList as $andCond) {
-			$condStr .= " AND " . $andCond->createChain();
+
+	public function createChain()
+	{
+		$condStr = "(".$this->toString();
+		foreach($this->ANDCondList as $andCond)
+		{
+			$condStr .= " AND ".$andCond->createChain();
 		}
-		foreach ($this->ORCondList as $orCond) {
-			$condStr .= " OR " . $orCond->createChain();
+		foreach($this->ORCondList as $orCond)
+		{
+			$condStr .= " OR ".$orCond->createChain();
 		}
 		$condStr .= ")";
 		return $condStr;
 	}
-	
-	public function setOperatorString($str) {
+
+	public function setOperatorString($str)
+	{
 		$this->operatorString = $str;
 	}
-	
-	public function getOperatorString($str) {
+
+	public function getOperatorString($str)
+	{
 		return $this->operatorString;
 	}
-	
+
 	/**
 	 * Appends a condition with a strict (AND) requirement
 	 *
 	 * @param Condition $cond
 	 */
-	public function addAND(Condition $cond) {
+	public function addAND(Condition $cond)
+	{
 		$this->ANDCondList[] = $cond;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 * @param Condition $cond
 	 */
-	public function addOR(Condition $cond) {
+	public function addOR(Condition $cond)
+	{
 		$this->ORCondList[] = $cond;
 	}
 }
@@ -71,17 +78,19 @@ abstract class Condition {
  *
  * @package activerecord.query.filter
  */
-class UnaryCondition  extends Condition {
-	
+class UnaryCondition extends Condition
+{
 	protected $fieldHandle = null;
 
-	public function __construct(ARFieldHandle $fieldHandle, $operatorString) {
+	public function __construct(ARFieldHandle $fieldHandle, $operatorString)
+	{
 		$this->fieldHandle = $fieldHandle;
 		$this->operatorString = $operatorString;
 	}
 
-	public function toString() {
-		return $this->fieldHandle->toString() . ' ' . $this->operatorString;
+	public function toString()
+	{
+		return $this->fieldHandle->toString().' '.$this->operatorString;
 	}
 }
 
@@ -90,28 +99,30 @@ class UnaryCondition  extends Condition {
  *
  * @package activerecord.query.filter
  */
-abstract class BinaryCondition extends Condition {
-	
+abstract class BinaryCondition extends Condition
+{
 	protected $leftSide = "";
 	protected $rightSide = "";
-	
+
 	protected $leftSideTableName = "";
 	protected $rightSideTableName = "";
-	
-	
-	public function __construct(ARFieldHandle $leftSide, $rightSide) {
-		
+
+	public function __construct(ARFieldHandle $leftSide, $rightSide)
+	{
 		$this->leftSide = $leftSide;
 		$this->rightSide = $rightSide;
 	}
-	
-	public function toString() {
 
+	public function toString()
+	{
 		$condStr = "";
-		$condStr = $this->leftSide->toString() . $this->operatorString;
-		if ($this->rightSide instanceof ARFieldHandle) {
+		$condStr = $this->leftSide->toString().$this->operatorString;
+		if ($this->rightSide instanceof ARFieldHandle)
+		{
 			$condStr .= $this->rightSide->toString();
-		} else {
+		}
+		else
+		{
 			$condStr .= $this->leftSide->prepareValue($this->rightSide);
 		}
 		return $condStr;
@@ -126,14 +137,14 @@ abstract class BinaryCondition extends Condition {
  *
  * @package activerecord.query.filter
  */
-class OperatorCond extends BinaryCondition {
-  
-  	protected $operatorString;
-  	
-  	public function __construct($leftSide, $rightSide, $operator) {
-	    
-	    parent::__construct($leftSide, $rightSide);
-	    $this->operatorString = $operator;
+class OperatorCond extends BinaryCondition
+{
+	protected $operatorString;
+
+	public function __construct($leftSide, $rightSide, $operator)
+	{
+		parent::__construct($leftSide, $rightSide);
+		$this->operatorString = $operator;
 	}
 }
 
@@ -142,7 +153,8 @@ class OperatorCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class EqualsCond extends BinaryCondition {
+class EqualsCond extends BinaryCondition
+{
 	protected $operatorString = "=";
 }
 
@@ -151,7 +163,8 @@ class EqualsCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class LessThanCond extends BinaryCondition {
+class LessThanCond extends BinaryCondition
+{
 	protected $operatorString = "<";
 }
 
@@ -160,7 +173,8 @@ class LessThanCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class MoreThanCond extends BinaryCondition {
+class MoreThanCond extends BinaryCondition
+{
 	protected $operatorString = ">";
 }
 
@@ -169,12 +183,13 @@ class MoreThanCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class LikeCond extends BinaryCondition {
-  
-  	protected $operatorString = " LIKE ";
-	
-	public function __construct(ARFieldHandle $leftSide, $rightSide) {
-		parent::__construct($leftSide, "%" . $rightSide . "%");
+class LikeCond extends BinaryCondition
+{
+	protected $operatorString = " LIKE ";
+
+	public function __construct(ARFieldHandle $leftSide, $rightSide)
+	{
+		parent::__construct($leftSide, "%".$rightSide."%");
 	}
 }
 
@@ -183,11 +198,13 @@ class LikeCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class INCond extends BinaryCondition {
+class INCond extends BinaryCondition
+{
 	protected $operatorString = " IN ";
-	
-	public function __construct(ARFieldHandle $leftSide, $rightSide) {
-		parent::__construct($leftSide, "(" . $rightSide . ")");
+
+	public function __construct(ARFieldHandle $leftSide, $rightSide)
+	{
+		parent::__construct($leftSide, "(".$rightSide.")");
 	}
 }
 
@@ -196,7 +213,8 @@ class INCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class EqualsOrMoreCond extends BinaryCondition {
+class EqualsOrMoreCond extends BinaryCondition
+{
 	protected $operatorString = ">=";
 }
 
@@ -206,7 +224,8 @@ class EqualsOrMoreCond extends BinaryCondition {
  *
  * @package activerecord.query.filter
  */
-class EqualsOrLessCond extends BinaryCondition {
+class EqualsOrLessCond extends BinaryCondition
+{
 	protected $operatorString = "<=";
 }
 

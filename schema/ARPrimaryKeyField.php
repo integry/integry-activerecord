@@ -8,7 +8,8 @@ require_once("schema/ARField.php");
  *
  * @package activerecord.schema
  */
-class ARPrimaryKeyField extends ARField implements ARPrimaryKey {
+class ARPrimaryKeyField extends ARField implements ARPrimaryKey
+{
 }
 
 ?>

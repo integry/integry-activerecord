@@ -7,7 +7,8 @@ require_once("ARException.php");
  *
  * @package activerecord.query.filter
  */
-class ARFilterException extends ARException {
+class ARFilterException extends ARException
+{
 }
 
 ?>

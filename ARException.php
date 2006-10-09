@@ -6,7 +6,8 @@
  * @package activerecord
  *
  */
-class ARException extends Exception {
+class ARException extends Exception 
+{
 }
 
 ?>
