@@ -759,7 +759,7 @@ abstract class ActiveRecord
 		$callerClassName = get_class($this);
 		$referenceFieldName = "";
 
-		if ($this->getID() ==  = null)
+		if ($this->getID() == null)
 		{
 			throw new ARException("Related record set can be loaded only by a persisted object (so it must have a record ID)");
 		}
