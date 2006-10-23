@@ -33,14 +33,19 @@ class Catalog extends ARTreeNode
 		return parent::getInstanceByID(__CLASS__, $recordID, $loadRecordData, $loadReferencedRecords, $loadChildRecords);
 	}
 	
+	public static function deleteByID($recordID)
+	{
+		return parent::deleteByID(__CLASS__, $recordID);
+	}
 }
 
 
 $electronicsCatalog = Catalog::getInstanceByID(2, true, false, true);
 print_r($electronicsCatalog->toArray());
 
-$monitorsCatalog = Catalog::getNewInstance($electronicsCatalog);
-$monitorsCatalog->name->set("Monitors");
-$monitorsCatalog->save();
+//$monitorsCatalog = Catalog::getNewInstance($electronicsCatalog);
+//$monitorsCatalog->name->set("Monitors");
+//$monitorsCatalog->save();
+Catalog::deleteByID(3);
 
 ?>

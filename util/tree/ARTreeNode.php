@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Enter description here...
+ * ...
  *
  * @link http://www.sitepoint.com/article/hierarchical-data-database/
  * @author Saulius Rupainis <saulius@integry.net>
@@ -23,7 +23,7 @@ class ARTreeNode extends ActiveRecord
 
 		if ($loadChildRecords)
 		{
-			$instance->loadChildNodes();
+			$instance->loadChildNodes($loadReferencedRecords);
 		}
 		return $instance;
 	}
@@ -35,7 +35,7 @@ class ARTreeNode extends ActiveRecord
 		return $instance;
 	}
 	
-	public function loadChildNodes()
+	public function loadChildNodes($loadReferencedRecords = false)
 	{
 		$className = get_class($this);
 		$nodeFilter = new ARSelectFilter();
@@ -55,7 +55,6 @@ class ARTreeNode extends ActiveRecord
 		}
 		foreach ($childList as $child)
 		{
-			echo $child->name->get() . "\n";
 			$parentId = $child->getParentNode()->getID();
 			$indexedNodeList[$parentId]->registerChildNode($child);
 		}
@@ -73,21 +72,39 @@ class ARTreeNode extends ActiveRecord
 	
 	public function save()
 	{
-		$tableName = self::getSchemaInstance(get_class($this))->getName();
 		if (!$this->hasID())
 		{
 			// Inserting new node
-			$parentRightValue = '';
+			$parentNode = $this->getField(self::PARENT_NODE_FIELD_NAME)->get();
+			$parentNode->load();
+			$parentRightValue = $parentNode->getFieldValue(self::RIGHT_NODE_FIELD_NAME);
 			$nodeLeftValue = $parentRightValue;
 			$nodeRightValue = $nodeLeftValue + 1;
-			
-			$this->db->executeUpdate("UPDATE " . $tableName . " SET " . self::RIGHT_NODE_FIELD_NAME . " = "  . self::RIGHT_NODE_FIELD_NAME . " + 2 WHERE "  . self::RIGHT_NODE_FIELD_NAME . ">=" . $parentRightValue);
-			$this->db->executeUpdate("UPDATE " . $tableName . " SET " . self::LEFT_NODE_FIELD_NAME . " = "  . self::LEFT_NODE_FIELD_NAME . " + 2 WHERE "  . self::LEFT_NODE_FIELD_NAME . ">=" . $parentRightValue);
+		
+			$tableName = self::getSchemaInstance(get_class($this))->getName();
+			$db = self::getDBConnection();	
+			$db->executeUpdate("UPDATE " . $tableName . " SET " . self::RIGHT_NODE_FIELD_NAME . " = "  . self::RIGHT_NODE_FIELD_NAME . " + 2 WHERE "  . self::RIGHT_NODE_FIELD_NAME . ">=" . $parentRightValue);
+			$db->executeUpdate("UPDATE " . $tableName . " SET " . self::LEFT_NODE_FIELD_NAME . " = "  . self::LEFT_NODE_FIELD_NAME . " + 2 WHERE "  . self::LEFT_NODE_FIELD_NAME . ">=" . $parentRightValue);
 			
 			$this->getField(self::RIGHT_NODE_FIELD_NAME)->set($nodeRightValue);
 			$this->getField(self::LEFT_NODE_FIELD_NAME)->set($nodeLeftValue);
 		}
 		parent::save();
+	}
+	
+	public static function deleteByID($className, $recordID)
+	{
+		$node = self::getInstanceByID($className, $recordID, self::LOAD_DATA);
+		$nodeRightValue = $node->getFieldValue(self::RIGHT_NODE_FIELD_NAME);
+		
+		$result = parent::deleteByID($className, $recordID);
+		
+		$tableName = self::getSchemaInstance($className)->getName();
+		$db = self::getDBConnection();
+		$db->executeUpdate("UPDATE " . $tableName . " SET " . self::RIGHT_NODE_FIELD_NAME . " = "  . self::RIGHT_NODE_FIELD_NAME . " - 2 WHERE "  . self::RIGHT_NODE_FIELD_NAME . ">=" . $nodeRightValue);
+		$db->executeUpdate("UPDATE " . $tableName . " SET " . self::LEFT_NODE_FIELD_NAME . " = "  . self::LEFT_NODE_FIELD_NAME . " - 2 WHERE "  . self::LEFT_NODE_FIELD_NAME . ">=" . $nodeRightValue);
+		
+		return $result;
 	}
 	
 	public function registerChildNode(ARTreeNode $childNode)
