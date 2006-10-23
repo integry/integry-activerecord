@@ -111,7 +111,7 @@ abstract class ActiveRecord
 	 *
 	 * @var ARValueMapper[]
 	 */
-	private $data = array();
+	protected $data = array();
 
 	/**
 	 * A helper const which should be used as a "magick number" to load referenced records
@@ -1144,6 +1144,11 @@ abstract class ActiveRecord
 	public function getFieldValue($fieldName)
 	{
 		return $this->data[$fieldName]->get();
+	}
+	
+	public function getField($fieldName)
+	{
+		return $this->data[$fieldName];
 	}
 
 	/**
