@@ -127,9 +127,21 @@ class ARTreeNode extends ActiveRecord
 		return self::getInstanceByID($className, self::ROOT_ID);
 	}
 	
-	public function getPathNodes()
+	public function getPathNodes($loadReferencedRecords = false)
 	{
+		$className = get_class($this);
+		$this->load();
+		$leftValue = $this->getFieldValue(self::LEFT_NODE_FIELD_NAME);
+		$rightValue = $this->getFieldValue(self::RIGHT_NODE_FIELD_NAME);
 		
+		$filter = new ARSelectFilter();
+		$cond = new OperatorCond(new ARFieldHandle($className, self::LEFT_NODE_FIELD_NAME), $leftValue, "<");
+		$cond->addAND(new OperatorCond(new ARFieldHandle($className, self::RIGHT_NODE_FIELD_NAME), $rightValue, ">"));
+		$filter->setCondition($cond);
+		$filter->setOrder(new ARFieldHandle($className, self::LEFT_NODE_FIELD_NAME), ARSelectFilter::ORDER_ASC);
+		
+		$recordSet = self::getRecordSet($className, $filter, $loadReferencedRecords);
+		return $recordSet;
 	}
 
 	public function toArray()
