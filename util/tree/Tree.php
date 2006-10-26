@@ -5,7 +5,7 @@
  */
 abstract class Tree extends ActiveRecord {	
 	
-	public $parents_instance;
+	public $parentsInstance;
 	
 	private $children = array();	
 	
@@ -73,8 +73,8 @@ abstract class Tree extends ActiveRecord {
 		 	  	
 		 	  	if (!empty(self::$instances_map[$this->parent->get()])) {
 			
-					$this->parents_instance = self::$instances_map[$this->parent->get()];
-					$current_right = $this->parents_instance->rgt->get();	 							  		     
+					$this->parentsInstance = self::$instances_map[$this->parent->get()];
+					$current_right = $this->parentsInstance->rgt->get();	 							  		     
 				} else {
 				  
 				  	$res = $db->executeQuery("SELECT rgt FROM ".$this->getTableName()." WHERE id = ".$this->parent->get());				  
@@ -116,9 +116,9 @@ abstract class Tree extends ActiveRecord {
 		
 			ActiveRecord::save();		
 
-			if ($this->parents_instance != null) {
+			if ($this->parentsInstance != null) {
 			  
-				$this->SetParent($this->parents_instance);	
+				$this->SetParent($this->parentsInstance);	
 			} else if (!empty(self::$instances_map[0])) {
 			  		  
 			  	$this->setParent(self::$instances_map[0]);			  	
@@ -252,9 +252,9 @@ abstract class Tree extends ActiveRecord {
 			
 			echo $tree_instance->name->get().' <br>--||--<br>';
 
-			if (!empty($tree_instance->parents_instance)) {		    
+			if (!empty($tree_instance->parentsInstance)) {		    
 			
-			    unset($tree_instance->parents_instance->children[$tree_instance->getId()]);
+			    unset($tree_instance->parentsInstance->children[$tree_instance->getId()]);
 			}		
 			if (!empty($parents_instance)) {			  	
 		
@@ -269,7 +269,6 @@ abstract class Tree extends ActiveRecord {
 	 * @param int|Tree Tree or it's id
 	 */
 	public static function delete($className, $tree) {
-	  
 	  	if (is_object($tree)) {
 		    			
 			$id = $tree->getId();
@@ -313,9 +312,9 @@ abstract class Tree extends ActiveRecord {
 			if ($child->lft->get() >= $lft && $child->rgt->get() <= $rgt) {
 			  
 			 	unSet(self::$instances_map[$child->getId()]);	  	 
-			 	if (!empty($child->parents_instance)) {		    
+			 	if (!empty($child->parentsInstance)) {		    
 		
-				    unset($child->parents_instance->children[$child->getId()]);
+				    unset($child->parentsInstance->children[$child->getId()]);
 				}
 			}
 		
@@ -410,7 +409,7 @@ abstract class Tree extends ActiveRecord {
 	 */				
 	protected function setParent($parent) {
 	  	  	
-		$this->parents_instance = $parent; 				
+		$this->parentsInstance = $parent; 				
 		$parent->children[$this->getId()] = $this; 				
 	}
 		
