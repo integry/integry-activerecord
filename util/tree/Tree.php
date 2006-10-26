@@ -9,7 +9,7 @@ abstract class Tree extends ActiveRecord {
 	
 	private $children = array();	
 	
-	private static $instances_map = array();
+	private static $instancesMap = array();
 
 	private $class_name;
 		
@@ -71,9 +71,9 @@ abstract class Tree extends ActiveRecord {
 		  	
 		 	if ($this->parent->get()) {
 		 	  	
-		 	  	if (!empty(self::$instances_map[$this->parent->get()])) {
+		 	  	if (!empty(self::$instancesMap[$this->parent->get()])) {
 			
-					$this->parentsInstance = self::$instances_map[$this->parent->get()];
+					$this->parentsInstance = self::$instancesMap[$this->parent->get()];
 					$current_right = $this->parentsInstance->rgt->get();	 							  		     
 				} else {
 				  
@@ -88,7 +88,7 @@ abstract class Tree extends ActiveRecord {
 				$db->executeUpdate("UPDATE ".$this->getTableName()." SET lft = lft + 2 WHERE lft >= ".$current_right);
 			    $db->executeUpdate("UPDATE ".$this->getTableName()." SET rgt = rgt + 2 WHERE rgt >= ".$current_right);	
 			    
-			    foreach (self::$instances_map as $key => $tree) {
+			    foreach (self::$instancesMap as $key => $tree) {
 				 		 	
 				 	if ($tree->lft->get() >= $current_right) {
 					   
@@ -119,12 +119,12 @@ abstract class Tree extends ActiveRecord {
 			if ($this->parentsInstance != null) {
 			  
 				$this->SetParent($this->parentsInstance);	
-			} else if (!empty(self::$instances_map[0])) {
+			} else if (!empty(self::$instancesMap[0])) {
 			  		  
-			  	$this->setParent(self::$instances_map[0]);			  	
+			  	$this->setParent(self::$instancesMap[0]);			  	
 			}
 
-			self::$instances_map[$this->getId()] = $this;
+			self::$instancesMap[$this->getId()] = $this;
 		} else {
 				  
 			ActiveRecord::save();
@@ -160,9 +160,9 @@ abstract class Tree extends ActiveRecord {
 		
 		$db = ActiveRecord::GetDbConnection();	
 						
-		if (!empty(self::$instances_map[$tree_id])) {
+		if (!empty(self::$instancesMap[$tree_id])) {
 		  
-		  	$tree_instance = self::$instances_map[$tree_id];
+		  	$tree_instance = self::$instancesMap[$tree_id];
 		  	$current_left = $tree_instance->lft->get();
 	  		$current_right = $tree_instance->rgt->get();	 
 		} else {
@@ -180,9 +180,9 @@ abstract class Tree extends ActiveRecord {
 			$res->next();				
 			$parent_left = (int)$res->getInt("max") + 1;	 	
 			$parent_right = (int)$res->getInt("max") + 2;	 					
-		} else if (!empty(self::$instances_map[$parent_id])) {
+		} else if (!empty(self::$instancesMap[$parent_id])) {
 		  		  
-		  	$parents_instance = self::$instances_map[$parent_id];		  	
+		  	$parents_instance = self::$instancesMap[$parent_id];		  	
 		  	$parent_left = $parents_instance->lft->get();
 		  	$parent_right = $parents_instance->rgt->get();
 		} else {
@@ -201,7 +201,7 @@ abstract class Tree extends ActiveRecord {
 		  	$db->executeUpdate("UPDATE ".$table." SET lft = lft + ".$diff." WHERE lft >= ".$parent_right." OR ( lft >= ".$current_left." AND rgt <= ".$current_right." ) ");
 			$db->executeUpdate("UPDATE ".$table." SET rgt = rgt + ".$diff." WHERE rgt >= ".$parent_right." OR ( lft >= ".$current_left." AND rgt <= ".$current_right." ) ");	
 			
-			foreach (self::$instances_map as $key => $value) {
+			foreach (self::$instancesMap as $key => $value) {
 			  		  
 			 	if ($value->lft->get() >= $parent_right ||
 			 	 		($value->lft->get() >= $current_left && $value->rgt->get() <= $current_right)) {
@@ -224,7 +224,7 @@ abstract class Tree extends ActiveRecord {
 			$db->executeUpdate("UPDATE ".$table." SET rgt = rgt + ".$diff2." WHERE rgt >= ".$parent_right);				
 			$db->executeUpdate("UPDATE ".$table." SET lft = lft - ".$diff3.", rgt = rgt- ".$diff3."  WHERE lft >= ".($current_left + $diff2)." AND rgt <= ".($current_right + $diff2)."  ");
 			
-			foreach (self::$instances_map as $key => $value) {
+			foreach (self::$instancesMap as $key => $value) {
 			  		  
 			 	if ($value->lft->get() >= $parent_right) {
 						    
@@ -277,9 +277,9 @@ abstract class Tree extends ActiveRecord {
 		  	$id = $tree;
 		}		
 	  
-		if (!empty(self::$instances_map[$id])) {
+		if (!empty(self::$instancesMap[$id])) {
 			
-			$tree = self::$instances_map[$id];			
+			$tree = self::$instancesMap[$id];			
 			Tree::_delete($className, $tree->lft->get(), $tree->rgt->get());	  
 		} else {
 		  				
@@ -307,11 +307,11 @@ abstract class Tree extends ActiveRecord {
 		
 		ActiveRecord::deleteRecordSet($className, $filter);
 		
-		foreach (self::$instances_map as $key => $child) {
+		foreach (self::$instancesMap as $key => $child) {
 		
 			if ($child->lft->get() >= $lft && $child->rgt->get() <= $rgt) {
 			  
-			 	unSet(self::$instances_map[$child->getId()]);	  	 
+			 	unSet(self::$instancesMap[$child->getId()]);	  	 
 			 	if (!empty($child->parentsInstance)) {		    
 		
 				    unset($child->parentsInstance->children[$child->getId()]);
@@ -329,9 +329,9 @@ abstract class Tree extends ActiveRecord {
 	 */
 	public static function getTreeInstanceById($className, $id) {
 		
-		if (!empty(self::$instances_map[$id])) {
+		if (!empty(self::$instancesMap[$id])) {
 		  	
-		  	return self::$instances_map[$id];
+		  	return self::$instancesMap[$id];
 		}				
 		
 		$tree = ActiveRecord::getInstanceById($className, $id, true);	
@@ -351,12 +351,12 @@ abstract class Tree extends ActiveRecord {
 			
 			
 			$parent_id = $value->parent->get();
-			if (!empty($parent_id) && !empty(self::$instances_map[$parent_id])) {
+			if (!empty($parent_id) && !empty(self::$instancesMap[$parent_id])) {
 			  
-				$value->setParent(self::$instances_map[$parent_id]);
+				$value->setParent(self::$instancesMap[$parent_id]);
 			}
 						
-			self::$instances_map[$value->getId()] = $value;		
+			self::$instancesMap[$value->getId()] = $value;		
 		}				
 		
 		return $tree;	
@@ -369,12 +369,12 @@ abstract class Tree extends ActiveRecord {
 	 */	
 	public static function getAllTree($className, $loadReferencedRecords = false) {
 		
-		if (!empty(self::$instances_map[0])) {
+		if (!empty(self::$instancesMap[0])) {
 		  	
-		  	return self::$instances_map[0];
+		  	return self::$instancesMap[0];
 		}
 		
-		self::$instances_map[0] = ActiveRecord::getInstanceByID($className, 0);		
+		self::$instancesMap[0] = ActiveRecord::getInstanceByID($className, 0);		
 		
 		$filter = new ARSelectFilter();
 		$filter->setLimit(10000000);
@@ -383,24 +383,24 @@ abstract class Tree extends ActiveRecord {
 		
 		foreach ($tree_set as $value) {
 					
-			if (!empty(self::$instances_map[$value->getId()])) {
+			if (!empty(self::$instancesMap[$value->getId()])) {
 			  
-				$value = self::$instances_map[$value->getId()];
+				$value = self::$instancesMap[$value->getId()];
 			}
 						
 			$parent_id = $value->parent->get();
-			if (!empty($parent_id) && !empty(self::$instances_map[$parent_id])) {
+			if (!empty($parent_id) && !empty(self::$instancesMap[$parent_id])) {
 			  
-				$value->setParent(self::$instances_map[$parent_id]);
+				$value->setParent(self::$instancesMap[$parent_id]);
 			} else {
 							
-			  	$value->setParent(self::$instances_map[0]);
+			  	$value->setParent(self::$instancesMap[0]);
 			}
 						
-			self::$instances_map[$value->getId()] = $value;	
+			self::$instancesMap[$value->getId()] = $value;	
 		}	
 		
-		return self::$instances_map[0];
+		return self::$instancesMap[0];
 	}			
 		
 	/**
