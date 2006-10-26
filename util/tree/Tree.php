@@ -11,7 +11,7 @@ abstract class Tree extends ActiveRecord {
 	
 	private static $instancesMap = array();
 
-	private $class_name;
+	private $className;
 		
 	public static function defineSchema($className = __CLASS__) {
 				
@@ -36,7 +36,7 @@ abstract class Tree extends ActiveRecord {
 	public static function getNewTreeInstance($className, $parent = null) {
 	  		  	
 	  	$tree = ActiveRecord::GetNewInstance($className);	
-		$tree->class_name = $className;	  	
+		$tree->className = $className;	  	
 	  	if ($parent != null) { 	  	
 			
 			if (is_Object($parent)) {
@@ -56,7 +56,7 @@ abstract class Tree extends ActiveRecord {
 	 */	
 	protected function getTableName() {
 	  	
-	  	$schema = self::getSchemaInstance($this->class_name);
+	  	$schema = self::getSchemaInstance($this->className);
 		return $schema->getName();
 	}
 	
