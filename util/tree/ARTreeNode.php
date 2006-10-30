@@ -159,6 +159,11 @@ class ARTreeNode extends ActiveRecord
 		return $this->childList;
 	}
 	
+	public function getSuccessorList()
+	{
+		
+	}
+	
 	public function save()
 	{
 		if (!$this->hasID())
