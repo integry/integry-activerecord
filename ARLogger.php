@@ -4,7 +4,7 @@
  * ActiveRecord query / action logger
  *
  */
-class Logger
+class ARLogger
 {
 	private $isEnabled = true;
 	private $startTime = null;

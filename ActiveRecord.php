@@ -5,10 +5,10 @@ if (strpos(get_include_path(), dirname(__FILE__)) === false)
 	set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__));
 }
 
-set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__).DIRECTORY_SEPARATOR."schema".DIRECTORY_SEPARATOR);
-set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__).DIRECTORY_SEPARATOR."query".DIRECTORY_SEPARATOR);
-set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__).DIRECTORY_SEPARATOR."query".DIRECTORY_SEPARATOR."filter".DIRECTORY_SEPARATOR);
-set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__).DIRECTORY_SEPARATOR."schema".DIRECTORY_SEPARATOR."datatype".DIRECTORY_SEPARATOR);
+set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "schema" . DIRECTORY_SEPARATOR);
+set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "query" . DIRECTORY_SEPARATOR);
+set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "query" . DIRECTORY_SEPARATOR . "filter" . DIRECTORY_SEPARATOR);
+set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "schema" . DIRECTORY_SEPARATOR . "datatype" . DIRECTORY_SEPARATOR);
 
 if (!function_exists("__autoload"))
 {
