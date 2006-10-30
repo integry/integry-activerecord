@@ -1234,7 +1234,7 @@ abstract class ActiveRecord
 	{
 		if (empty(self::$logger))
 		{
-			self::$logger = new Logger();
+			self::$logger = new ARLogger();
 		}
 		return self::$logger;
 	}
