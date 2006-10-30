@@ -109,6 +109,11 @@ class Logger
 	{
 		$this->isEnabled = false;
 	}
+	
+	public function setLogFileName($path)
+	{
+		$this->logFileName = $path;
+	}
 }
 
 ?>

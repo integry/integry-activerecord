@@ -40,15 +40,15 @@ class Catalog extends ARTreeNode
 }
 
 
-//$electronicsCatalog = Catalog::getInstanceByID(2, true, false, true);
-//print_r($electronicsCatalog->toArray());
+$electronicsCatalog = Catalog::getInstanceByID(2, true, false, true);
+print_r($electronicsCatalog->toArray());
 
 //$monitorsCatalog = Catalog::getNewInstance($electronicsCatalog);
 //$monitorsCatalog->name->set("Monitors");
 //$monitorsCatalog->save();
 //Catalog::deleteByID(3);
 
-$monitorsCatalog = Catalog::getInstanceByID(9, true);
-print_r($monitorsCatalog->getPathNodes()->toArray());
+//$monitorsCatalog = Catalog::getInstanceByID(9, true);
+//print_r($monitorsCatalog->getPathNodes()->toArray());
 
 ?>
