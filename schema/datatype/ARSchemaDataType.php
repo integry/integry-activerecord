@@ -58,14 +58,14 @@ abstract class ARSchemaDataType
  *
  * @package activerecord.schema.datatype
  */
-abstract class Numeric extends ARSchemaDataType{}
+abstract class ARNumeric extends ARSchemaDataType{}
 
 /**
  * ...
  *
  * @package activerecord.schema.datatype
  */
-class Integer extends Numeric
+class ARInteger extends Numeric
 {
 	public static function instance($typeLength = 4)
 	{
@@ -78,7 +78,7 @@ class Integer extends Numeric
  *
  * @package activerecord.schema.datatype
  */
-class Float extends Numeric
+class ARFloat extends Numeric
 {
 	public static function instance($typeLength = 8)
 	{
@@ -91,7 +91,7 @@ class Float extends Numeric
  *
  * @package activerecord.schema.datatype
  */
-class Bool extends Numeric
+class ARBool extends ARNumeric
 {
 	public static function instance()
 	{
@@ -104,14 +104,14 @@ class Bool extends Numeric
  *
  * @package activerecord.schema.datatype
  */
-abstract class Literal extends ARSchemaDataType{}
+abstract class ARLiteral extends ARSchemaDataType{}
 
 /**
  * ...
  *
  * @package activerecord.schema.datatype
  */
-class Char extends Literal
+class ARChar extends ARLiteral
 {
 	public static function instance($typeLength = 40)
 	{
@@ -124,7 +124,7 @@ class Char extends Literal
  *
  * @package activerecord.schema.datatype
  */
-class Varchar extends Literal
+class ARVarchar extends ARLiteral
 {
 	public static function instance($typeLength = 40)
 	{
@@ -137,7 +137,7 @@ class Varchar extends Literal
  *
  * @package activerecord.schema.datatype
  */
-class Binary extends ARSchemaDataType
+class ARBinary extends ARSchemaDataType
 {
 	public static function instance($typeLength)
 	{
@@ -150,14 +150,16 @@ class Binary extends ARSchemaDataType
  * Abstract class for data type which represents time period (date, time, hours or everything)
  *
  */
-abstract class Period extends ARSchemaDataType{}
+abstract class ARPeriod extends ARSchemaDataType
+{
+}
 
 /**
  * ...
  *
  * @package activerecord.schema.datatype
  */
-class Date extends Period
+class ARDate extends ARPeriod
 {
 	public static function instance()
 	{
@@ -170,7 +172,7 @@ class Date extends Period
  *
  * @package activerecord.schema.datatype
  */
-class Time extends Period
+class ARTime extends ARPeriod
 {
 	public static function instance()
 	{
@@ -183,7 +185,7 @@ class Time extends Period
  *
  * @package activerecord.schema.datatype
  */
-class DateTime extends Period
+class ARDateTime extends ARPeriod
 {
 	public static function instance()
 	{
