@@ -65,7 +65,7 @@ abstract class ARNumeric extends ARSchemaDataType{}
  *
  * @package activerecord.schema.datatype
  */
-class ARInteger extends Numeric
+class ARInteger extends ARNumeric
 {
 	public static function instance($typeLength = 4)
 	{
@@ -78,7 +78,7 @@ class ARInteger extends Numeric
  *
  * @package activerecord.schema.datatype
  */
-class ARFloat extends Numeric
+class ARFloat extends ARNumeric
 {
 	public static function instance($typeLength = 8)
 	{
