@@ -26,7 +26,7 @@ abstract class ARFilter
 	{
 		if ($this->condition != null)
 		{
-			return " WHERE ".$this->condition->createChain();
+			return " WHERE " . $this->condition->createChain();
 		}
 		else
 		{

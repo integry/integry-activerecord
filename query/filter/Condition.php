@@ -29,14 +29,14 @@ abstract class Condition
 
 	public function createChain()
 	{
-		$condStr = "(".$this->toString();
+		$condStr = "(" . $this->toString();
 		foreach($this->ANDCondList as $andCond)
 		{
-			$condStr .= " AND ".$andCond->createChain();
+			$condStr .= " AND " . $andCond->createChain();
 		}
 		foreach($this->ORCondList as $orCond)
 		{
-			$condStr .= " OR ".$orCond->createChain();
+			$condStr .= " OR " . $orCond->createChain();
 		}
 		$condStr .= ")";
 		return $condStr;

@@ -29,7 +29,7 @@ class ARFieldHandle
 	public function prepareValue($value)
 	{
 		$dataType = $this->field->getDataType();
-		if ($dataType instanceof Literal || $dataType instanceof Period)
+		if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
 		{
 			return "'".$value."'";
 		}

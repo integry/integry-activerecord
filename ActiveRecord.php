@@ -999,7 +999,7 @@ abstract class ActiveRecord
 			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
 			$filter->mergeCondition($cond);
 		}
-		$updateQuery = "UPDATE ".$this->schema->getName()." SET ".$this->enumerateModifiedFields()." ".$filter->createString();
+		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
 		self::getLogger()->logQuery($updateQuery);
 		return $this->db->executeUpdate($updateQuery);
