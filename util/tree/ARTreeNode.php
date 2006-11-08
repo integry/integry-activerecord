@@ -314,10 +314,10 @@ class ARTreeNode extends ActiveRecord
 	{			
 		$schema = self::getSchemaInstance($className);
 		$tableName = $schema->getName();		
-		$schema->registerField(new ARPrimaryKeyField("ID", Integer::instance()));	
-		$schema->registerField(new ARForeignKeyField(self::PARENT_NODE_FIELD_NAME, $tableName, "ID",$className, Integer::instance()));					
-		$schema->registerField(new ARField(self::LEFT_NODE_FIELD_NAME, Integer::instance()));
-		$schema->registerField(new ARField(self::RIGHT_NODE_FIELD_NAME, Integer::instance()));		
+		$schema->registerField(new ARPrimaryKeyField("ID", ARInteger::instance()));	
+		$schema->registerField(new ARForeignKeyField(self::PARENT_NODE_FIELD_NAME, $tableName, "ID",$className, ARInteger::instance()));					
+		$schema->registerField(new ARField(self::LEFT_NODE_FIELD_NAME, ARInteger::instance()));
+		$schema->registerField(new ARField(self::RIGHT_NODE_FIELD_NAME, ARInteger::instance()));		
 	}
 }
 
