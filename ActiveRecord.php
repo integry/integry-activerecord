@@ -1063,7 +1063,7 @@ abstract class ActiveRecord
 				}
 				else
 				{
-					if ($dataContainer->getField->getDataType() instanceof ARArray)
+					if ($dataContainer->getField()->getDataType() instanceof ARArray)
 					{
 						$value = "'" . serialize($dataContainer->get()) . "'";
 					}

@@ -1,12 +1,12 @@
 <?php
 
-set_include_path(get_include_path() . PATH_SEPARATOR . "C:/projects/K-Shop/library/activerecord");
+set_include_path(get_include_path() . PATH_SEPARATOR . "C:/projects/activerecord");
 require_once("ActiveRecord.php");
 
-ActiveRecord::$creolePath = "C:/projects/K-Shop/library/creole";
-ActiveRecord::setDSN("mysql://root@localhost/demoproject");
+ActiveRecord::$creolePath = "C:/projects/livecart/library/creole";
+ActiveRecord::setDSN("mysql://root@server/demoproject");
 
-
+/*
 class Demo extends ActiveRecord {
 	
 	public static function defineSchema($className = __CLASS__) {
@@ -25,6 +25,7 @@ class Demo extends ActiveRecord {
 		return parent::getInstanceByID(__CLASS__, $recordID, $loadRecordData, $loadReferencedRecords);
 	}
 }
+*/
 
 /**
  * Blog post model
@@ -36,10 +37,10 @@ class BlogPost extends ActiveRecord {
 		
 		$schema = self::getSchemaInstance($className);
 		$schema->setName("BlogPost");
-		$schema->registerField(new ARPrimaryKeyField("ID", Integer::instance()));
-		$schema->registerField(new ARField("title", Varchar::instance(200)));
-		$schema->registerField(new ARField("body", Varchar::instance(1024)));
-		$schema->registerField(new ARField("createdAt", DateTime::instance()));
+		$schema->registerField(new ARPrimaryKeyField("ID", ARInteger::instance()));
+		$schema->registerField(new ARField("title", ARArray::instance()));
+		$schema->registerField(new ARField("body", ARVarchar::instance(1024)));
+		$schema->registerField(new ARField("createdAt", ARDateTime::instance()));
 	}
 	
 	public static function getRecordSet(ARSelectFilter $filter, $loadReferencedRecords = false) {
@@ -51,10 +52,7 @@ class BlogPost extends ActiveRecord {
 	}
 }
 
-/**
- * Blog comment model
- *
- */
+/*
 class BlogComment extends ActiveRecord {
 	
 	public static function defineSchema($className = __CLASS__) {
@@ -69,5 +67,6 @@ class BlogComment extends ActiveRecord {
 		$schema->registerField(new ARField("createdAt", DateTime::instance()));
 	}	
 }
+*/
 
 ?>
