@@ -647,7 +647,14 @@ abstract class ActiveRecord
 			}
 			else
 			{
-				$this->data[$fieldName]->set($recordDataArray[$fieldName], false);
+				if ($field->getDataType() instanceof  ARArray)
+				{
+					$this->data[$fieldName]->set(unserialize($recordDataArray[$fieldName]), false);
+				}
+				else
+				{
+					$this->data[$fieldName]->set($recordDataArray[$fieldName], false);
+				}
 			}
 
 		}
@@ -770,7 +777,6 @@ abstract class ActiveRecord
 			if ($field->getForeignClassName() == $callerClassName)
 			{
 				$connectingFieldName = $field->getName();
-				//$connectingCond = new EqualsCond($foreignSchema->getName() . "." . $connectingFieldName, $this->getID());
 				$connectingCond = new EqualsCond(new ARFieldHandle($foreignSchema->getName(), $connectingFieldName), $this->getID());
 				break;
 			}
@@ -779,8 +785,6 @@ abstract class ActiveRecord
 		{
 			throw new ARSchemaException("Reference from ".$foreignClassName." to ".$callerClassName." is not defined in schema");
 		}
-
-		//$filter->appendCondition($foreignSchema->getName() . "." . $connectingFieldName. " = " . $this->getID());
 		if ($filter->isConditionSet())
 		{
 			$mainCond = $filter->getCondition();
@@ -1053,13 +1057,20 @@ abstract class ActiveRecord
 			//if (!($dataContainer->getField() instanceof ARPrimaryKeyField) && $dataContainer->isModified()) {
 			if ($dataContainer->isModified())
 			{
-				if ($dataContainer->getField()instanceof ARForeignKey)
+				if ($dataContainer->getField() instanceof ARForeignKey)
 				{
 					$value = "'".$dataContainer->get()->getID()."'";
 				}
 				else
 				{
-					$value = "'".$dataContainer->get()."'";
+					if ($dataContainer->getField->getDataType() instanceof ARArray)
+					{
+						$value = "'" . serialize($dataContainer->get()) . "'";
+					}
+					else
+					{
+						$value = "'".$dataContainer->get()."'";
+					}
 				}
 				if ($dataContainer->isNull())
 				{

@@ -59,7 +59,11 @@ class ARValueMapper
 	{
 		if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord))
 		{
-			throw new ARException("Invalid parameter: must be an instance of ActiveRecord");
+			throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");
+		}
+		if ($this->field->getDataType() instanceof ARArray && !is_array($value))
+		{
+			throw new ARException("Invalid value parameter: must be an array");
 		}
 		$this->value = $value;
 
