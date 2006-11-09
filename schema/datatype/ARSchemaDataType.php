@@ -58,7 +58,25 @@ abstract class ARSchemaDataType
  *
  * @package activerecord.schema.datatype
  */
-abstract class ARNumeric extends ARSchemaDataType{}
+abstract class ARNumeric extends ARSchemaDataType
+{
+}
+
+/**
+ * Array data type
+ * 
+ * As many DBMS vendors does not support array data types, array data should be saved 
+ * in a serialized form (string)
+ *
+ * @package activerecord.schema.datatype
+ */
+class ARArray extends ARSchemaDataType
+{
+	public static function instance()
+	{
+		return parent::instance(__CLASS__, 2048);
+	}
+}
 
 /**
  * ...
