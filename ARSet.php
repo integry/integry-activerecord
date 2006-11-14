@@ -28,7 +28,7 @@ class ARSet implements IteratorAggregate
 	 *
 	 * @param ARFilter $recordSetFilter Filter that was used to create a record set
 	 */
-	public function __construct(ARSelectFilter $recordSetFilter)
+	public function __construct(ARSelectFilter $recordSetFilter = null)
 	{
 		$this->filter = $recordSetFilter;
 	}
