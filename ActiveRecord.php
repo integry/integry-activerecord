@@ -649,7 +649,7 @@ abstract class ActiveRecord
 			{
 				if ($field->getDataType() instanceof  ARArray)
 				{
-					if (trim($this->data[$fieldName]->get()) != "")
+					if (trim($recordDataArray[$fieldName]) != "")
 					{
 						$this->data[$fieldName]->set(unserialize($recordDataArray[$fieldName]), false);
 					}
