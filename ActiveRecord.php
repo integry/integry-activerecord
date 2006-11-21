@@ -189,7 +189,7 @@ abstract class ActiveRecord
 	 */
 	public static function getSchemaInstance($className)
 	{
-		if (empty(self::$schemaMap[$className]))
+	    if (empty(self::$schemaMap[$className]))
 		{
 			self::$schemaMap[$className] = new ARSchema();
 
@@ -589,7 +589,15 @@ abstract class ActiveRecord
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $name => $field)
 		{
-			$recordData[$name] = $dataArray[$name];
+			if ($field->getDataType() instanceof  ARArray )
+			{
+				$recordData[$name] = unserialize($dataArray[$name]);
+			}
+			else
+			{
+    		    $recordData[$name] = $dataArray[$name];
+			}
+
 			unset($dataArray[$name]);
 		}
 
@@ -647,17 +655,7 @@ abstract class ActiveRecord
 			}
 			else
 			{
-				if ($field->getDataType() instanceof  ARArray)
-				{
-					if (trim($recordDataArray[$fieldName]) != "")
-					{
-						$this->data[$fieldName]->set(unserialize($recordDataArray[$fieldName]), false);
-					}
-				}
-				else
-				{
-					$this->data[$fieldName]->set($recordDataArray[$fieldName], false);
-				}
+				$this->data[$fieldName]->set($recordDataArray[$fieldName], false);
 			}
 
 		}
@@ -1159,7 +1157,7 @@ abstract class ActiveRecord
 	{
 		return $this->data[$fieldName]->get();
 	}
-	
+
 	public function getField($fieldName)
 	{
 		return $this->data[$fieldName];
