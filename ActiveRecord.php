@@ -589,7 +589,7 @@ abstract class ActiveRecord
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $name => $field)
 		{
-			if ($field->getDataType() instanceof  ARArray )
+			if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$name]) != "")
 			{
 				$recordData[$name] = unserialize($dataArray[$name]);
 			}
