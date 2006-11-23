@@ -185,7 +185,7 @@ abstract class ActiveRecord
 	 * Creates or gets an already created Schema object for a given class $className
 	 *
 	 * @param string $className
-	 * @return Schema
+	 * @return ARSchema
 	 */
 	public static function getSchemaInstance($className)
 	{
