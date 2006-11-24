@@ -967,9 +967,9 @@ abstract class ActiveRecord
 			{
 				$PKList = $this->schema->getPrimaryKeyList();
 				$PKField = $PKList[key($PKList)];
-				if ($PKField->getDataType()instanceof Numeric)
+				if ($PKField->getDataType() instanceof ARInteger )
 				{
-					$IDG = $this->db->getIdGenerator();
+				    $IDG = $this->db->getIdGenerator();
 					$this->setID($IDG->getId(), false);
 				}
 			}
