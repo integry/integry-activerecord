@@ -159,6 +159,16 @@ class EqualsCond extends BinaryCondition
 }
 
 /**
+ * Not equals condition
+ *
+ * @package activerecord.query.filter
+ */
+class NotEqualsCond extends BinaryCondition
+{
+	protected $operatorString = "!=";
+}
+
+/**
  * Less than condition
  *
  * @package activerecord.query.filter
