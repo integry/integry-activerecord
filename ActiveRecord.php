@@ -815,6 +815,7 @@ abstract class ActiveRecord
 		$db = self::getDBConnection();
 
 		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString();
+		self::getLogger()->logQuery($deleteQuery);
 		return $db->executeUpdate($deleteQuery);
 	}
 
@@ -871,6 +872,7 @@ abstract class ActiveRecord
 		$db = self::getDBConnection();
 
 		$updateQuery = "UPDATE ".$schema->getName()." ".$filter->createString();
+		self::getLogger()->logQuery($updateQuery);
 		return $db->executeUpdate($updateQuery);
 	}
 
