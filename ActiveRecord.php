@@ -1257,6 +1257,36 @@ abstract class ActiveRecord
 	}
 
 	/**
+	 * Begins a transaction
+	 *
+	 */
+	public static function beginTransaction()
+	{
+		$db = self::getDBConnection();
+		$db->setAutoCommit(false);
+	}
+
+	/**
+	 * Commits a transaction
+	 *
+	 */
+	public static function commit()
+	{
+		$db = self::getDBConnection();
+		$db->commit();
+	}
+
+	/**
+	 * Rollbacks a transaction
+	 *
+	 */
+	public static function rollback()
+	{
+		$db = self::getDBConnection();
+		$db->rollback();
+	}
+
+	/**
 	 * Abstract method for table schema definition
 	 *
 	 * All derived classes must implement this method and perform the following steps:
