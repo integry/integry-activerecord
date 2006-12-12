@@ -1262,6 +1262,7 @@ abstract class ActiveRecord
 	 */
 	public static function beginTransaction()
 	{
+		self::getLogger()->logAction("BEGIN transaction");
 		$db = self::getDBConnection();
 		$db->setAutoCommit(false);
 	}
@@ -1272,6 +1273,7 @@ abstract class ActiveRecord
 	 */
 	public static function commit()
 	{
+		self::getLogger()->logAction("COMMIT transaction");
 		$db = self::getDBConnection();
 		$db->commit();
 	}
@@ -1282,6 +1284,7 @@ abstract class ActiveRecord
 	 */
 	public static function rollback()
 	{
+		self::getLogger()->logAction("ROLLBACK transaction");
 		$db = self::getDBConnection();
 		$db->rollback();
 	}
