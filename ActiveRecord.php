@@ -1002,7 +1002,6 @@ abstract class ActiveRecord
 			{
 				$recordID = $this->data[$PKField->getName()]->get();
 			}
-			//$cond = new EqualsCond($className . "." . $PKField->getName(), $recordID);
 			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
 			$filter->mergeCondition($cond);
 		}
