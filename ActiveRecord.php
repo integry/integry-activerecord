@@ -1061,7 +1061,10 @@ abstract class ActiveRecord
 			{
 				if ($dataContainer->getField() instanceof ARForeignKey)
 				{
-					$value = "'".$dataContainer->get()->getID()."'";
+					if (!$dataContainer->isNull())
+					{
+						$value = "'".$dataContainer->get()->getID()."'";
+					}
 				}
 				else
 				{
