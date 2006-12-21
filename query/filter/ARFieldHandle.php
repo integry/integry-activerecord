@@ -19,6 +19,10 @@ class ARFieldHandle
 			$this->tableName = $schema->getName();
 			$this->field = $schema->getField($fieldName);
 		}
+		else
+		{
+			throw new ARException("Unable to find defined schema or field: " . $className. "." . $fieldName);
+		}
 	}
 
 	public function toString()
