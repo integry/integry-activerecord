@@ -591,7 +591,7 @@ abstract class ActiveRecord
 		{
 			if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$name]) != "")
 			{
-				$recordData[$name] = unserialize($dataArray[$name]);
+				$recordData[$name] = @unserialize($dataArray[$name]);
 			}
 			else
 			{
