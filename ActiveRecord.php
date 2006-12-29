@@ -591,7 +591,15 @@ abstract class ActiveRecord
 		{
 			if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$name]) != "")
 			{
-				$recordData[$name] = @unserialize($dataArray[$name]);
+				$restoredData = @unserialize($dataArray[$name]);
+				if ($restoredData !== false)
+				{
+					$recordData[$name] = $restoredData;
+				}
+				else
+				{
+					$recordData[$name] = $dataArray[$name];
+				}
 			}
 			else
 			{
