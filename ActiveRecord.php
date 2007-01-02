@@ -596,10 +596,6 @@ abstract class ActiveRecord
 				{
 					$recordData[$name] = $restoredData;
 				}
-				//else
-				//{
-				//	$recordData[$name] = $dataArray[$name];
-				//}
 			}
 			else
 			{
