@@ -1076,9 +1076,13 @@ abstract class ActiveRecord
 					{
 						$value = "'" . serialize($dataContainer->get()) . "'";
 					}
+					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric)
+					{
+						$value = $dataContainer->get();
+					}
 					else
 					{
-						$value = "'".$dataContainer->get()."'";
+						$value = "'" . $dataContainer->get() . "'";
 					}
 				}
 				if ($dataContainer->isNull())
