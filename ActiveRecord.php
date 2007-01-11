@@ -1074,7 +1074,8 @@ abstract class ActiveRecord
 				{
 					if ($dataContainer->getField()->getDataType() instanceof ARArray)
 					{
-						$value = "'" . addslashes(serialize($dataContainer->get())) . "'";
+						$value = "'" . str_replace("'", "\'", serialize($dataContainer->get())) . "'";
+
 					}
 					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric)
 					{
@@ -1082,7 +1083,7 @@ abstract class ActiveRecord
 					}
 					else
 					{
-						$value = "'" . addslashes($dataContainer->get()) . "'";
+						$value = "'" . str_replace("'", "\'", $dataContainer->get()) . "'";
 					}
 				}
 				if ($dataContainer->isNull())
