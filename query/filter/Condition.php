@@ -214,6 +214,10 @@ class INCond extends BinaryCondition
 
 	public function __construct(ARFieldHandle $leftSide, $rightSide)
 	{
+		if (is_array($rightSide))
+		{
+		  	$rightSide = implode(', ', $rightSide);
+		}
 		parent::__construct($leftSide, "(".$rightSide.")");
 	}
 }
