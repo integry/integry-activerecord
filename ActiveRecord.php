@@ -680,10 +680,7 @@ abstract class ActiveRecord
 	public static function getRecordSet($className, ARSelectFilter $filter, $loadReferencedRecords = false)
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
-
-		
 		$query->getFilter()->merge($filter);
-		echo $query->createString();
 
 		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
