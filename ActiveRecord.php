@@ -674,11 +674,16 @@ abstract class ActiveRecord
 	 * @param bool $loadReferencedRecords
 	 *
 	 * @todo Smarter way to merge filters (from a query object and the one that is supplied as parameter)
+	 * 
+	 * @return ARSet
 	 */
 	public static function getRecordSet($className, ARSelectFilter $filter, $loadReferencedRecords = false)
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
+
+		
 		$query->getFilter()->merge($filter);
+		echo $query->createString();
 
 		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
@@ -703,6 +708,15 @@ abstract class ActiveRecord
 		return self::createRecordSet($className, $query);
 	}
 
+	/**
+	 * Loads a set of active record instances (persisted object list) by using a query
+	 *
+	 * @param string $className
+	 * @param ARSelectQueryBuilder $query
+	 * @param bool $loadReferencedRecords
+	 *
+	 * @return ARSet
+	 */
 	protected final static function createRecordSet($className, ARSelectQueryBuilder $query, $loadReferencedRecords = false)
 	{
 		$schema = self::getSchemaInstance($className);
@@ -723,10 +737,11 @@ abstract class ActiveRecord
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
 			}
 		}
-
+		
 		$filter = $query->getFilter();
 		if ($filter->getLimit() >= $recordSet->size() || $filter->getOffset() > 0)
 		{
+		    
 			$db = self::getDBConnection();
 			$counterFilter = clone $filter;
 			$counterFilter->setLimit(0, 0);
