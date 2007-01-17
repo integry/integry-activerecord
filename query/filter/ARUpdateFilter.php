@@ -38,11 +38,19 @@ class ARUpdateFilter extends ARFilter
 	 *
 	 * @param string $fieldName
 	 * @param string $fieldValue
+	 *
+	 * @todo add ARFieldHandle (field object) instead of $fieldName (string)
 	 */
 	public function addModifier($fieldName, $fieldValue)
 	{
 		$this->modifierList[$fieldName] = $fieldValue;
 	}
+
+	/*
+	public function addModifier(ARFieldHandle $field, $fieldValue)
+	{
+	}
+	*/
 }
 
 ?>
