@@ -620,6 +620,10 @@ abstract class ActiveRecord
 					if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$refSchema->getName()."_".$field->getName()]) != "")
 					{
 						$referenceListData[$foreignClassName][$field->getName()] = unserialize($dataArray[$refSchema->getName()."_".$field->getName()]);
+						if (!$referenceListData[$foreignClassName][$field->getName()])
+						{
+						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];exit;
+						}
 					}
 					else
 					{

@@ -44,6 +44,20 @@ class ARSelectFilter extends ARFilter
 	private $orderType = self::ORDER_ASC;
 
 	/**
+	 * A list of tables to join
+	 *
+	 * @var array
+	 */
+	private $joinList = array();
+
+	/**
+	 * A list of additional fields to select
+	 *
+	 * @var array
+	 */
+	private $fieldList = array();
+
+	/**
 	 * Creates a string by using filter data
 	 *
 	 * @return string
@@ -131,15 +145,6 @@ class ARSelectFilter extends ARFilter
 		return $this->fieldListForOrder;
 	}
 
-	/**
-	 * Sets a "bulk" ordering by passing an array of field to order by
-	 *
-	 */
-	private function setFieldOrder($fieldList)
-	{
-		$this->fieldListForOrder = $fieldList;
-	}
-
 	public function getOrderType()
 	{
 		return $this->orderType;
@@ -167,7 +172,56 @@ class ARSelectFilter extends ARFilter
 		//$this->setOrder($filter->getOrder(), $filter->getOrderType());
 		$this->setFieldOrder($filter->getFieldOrder());
 		$this->setLimit($filter->getLimit(), $filter->getOffset());
+		
+		$joins = $filter->getJoinList();
+		$this->joinList = array_merge($this->joinList, $joins);
+		$fields = $filter->getFieldList();
+		$this->fieldList = array_merge($this->fieldList, $fields);
 	}
+	
+	/**
+	 * Joins table by using supplied params
+	 *
+	 * @param string $tableName
+	 * @param string $mainTableName
+	 * @param string $tableJoinFieldName
+	 * @param string $mainTableJoinFieldName
+	 * @param string $tableAliasName	Necessary when joining the same table more than one time (LEFT JOIN tablename AS table_1)
+	 */
+	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
+	{
+		$this->joinList[] = array("tableName" => $tableName, 
+								  "mainTableName" => $mainTableName, 
+								  "tableJoinFieldName" => $tableJoinFieldName, 
+								  "mainTableJoinFieldName" => $mainTableJoinFieldName,
+								  "tableAliasName" => $tableAliasName
+								  );
+	}	
+	
+	public function getJoinList()
+	{
+	  	return $this->joinList;
+	}
+	
+	public function addField($fieldName, $tableName = null, $fieldNameInResult = null)
+	{
+		$this->fieldList[] = array("fieldName" => $fieldName, "tableName" => $tableName, "fieldNameInResult" => $fieldNameInResult);
+	}
+		
+	public function getFieldList()
+	{
+	  	return $this->fieldList;
+	}
+
+	/**
+	 * Sets a "bulk" ordering by passing an array of field to order by
+	 *
+	 */
+	private function setFieldOrder($fieldList)
+	{
+		$this->fieldListForOrder = $fieldList;
+	}
+	
 }
 
 ?>

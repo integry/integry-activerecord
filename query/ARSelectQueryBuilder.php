@@ -61,10 +61,16 @@ class ARSelectQueryBuilder
 	 * @param string $mainTableName
 	 * @param string $tableJoinFieldName
 	 * @param string $mainTableJoinFieldName
+	 * @param string $tableAliasName	Necessary when joining the same table more than one time (LEFT JOIN sometable AS table_1 ON ... LEFT JOIN sometable AS table_2 ON ...)
 	 */
-	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName)
+	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
 	{
-		$this->joinList[] = array("tableName" => $tableName, "mainTableName" => $mainTableName, "tableJoinFieldName" => $tableJoinFieldName, "mainTableJoinFieldName" => $mainTableJoinFieldName);
+		$this->joinList[] = array("tableName" => $tableName, 
+								  "mainTableName" => $mainTableName, 
+								  "tableJoinFieldName" => $tableJoinFieldName, 
+								  "mainTableJoinFieldName" => $mainTableJoinFieldName,
+								  "tableAliasName" => $tableAliasName
+								  );
 	}
 
 	/**
@@ -94,6 +100,9 @@ class ARSelectQueryBuilder
 	 */
 	public function createString()
 	{
+		$filterFieldList = $this->filter->getFieldList();
+		$this->fieldList = array_merge($this->fieldList, $filterFieldList);
+		
 		$fieldListStr = "";
 		if (empty($this->fieldList))
 		{
@@ -123,6 +132,10 @@ class ARSelectQueryBuilder
 		$fieldListStr = implode(", ", $preparedFieldList);
 
 		$tableListStr = implode(", ", $this->tableList);
+	
+		// add joins from select filter
+		$filterJoins = $this->filter->getJoinList();
+		$this->joinList = array_merge($this->joinList, $filterJoins);
 
 		$joinListStr = "";
 		if (!empty($this->joinList))
@@ -130,7 +143,17 @@ class ARSelectQueryBuilder
 			$preparedJoinList = array();
 			foreach($this->joinList as $joinItem)
 			{
-				$preparedJoinList[] = "LEFT JOIN ".$joinItem['tableName']." ON ".$joinItem['mainTableName'].".".$joinItem['mainTableJoinFieldName']." = ".$joinItem['tableName'].".".$joinItem['tableJoinFieldName'];
+				if (!empty($joinItem['tableAliasName']))
+				{
+				  	$alias = ' AS ' . $joinItem['tableAliasName'] . ' ';
+				  	$tableName = $joinItem['tableAliasName'];
+				}
+				else
+				{
+				  	$alias = '';
+				  	$tableName = $joinItem['tableName'];
+				}
+				$preparedJoinList[] = "LEFT JOIN ".$joinItem['tableName'].$alias." ON ".$joinItem['mainTableName'].".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'];
 			}
 			$joinListStr = implode(" ", $preparedJoinList);
 		}
@@ -139,7 +162,7 @@ class ARSelectQueryBuilder
 		if ($this->filter != null)
 		{
 			$selectQueryString .= $this->filter->createString();
-		}
+		}//echo $selectQueryString . '<br><br><br>';
 		return $selectQueryString;
 	}
 }
