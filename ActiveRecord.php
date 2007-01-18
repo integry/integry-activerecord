@@ -615,9 +615,16 @@ abstract class ActiveRecord
 				$referenceListData[$foreignClassName] = array();
 				$refSchema = self::getSchemaInstance($foreignClassName);
 
-				foreach($refSchema->getFieldList()as $field)
+				foreach($refSchema->getFieldList() as $field)
 				{
-					$referenceListData[$foreignClassName][$field->getName()] = $dataArray[$refSchema->getName()."_".$field->getName()];
+					if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$refSchema->getName()."_".$field->getName()]) != "")
+					{
+						$referenceListData[$foreignClassName][$field->getName()] = unserialize($dataArray[$refSchema->getName()."_".$field->getName()]);
+					}
+					else
+					{
+						$referenceListData[$foreignClassName][$field->getName()] = $dataArray[$refSchema->getName()."_".$field->getName()];
+					}
 					unset($dataArray[$refSchema->getName()."_".$field->getName()]);
 				}
 			}
@@ -674,7 +681,7 @@ abstract class ActiveRecord
 	 * @param bool $loadReferencedRecords
 	 *
 	 * @todo Smarter way to merge filters (from a query object and the one that is supplied as parameter)
-	 * 
+	 *
 	 * @return ARSet
 	 */
 	public static function getRecordSet($className, ARSelectFilter $filter, $loadReferencedRecords = false)
@@ -734,11 +741,11 @@ abstract class ActiveRecord
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
 			}
 		}
-		
+
 		$filter = $query->getFilter();
 		if ($filter->getLimit() >= $recordSet->size() || $filter->getOffset() > 0)
 		{
-		    
+
 			$db = self::getDBConnection();
 			$counterFilter = clone $filter;
 			$counterFilter->setLimit(0, 0);
