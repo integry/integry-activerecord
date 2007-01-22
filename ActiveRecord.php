@@ -138,6 +138,13 @@ abstract class ActiveRecord
 	 */
 	protected $isLoaded = false;
 
+	/**
+	 * For emulating nested transactions
+	 *
+	 * @var bool
+	 */
+	public static $transactionLevel = 0;
+	
 	public static $logger = null;
 
 	/**
@@ -622,7 +629,7 @@ abstract class ActiveRecord
 						$referenceListData[$foreignClassName][$field->getName()] = unserialize($dataArray[$refSchema->getName()."_".$field->getName()]);
 						if (!$referenceListData[$foreignClassName][$field->getName()])
 						{
-						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];exit;
+						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];
 						}
 					}
 					else
@@ -962,46 +969,38 @@ abstract class ActiveRecord
 	 */
 	public function save($forceOperation = 0)
 	{
-		if ($forceOperation)
+		if ($forceOperation)		
 		{
-			if ($forceOperation == self::PERFORM_UPDATE)
-			{
-				if ($this->isModified())
-				{
-					$this->setupDBConnection();
-					$this->update();
-				}
-			}
-			else
-			{
-				$this->setupDBConnection();
-				$this->insert();
-			}
-			return ;
-		}
-
-		if ($this->isExistingRecord())
-		{
-			if ($this->isModified())
-			{
-				$this->setupDBConnection();
-				$this->update();
-			}
+		  	$action = ($forceOperation == self::PERFORM_UPDATE) ? self::PERFORM_UPDATE : self::PERFORM_INSERT;
 		}
 		else
 		{
-			$this->setupDBConnection();
-			$this->insert();
-			if (count($this->schema->getPrimaryKeyList()) == 1)
+			if ($this->isExistingRecord())
 			{
-				$PKList = $this->schema->getPrimaryKeyList();
-				$PKField = $PKList[key($PKList)];
-				if ($PKField->getDataType() instanceof ARInteger )
+				if ($this->isModified())
 				{
-				    $IDG = $this->db->getIdGenerator();
-					$this->setID($IDG->getId(), false);
-				}
+					$action = self::PERFORM_UPDATE;	  
+				}	
+				else
+				{
+				  	return false;
+				}			  	
 			}
+			else
+			{
+				$action = self::PERFORM_INSERT;	  			  
+			}				  
+		}
+
+		$this->setupDBConnection();
+				
+		if (self::PERFORM_UPDATE == $action)
+		{
+			$this->update();
+		}
+		else
+		{
+			$this->insert();
 		}
 	}
 
@@ -1048,7 +1047,21 @@ abstract class ActiveRecord
 		$insertQuery = "INSERT INTO ".$this->schema->getName()." SET ".$this->enumerateModifiedFields();
 
 		self::getLogger()->logQuery($insertQuery);
-		return $this->db->executeUpdate($insertQuery);
+		$result = $this->db->executeUpdate($insertQuery);
+		
+		// get inserted record ID
+		if (count($this->schema->getPrimaryKeyList()) == 1)
+		{
+			$PKList = $this->schema->getPrimaryKeyList();
+			$PKField = $PKList[key($PKList)];
+			if ($PKField->getDataType() instanceof ARInteger )
+			{
+			    $IDG = $this->db->getIdGenerator();
+				$this->setID($IDG->getId(), false);
+			}
+		}		
+		
+		return $result;		
 	}
 
 	/**
@@ -1297,10 +1310,15 @@ abstract class ActiveRecord
 	 *
 	 */
 	public static function beginTransaction()
-	{
-		self::getLogger()->logAction("BEGIN transaction");
-		$db = self::getDBConnection();
-		$db->setAutoCommit(false);
+	{		
+		// only begin the transaction once
+		self::getLogger()->logAction("BEGIN transaction " . ((int)self::$transactionLevel + 1));
+		ActiveRecord::$transactionLevel++;
+		if (1 == self::$transactionLevel)
+		{
+			$db = self::getDBConnection();
+			$db->setAutoCommit(false);
+		}
 	}
 
 	/**
@@ -1309,9 +1327,13 @@ abstract class ActiveRecord
 	 */
 	public static function commit()
 	{
+		ActiveRecord::$transactionLevel--;
 		self::getLogger()->logAction("COMMIT transaction");
-		$db = self::getDBConnection();
-		$db->commit();
+		if (0 == ActiveRecord::$transactionLevel)
+		{
+			$db = self::getDBConnection();
+			$db->commit();
+		}
 	}
 
 	/**
@@ -1320,6 +1342,7 @@ abstract class ActiveRecord
 	 */
 	public static function rollback()
 	{
+		ActiveRecord::$transactionLevel = 0;
 		self::getLogger()->logAction("ROLLBACK transaction");
 		$db = self::getDBConnection();
 		$db->rollback();
