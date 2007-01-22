@@ -101,17 +101,17 @@ class ARSelectQueryBuilder
 	public function createString()
 	{
 		$filterFieldList = $this->filter->getFieldList();
-		$this->fieldList = array_merge($this->fieldList, $filterFieldList);
+		$fields = array_merge($this->fieldList, $filterFieldList);
 		
 		$fieldListStr = "";
-		if (empty($this->fieldList))
+		if (empty($fields))
 		{
 			$fieldStr = "*";
 		}
 		else
 		{
 			$preparedFieldList = array();
-			foreach($this->fieldList as $fieldInfo)
+			foreach($fields as $fieldInfo)
 			{
 				$field = "";
 				if (!empty($fieldInfo['tableName']))
@@ -135,13 +135,13 @@ class ARSelectQueryBuilder
 	
 		// add joins from select filter
 		$filterJoins = $this->filter->getJoinList();
-		$this->joinList = array_merge($this->joinList, $filterJoins);
+		$joins = array_merge($this->joinList, $filterJoins);
 
 		$joinListStr = "";
-		if (!empty($this->joinList))
+		if (!empty($joins))
 		{
 			$preparedJoinList = array();
-			foreach($this->joinList as $joinItem)
+			foreach($joins as $joinItem)
 			{
 				if (!empty($joinItem['tableAliasName']))
 				{

@@ -759,6 +759,7 @@ abstract class ActiveRecord
 
 			$db = self::getDBConnection();
 			$counterFilter = clone $filter;
+			$counterFilter->removeFieldList();
 			$counterFilter->setLimit(0, 0);
 
 			$query->removeFieldList();
@@ -771,6 +772,7 @@ abstract class ActiveRecord
 			self::getLogger()->logQuery($counterQuery);
 			$counterResult = $db->executeQuery($counterQuery);
 			$counterResult->next();
+
 			$resultData = $counterResult->getRow();
 			$recordSet->setTotalRecordCount($resultData['totalCount']);
 		}

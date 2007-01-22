@@ -213,6 +213,11 @@ class ARSelectFilter extends ARFilter
 	  	return $this->fieldList;
 	}
 
+	public function removeFieldList()
+	{
+		$this->fieldList = array();		
+	}
+
 	/**
 	 * Sets a "bulk" ordering by passing an array of field to order by
 	 *
