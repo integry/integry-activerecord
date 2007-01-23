@@ -44,6 +44,17 @@ class ARSet implements IteratorAggregate
 	}
 
 	/**
+	 * Removes a record from record set
+	 *
+	 * @param ActiveRecord $record
+	 */
+	public function remove($recordIndex)
+	{
+		unset($this->data[$recordIndex]);
+		$this->data = array_values($this->data);
+	}
+
+	/**
 	 * Required definition of interface IteratorAggregate
 	 *
 	 * @return Iterator
