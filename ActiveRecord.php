@@ -1004,6 +1004,16 @@ abstract class ActiveRecord
 		{
 			$this->insert();
 		}
+		
+		$this->resetModifiedStatus();
+	}
+
+	protected function resetModifiedStatus()
+	{
+		foreach($this->data as $dataContainer)
+		{
+			$dataContainer->resetModifiedStatus();
+		} 	
 	}
 
 	/**

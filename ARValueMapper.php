@@ -105,6 +105,14 @@ class ARValueMapper
 	}
 
 	/**
+	 * Marks the field as not modified (after saving, etc.)
+	 */
+	public function resetModifiedStatus()
+	{
+		$this->isModified = false;
+	}
+
+	/**
 	 * Checks if this instance has an assigned value
 	 *
 	 * @return bool
