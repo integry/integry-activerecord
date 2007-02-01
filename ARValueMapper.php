@@ -26,6 +26,15 @@ class ARValueMapper
 	private $value = null;
 
 	/**
+	 * Initial value (reset after saving)
+	 *
+	 * Necessary whena record primary key values change and record needs to be updated
+	 *
+	 * @var mixed
+	 */
+	private $initialID = null;
+
+	/**
 	 * A mark to indicate if a record was modified
 	 *
 	 * @var bool
@@ -65,8 +74,14 @@ class ARValueMapper
 		//{
 		//	throw new ARException("Invalid value parameter: must be an array");
 		//}
-		$this->value = $value;
+		
+		if ($this->field instanceof ARForeignKey && !$this->initialID)
+		{
+			$this->initialID = $value->getID();
+		}
 
+		$this->value = $value;
+		
 		if ($markAsModified)
 		{
 			$this->isModified = true;
@@ -95,6 +110,23 @@ class ARValueMapper
 	}
 
 	/**
+	 * Gets initial field value
+	 *
+	 * @return mixed
+	 */
+	public function getInitialID()
+	{
+		if (!$this->initialID)
+		{
+			return $this->value->getID();  
+		}
+		else
+		{
+			return $this->initialID;  
+		}		
+	}
+
+	/**
 	 * Returns true if field is being modified
 	 *
 	 * @return bool
@@ -110,6 +142,10 @@ class ARValueMapper
 	public function resetModifiedStatus()
 	{
 		$this->isModified = false;
+		if ($this->field instanceof ARForeignKey)
+		{
+			$this->initialID = $this->value->getID();		  
+		}
 	}
 
 	/**

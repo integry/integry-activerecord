@@ -865,7 +865,6 @@ abstract class ActiveRecord
 	 */
 	public static function deleteByID($className, $recordID)
 	{
-
 		$filter = new ARDeleteFilter();
 		$schema = self::getSchemaInstance($className);
 		$PKList = $schema->getPrimaryKeyList();
@@ -941,14 +940,15 @@ abstract class ActiveRecord
 			$PKList = $this->schema->getPrimaryKeyList();
 			if (count($PKList) > 1)
 			{
+				// at least one primary key field must be unmodified
 				foreach($PKList as $field)
 				{
-					if ($this->data[$field->getName()]->isModified())
+					if (!$this->data[$field->getName()]->isModified())
 					{
-						return false;
+						return true;
 					}
 				}
-				return true;
+				return false;
 			}
 			else
 			{
@@ -1024,7 +1024,6 @@ abstract class ActiveRecord
 	protected function update()
 	{
 		$filter = new ARUpdateFilter();
-		$updateCond = null;
 		$PKList = $this->schema->getPrimaryKeyList();
 		$className = get_class($this);
 
@@ -1033,8 +1032,8 @@ abstract class ActiveRecord
 			$recordID = "";
 			if ($PKField instanceof ARForeignKey)
 			{
-				$recordObj = $this->data[$PKField->getName()]->get();
-				$recordID = $recordObj->getID();
+				//$recordID = $this->data[$PKField->getName()]->get()->getID();
+				$recordID = $this->data[$PKField->getName()]->getInitialID();
 			}
 			else
 			{
@@ -1074,6 +1073,35 @@ abstract class ActiveRecord
 		}		
 		
 		return $result;		
+	}
+
+	/**
+	 * Deletes an existing record
+	 */
+	public function delete()
+	{
+		$filter = new ARDeleteFilter();
+		$PKList = $this->schema->getPrimaryKeyList();
+		$className = get_class($this);
+
+		foreach($PKList as $PKField)
+		{
+			$recordID = "";
+			if ($PKField instanceof ARForeignKey)
+			{
+				$recordID = $this->data[$PKField->getName()]->getInitialID();
+			}
+			else
+			{
+				$recordID = $this->data[$PKField->getName()]->get();
+			}
+			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
+			$filter->mergeCondition($cond);
+		}
+		$updateQuery = "DELETE FROM " . $this->schema->getName() . " " . $filter->createString();
+
+		self::getLogger()->logQuery($updateQuery);
+		return $this->db->executeUpdate($updateQuery);
 	}
 
 	/**
