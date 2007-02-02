@@ -131,6 +131,9 @@ abstract class ActiveRecord
 	const PERFORM_INSERT = 1;
 	const PERFORM_UPDATE = 2;
 
+	const RECURSIVE = true;
+	const NON_RECURSIVE = false;
+
 	/**
 	 * Is record data loaded from a database?
 	 *
