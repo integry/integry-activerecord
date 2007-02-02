@@ -632,7 +632,7 @@ abstract class ActiveRecord
 						$referenceListData[$foreignClassName][$field->getName()] = unserialize($dataArray[$refSchema->getName()."_".$field->getName()]);
 						if (!$referenceListData[$foreignClassName][$field->getName()])
 						{
-						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];
+//						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];
 						}
 					}
 					else
@@ -710,7 +710,6 @@ abstract class ActiveRecord
 	{
 		$db = self::getDBConnection();
 		$queryStr = $query->createString();
-echo $queryStr;
 		self::getLogger()->logQuery($queryStr);
 		$resultSet = $db->executeQuery($queryStr);
 		$dataArray = array();
@@ -1321,17 +1320,55 @@ echo $queryStr;
 	}
 
 	/**
-	 * Gets a record instance as array (loads record data)
+	 * Gets record instances in array (loads record data)
+	 *
+	 * Useful when you know the ID's for the records you need to retrieve, but do not want to make
+	 * extra queries, because these instances (or some of them) may already be available in pool
 	 *
 	 * @param string $className
-	 * @param mixed $recordID
+	 * @param array $recordIDs
 	 * @param bool $loadReferencedData
-	 *
-	 * @todo implementation!
+	 * @return array
 	 */
-	public static function getInstanceArray($className, $recordID, $loadReferencedData = false)
+	public static function getInstanceArray($className, $recordIDs, $loadReferencedData = false)
 	{
-		throw new ARException("Not implemented!");
+		if (!is_array($recordIDs))
+		{
+		  	throw new Exception('ActiveRecord::getInstanceArray expects an array of record IDs!');
+		}
+		
+		$missingInstances = array();
+		$ret = array();
+		foreach ($recordIDs as $id)
+		{
+			$instance = self::retrieveFromPool($className, $recordID);
+			if (null == $instance)
+			{
+				$missingInstances[] = $id;
+			}
+			else
+			{
+				$ret[$id] = $instance;
+			}		  
+		}
+		
+		// get missing instances
+		$filter = new ARSelectFilter();
+		$cond = new INCond(new ARFieldHandle($className, 'ID'), $missingInstances);
+		$filter->setCondition($cond);
+		$set = self::getRecordSet($className, $filter, $loadReferencedData);
+		
+		foreach ($set as $instance)
+		{
+		  	$ret[$instance->getID()] = $instance;
+		}
+		
+		return $ret;
+	}
+
+	public function restoreDataFromArray($recordData)
+	{
+		$this->setData($recordData);  	
 	}
 
 	public static function getLogger()
@@ -1401,6 +1438,9 @@ echo $queryStr;
 	 * @param string $className
 	 * @see ARSchema
 	 */
-	abstract protected static function defineSchema($className = __CLASS__);
+	protected static function defineSchema($className = __CLASS__)
+	{
+		throw new Exception('ActiveRecord::defineSchema must be implemented');  	
+	}
 }
 ?>
