@@ -142,7 +142,7 @@ class ARValueMapper
 	public function resetModifiedStatus()
 	{
 		$this->isModified = false;
-		if ($this->field instanceof ARForeignKey)
+		if ($this->field instanceof ARForeignKey && !is_null($this->value))
 		{
 			$this->initialID = $this->value->getID();		  
 		}

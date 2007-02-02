@@ -707,7 +707,7 @@ abstract class ActiveRecord
 	{
 		$db = self::getDBConnection();
 		$queryStr = $query->createString();
-
+echo $queryStr;
 		self::getLogger()->logQuery($queryStr);
 		$resultSet = $db->executeQuery($queryStr);
 		$dataArray = array();
