@@ -1337,6 +1337,11 @@ abstract class ActiveRecord
 		  	throw new Exception('ActiveRecord::getInstanceArray expects an array of record IDs!');
 		}
 		
+		if (count($recordIDs) == 0)
+		{
+			return array();
+		}
+		
 		$missingInstances = array();
 		$ret = array();
 		foreach ($recordIDs as $id)
@@ -1366,6 +1371,10 @@ abstract class ActiveRecord
 		return $ret;
 	}
 
+	/**
+	 * 
+	 *  @todo needed?
+	 */
 	public function restoreDataFromArray($recordData)
 	{
 		$this->setData($recordData);  	
@@ -1383,6 +1392,11 @@ abstract class ActiveRecord
 	public function isLoaded()
 	{
 		return $this->isLoaded;
+	}
+
+	public function markAsLoaded()
+	{
+		$this->loaded = true;
 	}
 
 	/**
