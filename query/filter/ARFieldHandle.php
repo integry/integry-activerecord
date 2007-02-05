@@ -10,13 +10,13 @@ class ARFieldHandle
 	private $tableName = "";
 	private $field = null;
 
-	public function __construct($className, $fieldName)
+	public function __construct($className, $fieldName, $tableAlias = false)
 	{
 		$schema = ActiveRecord::getSchemaInstance($className);
 
 		if ($schema->fieldExists($fieldName))
 		{
-			$this->tableName = $schema->getName();
+			$this->tableName = $tableAlias ? $tableAlias : $schema->getName();
 			$this->field = $schema->getField($fieldName);
 		}
 		else
