@@ -1155,7 +1155,7 @@ abstract class ActiveRecord
 						$value = "'" . str_replace("'", "\'", serialize($dataContainer->get())) . "'";
 
 					}
-					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric)
+					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric && $dataContainer->get())
 					{
 						$value = $dataContainer->get();
 					}

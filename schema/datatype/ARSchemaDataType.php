@@ -155,6 +155,20 @@ class ARVarchar extends ARLiteral
  *
  * @package activerecord.schema.datatype
  */
+class ARText extends ARLiteral
+{
+	public static function instance()
+	{
+		return parent::instance(__CLASS__, 0);
+	}
+}
+
+
+/**
+ * ...
+ *
+ * @package activerecord.schema.datatype
+ */
 class ARBinary extends ARSchemaDataType
 {
 	public static function instance($typeLength)

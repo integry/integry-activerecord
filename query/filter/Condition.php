@@ -204,6 +204,16 @@ class LikeCond extends BinaryCondition
 }
 
 /**
+ * Condition using REGEXP operator
+ *
+ * @package activerecord.query.filter
+ */
+class RegexpCond extends BinaryCondition
+{
+	protected $operatorString = " REGEXP ";
+}
+
+/**
  * Condition using IN operator
  *
  * @package activerecord.query.filter
