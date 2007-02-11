@@ -196,11 +196,6 @@ class MoreThanCond extends BinaryCondition
 class LikeCond extends BinaryCondition
 {
 	protected $operatorString = " LIKE ";
-
-	public function __construct(ARFieldHandle $leftSide, $rightSide)
-	{
-		parent::__construct($leftSide, "%".$rightSide."%");
-	}
 }
 
 /**
