@@ -70,7 +70,7 @@ abstract class ARNumeric extends ARSchemaDataType
  *
  * @package activerecord.schema.datatype
  */
-class ARArray extends ARSchemaDataType
+class ARArray extends ARLiteral
 {
 	public static function instance()
 	{

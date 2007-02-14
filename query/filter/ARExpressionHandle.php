@@ -9,6 +9,11 @@ class ARExpressionHandle implements ARFieldHandleInterface
 	    $this->expression = $expression;
 	}
 	
+	public function prepareValue($value)
+	{
+	  	return "'" . $value . "'";
+	}	
+	
 	public function toString()
 	{
 	  	return $this->expression;

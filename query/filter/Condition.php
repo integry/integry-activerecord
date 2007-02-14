@@ -82,7 +82,7 @@ class UnaryCondition extends Condition
 {
 	protected $fieldHandle = null;
 
-	public function __construct(ARFieldHandle $fieldHandle, $operatorString)
+	public function __construct(ARFieldHandleInterface $fieldHandle, $operatorString)
 	{
 		$this->fieldHandle = $fieldHandle;
 		$this->operatorString = $operatorString;
@@ -107,7 +107,7 @@ abstract class BinaryCondition extends Condition
 	protected $leftSideTableName = "";
 	protected $rightSideTableName = "";
 
-	public function __construct(ARFieldHandle $leftSide, $rightSide)
+	public function __construct(ARFieldHandleInterface $leftSide, $rightSide)
 	{
 		$this->leftSide = $leftSide;
 		$this->rightSide = $rightSide;
@@ -117,7 +117,7 @@ abstract class BinaryCondition extends Condition
 	{
 		$condStr = "";
 		$condStr = $this->leftSide->toString().$this->operatorString;
-		if ($this->rightSide instanceof ARFieldHandle)
+		if ($this->rightSide instanceof ARFieldHandleInterface)
 		{
 			$condStr .= $this->rightSide->toString();
 		}
@@ -217,7 +217,7 @@ class INCond extends BinaryCondition
 {
 	protected $operatorString = " IN ";
 
-	public function __construct(ARFieldHandle $leftSide, $rightSide)
+	public function __construct(ARFieldHandleInterface $leftSide, $rightSide)
 	{
 		if (is_array($rightSide))
 		{
