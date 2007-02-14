@@ -114,7 +114,7 @@ class ARSelectFilter extends ARFilter
 	 * @param string $fieldName
 	 * @param string $orderType
 	 */
-	public function setOrder(ARFieldHandle $fieldHandle, $orderType = self::ORDER_ASC)
+	public function setOrder(ARFieldHandleInterface $fieldHandle, $orderType = self::ORDER_ASC)
 	{
 		$this->fieldListForOrder[$fieldHandle->toString()] = $orderType;
 	}

@@ -4,7 +4,7 @@
  * Table field access handle
  *
  */
-class ARFieldHandle
+class ARFieldHandle implements ARFieldHandleInterface
 {
 	private $className = "";
 	private $tableName = "";
