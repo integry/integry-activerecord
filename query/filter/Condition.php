@@ -71,6 +71,40 @@ abstract class Condition
 	{
 		$this->ORCondList[] = $cond;
 	}
+	
+	/**
+	 * Creates an expression handle, which can be used in query field list for advanced calculations
+	 *
+	 * For example:
+	 * <code>
+	 *		$cond = new EqualsOrMoreCond(new ARFieldHandle('ProductPrice', 'price'), 20);
+	 *		$filter->addField('SUM(' . $cond->getExpressionHandle() . ')');
+	 * </code>
+	 *
+	 * @param array $array Array of Condition object instances
+	 * @return Condition
+	 */
+	public function getExpressionHandle()
+	{
+		return new ARExpressionHandle($this->createChain());	
+	}
+	
+	/**
+	 * Merges an array of conditions into one condition
+	 *
+	 * @param array $array Array of Condition object instances
+	 * @return Condition
+	 */
+	public static function mergeFromArray($array)
+	{
+		$baseCond = array_shift($array);
+		foreach ($array as $cond)
+		{
+			$baseCond->addAND($cond);
+		}
+		
+		return $baseCond;
+	}
 }
 
 /**

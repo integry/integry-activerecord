@@ -90,7 +90,7 @@ class ARSelectQueryBuilder
 
 	public function removeFieldList()
 	{
-		unset($this->fieldList);
+		$this->fieldList = array();
 	}
 
 	/**

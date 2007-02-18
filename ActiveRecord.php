@@ -706,7 +706,7 @@ abstract class ActiveRecord
 		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
-	protected static function fetchDataFromDB(ARSelectQueryBuilder $query)
+	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
 	{
 		$db = self::getDBConnection();
 		$queryStr = $query->createString();
