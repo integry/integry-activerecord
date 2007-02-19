@@ -521,12 +521,10 @@ abstract class ActiveRecord
 			}
 			if ($PKCond == null)
 			{
-				//$PKCond = new EqualsCond(get_class($this).".".$PK->getName(), $this->data[$PK->getName()]->get());
 				$PKCond = new EqualsCond(new ARFieldHandle(get_class($this), $PK->getName()), $PKValue);
 			}
 			else
 			{
-				//$PKCond->addAND(new EqualsCond(get_class($this).".".$PK->getName(), $this->data[$PK->getName()]->get()));
 				$PKCond->addAND(new EqualsCond(new ARFieldHandle(get_class($this), $PK->getName()), $PKValue));
 			}
 		}
