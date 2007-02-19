@@ -1341,12 +1341,12 @@ abstract class ActiveRecord
 		{
 			return array();
 		}
-		
+
 		$missingInstances = array();
 		$ret = array();
 		foreach ($recordIDs as $id)
 		{
-			$instance = self::retrieveFromPool($className, $recordID);
+			$instance = self::retrieveFromPool($className, $id);
 			if (null == $instance)
 			{
 				$missingInstances[] = $id;
@@ -1358,14 +1358,17 @@ abstract class ActiveRecord
 		}
 		
 		// get missing instances
-		$filter = new ARSelectFilter();
-		$cond = new INCond(new ARFieldHandle($className, 'ID'), $missingInstances);
-		$filter->setCondition($cond);
-		$set = self::getRecordSet($className, $filter, $loadReferencedData);
-		
-		foreach ($set as $instance)
+		if ($missingInstances)
 		{
-		  	$ret[$instance->getID()] = $instance;
+			$filter = new ARSelectFilter();
+			$cond = new INCond(new ARFieldHandle($className, 'ID'), $missingInstances);
+			$filter->setCondition($cond);
+			$set = self::getRecordSet($className, $filter, $loadReferencedData);
+			
+			foreach ($set as $instance)
+			{
+			  	$ret[$instance->getID()] = $instance;
+			}		  
 		}
 		
 		return $ret;
