@@ -190,12 +190,27 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
 	{
-		$this->joinList[] = array("tableName" => $tableName, 
-								  "mainTableName" => $mainTableName, 
-								  "tableJoinFieldName" => $tableJoinFieldName, 
-								  "mainTableJoinFieldName" => $mainTableJoinFieldName,
-								  "tableAliasName" => $tableAliasName
-								  );
+		
+		$join = array("tableName" => $tableName, 
+					  "mainTableName" => $mainTableName, 
+					  "tableJoinFieldName" => $tableJoinFieldName, 
+					  "mainTableJoinFieldName" => $mainTableJoinFieldName,
+					  "tableAliasName" => $tableAliasName
+					  );
+
+		if ($tableAliasName)
+		{
+		  	if (isset($this->joinList[$tableAliasName]))
+		  	{
+			    return false;
+			}
+			
+			$this->joinList[$tableAliasName] = $join;
+		} 
+		else
+		{
+			$this->joinList[] = $join;
+		}	
 	}	
 	
 	public function getJoinList()
