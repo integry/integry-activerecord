@@ -807,7 +807,7 @@ abstract class ActiveRecord
 	{
 		$this->appendRelatedRecordJoinCond($foreignClassName, $filter);
 		//return self::getRecordSet($foreignClassName, $filter, $loadReferencedRecords);
-		return __invokeStaticMethod($foreignClassName, "getRecordSet", array($foreignClassName, $filter, $loadReferencedRecords));
+		return __invokeStaticMethod('ActiveRecord', "getRecordSet", array($foreignClassName, $filter, $loadReferencedRecords));
 	}
 
 	private function appendRelatedRecordJoinCond($foreignClassName, ARSelectFilter $filter)
