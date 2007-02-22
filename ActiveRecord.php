@@ -718,6 +718,19 @@ abstract class ActiveRecord
 		return $dataArray;
 	}
 
+	public static function getDataBySQL($sqlSelectQuery)
+	{
+		$db = self::getDBConnection();
+		self::getLogger()->logQuery($sqlSelectQuery);
+		$resultSet = $db->executeQuery($sqlSelectQuery);
+		$dataArray = array();
+		while ($resultSet->next())
+		{
+			$dataArray[] = $resultSet->getRow();
+		}
+		return $dataArray;
+	}
+
 	public static function getRecordSetByQuery($className, ARSelectQueryBuilder $query)
 	{
 		return self::createRecordSet($className, $query);
