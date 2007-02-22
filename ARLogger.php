@@ -55,19 +55,13 @@ class ARLogger
 
 	private function addLogItem($msg, $logType)
 	{
+//		return false;
 		$logItem = array("type" => $logType, "msg" => $msg);
 		$this->log[] = $logItem;
 
-		$logData = $this->startTime." | ".$this->createLogItemStr($logItem);
-		if (empty($this->logFileName))
-		{
-			$filePath = dirname(__FILE__).DIRECTORY_SEPARATOR."activerecord.log";
-		}
-		else
-		{
-			$filePath = $this->logFileName;
-		}
-		file_put_contents($filePath, $logData, FILE_APPEND);
+		$logData = /*$this->startTime.*/ microtime(true) . " | " . $this->createLogItemStr($logItem);
+
+		file_put_contents($this->logFileName, $logData, FILE_APPEND);
 	}
 
 	private function createLogItemStr($itemArray)
