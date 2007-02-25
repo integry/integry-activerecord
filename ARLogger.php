@@ -12,6 +12,8 @@ class ARLogger
 	private $outputType = 1;
 	private $logFileName = "";
 
+	private $lastQueryTime = null;
+
 	const OUTPUT_FILE = 1;
 	const OUTPUT_SCREEN = 2;
 
@@ -26,11 +28,13 @@ class ARLogger
 
 	public function logQuery($queryStr)
 	{
+		$this->lastQueryTime = microtime(true);
 		$this->addLogItem($queryStr, self::LOG_QUERY);
 	}
 
 	public function logObject(ActiveRecord $ARInstance, $restoredFromPool = false)
 	{
+		return false;
 		$ID = $ARInstance->getID();
 
 		if ($ARInstance->isLoaded())
@@ -53,9 +57,14 @@ class ARLogger
 		$this->addLogItem($msg, self::LOG_OBJECT);
 	}
 
+	public function logQueryExecutionTime()
+	{
+		file_put_contents($this->logFileName, '( ' . (microtime(true) - $this->lastQueryTime) . ' sec)' . "\n\n", FILE_APPEND);	
+	}
+
 	private function addLogItem($msg, $logType)
 	{
-//		return false;
+		return false;
 		$logItem = array("type" => $logType, "msg" => $msg);
 		$this->log[] = $logItem;
 

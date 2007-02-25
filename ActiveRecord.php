@@ -149,6 +149,8 @@ abstract class ActiveRecord
 	public static $transactionLevel = 0;
 	
 	public static $logger = null;
+	
+	protected $cachedId = null;
 
 	/**
 	 * ActiveRecord constructor. Never use it directly
@@ -298,6 +300,8 @@ abstract class ActiveRecord
 				throw new ARException("Unknown situation (not implemented?)");
 			}
 		}
+		
+		$this->cachedId = null;
 	}
 
 	/**
@@ -308,27 +312,32 @@ abstract class ActiveRecord
 	 */
 	public function getID()
 	{
-		$PKList = $this->schema->getPrimaryKeyList();
-		$PK = array();
-		foreach($PKList as $name => $field)
+		if (!$this->cachedId)
 		{
-			if ($field instanceof ARPrimaryForeignKeyField)
+			$PKList = $this->schema->getPrimaryKeyList();
+			$PK = array();
+			foreach($PKList as $name => $field)
 			{
-				$PK[$name] = $this->data[$name]->get()->getID();
+				if ($field instanceof ARPrimaryForeignKeyField)
+				{
+					$PK[$name] = $this->data[$name]->get()->getID();
+				}
+				else
+				{
+					$PK[$name] = $this->data[$name]->get();
+				}
+			}
+			if (count($PK) == 1)
+			{
+				$this->cachedId = $PK[key($PK)];
 			}
 			else
 			{
-				$PK[$name] = $this->data[$name]->get();
+				$this->cachedId = $PK;
 			}
 		}
-		if (count($PK) == 1)
-		{
-			return $PK[key($PK)];
-		}
-		else
-		{
-			return $PK;
-		}
+
+		return $this->cachedId;
 	}
 
 	/**
@@ -374,14 +383,13 @@ abstract class ActiveRecord
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false)
 	{
-		$fromPool = false;
 		$instance = self::retrieveFromPool($className, $recordID);
 		if ($instance == null)
 		{
 			$instance = self::getNewInstance($className);
 			$instance->setID($recordID, false);
 			self::storeToPool($instance);
-			$fromPool = true;
+			//self::getLogger()->logObject($instance, true);
 		}
 
 		if ($loadRecordData)
@@ -389,7 +397,6 @@ abstract class ActiveRecord
 			$instance->load($loadReferencedRecords);
 		}
 
-		self::getLogger()->logObject($instance, $fromPool);
 		return $instance;
 	}
 
@@ -433,7 +440,11 @@ abstract class ActiveRecord
 	 */
 	private static function getRecordHash($recordID)
 	{
-		if (is_array($recordID))
+		if (!is_array($recordID))
+		{
+			return $recordID;
+		}
+		else
 		{
 			asort(&$recordID);
 			$hashElements = array();
@@ -442,10 +453,6 @@ abstract class ActiveRecord
 				$hashElements[] = $value;
 			}
 			return implode("-", $hashElements);
-		}
-		else
-		{
-			return $recordID;
 		}
 	}
 
@@ -561,20 +568,22 @@ abstract class ActiveRecord
 	{
 		$schema = self::getSchemaInstance($className);
 		$PKList = $schema->getPrimaryKeyList();
-		$recordID = null;
 
-		foreach($PKList as $name => $field)
+		if (count($PKList) == 1)
 		{
-			if (count($PKList) > 1)
+			return $dataArray[key($PKList)];	
+		}
+		else
+		{
+			$recordID = array();
+			
+			foreach($PKList as $name => $field)
 			{
 				$recordID[$name] = $dataArray[$name];
 			}
-			else
-			{
-				$recordID = $dataArray[$name];
-			}
+			
+			return $recordID;			
 		}
-		return $recordID;
 	}
 
 	/**
@@ -710,6 +719,7 @@ abstract class ActiveRecord
 		$queryStr = $query->createString();
 		self::getLogger()->logQuery($queryStr);
 		$resultSet = $db->executeQuery($queryStr);
+		self::getLogger()->logQueryExecutionTime();		
 		$dataArray = array();
 		while ($resultSet->next())
 		{
