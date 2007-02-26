@@ -393,6 +393,7 @@ abstract class ActiveRecord
 	 * @param mixed $recordID
 	 * @param bool $loadRecordData
 	 * @param bool $loadReferencedRecords
+	 * @param array $data	Record data array (may include referenced record data)
 	 *
 	 * @link http://en.wikipedia.org/wiki/Flyweight_pattern
 	 *
