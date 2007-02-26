@@ -192,7 +192,9 @@ abstract class ActiveRecord
 					}
 					else
 					{
-						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null));  					  					  
+//echo $name . $data[$name] . '<br>';
+						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null)); 
+//						echo $this->data[$name]->get()->getID();
 					}
 				}
 				else
