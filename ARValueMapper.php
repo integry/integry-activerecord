@@ -47,6 +47,7 @@ class ARValueMapper
 	{
 		$this->field = $field;
 		$this->value = $value;//echo $value;
+//		echo '<font color=green>' . $this->field->getName() . '--' . $value . '</font><br>';
 	}
 
 	/**

@@ -162,6 +162,7 @@ abstract class ActiveRecord
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
 		$this->createDataAccessVariables($data);
+		//print_r($this->toarray());		
 	}
 
 	/**
@@ -181,7 +182,6 @@ abstract class ActiveRecord
 						
 			if ($field instanceof ARForeignKey)
 			{
-
 				$varName = $field->getForeignClassName();
 
 				if (isset($data[$name]))
@@ -195,19 +195,26 @@ abstract class ActiveRecord
 						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null));  					  					  
 					}
 				}
+				else
+				{
+				  	//echo $data[$name];
+				}
 							
 				//echo '<b>' . $varName . '</b><Br>';
 				// Making first letter lowercase				
 				$varName = strtolower(substr($varName, 0, 1)).substr($varName, 1);
 				$this->$varName = $this->data[$name];
-
 			}
 			else if (!($field instanceof ARPrimaryKey))
 			{
 				$this->$name = $this->data[$name];
 			}
 		}
-
+		
+		if ($data)
+		{
+		  	$this->isLoaded = true;
+		}
 	}
 
 	/**
@@ -425,6 +432,7 @@ abstract class ActiveRecord
 	 */
 	private static function storeToPool(ActiveRecord $instance)
 	{
+		echo '<font color=red>'; print_r($instance->toarray()); echo '</font>';
 		$hash = self::getRecordHash($instance->getID());
 		$className = get_class($instance);
 		self::$recordPool[$className][$hash] = $instance;
@@ -739,7 +747,11 @@ abstract class ActiveRecord
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
 
-		return self::createRecordSet($className, $query, $loadReferencedRecords);
+		$set = self::createRecordSet($className, $query, $loadReferencedRecords);
+		
+//		echo '<font color=blue>'; print_r($set->toarray()); echo '</font>';
+		
+		return $set;
 	}
 
 	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
@@ -794,7 +806,7 @@ abstract class ActiveRecord
 		foreach($queryResultData as $rowData)
 		{
 			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
-			
+
 			$recordID = self::extractRecordID($className, $rowData);
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
