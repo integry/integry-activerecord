@@ -487,7 +487,7 @@ abstract class ActiveRecord
 
 		$query->includeTable($schema->getName());
 
-		/* Adding main table fields to a select query */
+		// Add main table fields to the select query
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $field)
 		{
@@ -586,7 +586,9 @@ abstract class ActiveRecord
 		}
 
 		$parsedRowData = self::prepareDataArray(get_class($this), $rowDataArray[0], $loadReferencedRecords);
-		$this->setData($parsedRowData['recordData'], $parsedRowData['referenceData']);
+		
+		$this->createDataAccessVariables($parsedRowData['recordData']);
+		
 		if (!empty($parsedRowData['miscData']))
 		{
 			$this->miscRecordDataHandler($parsedRowData['miscData']);
@@ -714,73 +716,10 @@ abstract class ActiveRecord
 
 	protected function miscRecordDataHandler($miscRecordDataArray)
 	{
-		echo '<pre style="color: green;">';
+		echo '<pre>';
 		print_r($miscRecordDataArray);
 		echo '</pre>';
 		throw new ARException("miscRecordDataHandler is not implemented");
-	}
-
-	/**
-	 * Sets initial record data and marks it as loaded
-	 *
-	 * @param array $recordDataArray Record data (assoc array)
-	 * @param array $referencedRecordData Referenced record data
-	 *
-	 * @todo optimise recursive setData() calls, to avoid repeated record data setting
-	 * @todo maybe get rid of this method altogether
-	 */
-	protected function setData($recordDataArray, $referencedRecordData = array())
-	{
-		$fieldNameList = array_keys($recordDataArray);
-		foreach($fieldNameList as $fieldName)
-		{
-			$field = $this->schema->getField($fieldName);
-
-			if (!($field instanceof ARForeignKey))
-			{
-				if (isset($recordDataArray[$fieldName]))
-				{
-					$this->data[$fieldName]->set($recordDataArray[$fieldName], false);	
-				}				
-			}
-			else
-			{
-				$className = $field->getForeignClassName();
-				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName]);
-				if (!empty($referencedRecordData))
-				{
-					$instance->setData($referencedRecordData[$className]);
-				}
-				$this->data[$fieldName]->set($instance, false);
-			}
-
-		}
-		$this->isLoaded = true;
-	}
-
-	/**
-	 *	@todo finish implementation & cleanup + optimize
-	 */ 
-	protected function testRecordSetsetData($recordDataArray, $referencedRecordData = array())
-	{
-		$fieldNameList = array_keys($recordDataArray);
-		foreach($fieldNameList as $fieldName)
-		{
-			$field = $this->schema->getField($fieldName);
-
-			if ($field instanceof ARForeignKey && isset($recordDataArray[$fieldName]))
-			{
-				$className = $field->getForeignClassName();
-//				echo "\n\n $className \n";
-//				echo $recordDataArray[$fieldName];
-				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName], null, null, isset($recordDataArray[$className]) ? $recordDataArray[$className] : array());
-//				print_r($referencedRecordData[$className]);
-				$this->data[$fieldName]->set($instance, false);
-//				echo $fieldName . "\n";
-			}
-
-		}
-		$this->isLoaded = true;
 	}
 
 	/**
@@ -859,7 +798,6 @@ abstract class ActiveRecord
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
 
-			$instance->testRecordSetsetData($parsedRowData['recordData'], $parsedRowData['referenceData']);
 			if (!empty($parsedRowData['miscData']))
 			{
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
