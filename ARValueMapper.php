@@ -28,7 +28,7 @@ class ARValueMapper
 	/**
 	 * Initial value (reset after saving)
 	 *
-	 * Necessary whena record primary key values change and record needs to be updated
+	 * Necessary when a record primary key values change and record needs to be updated (referencing the old ID values)
 	 *
 	 * @var mixed
 	 */
@@ -46,7 +46,7 @@ class ARValueMapper
 	public function __construct(ARField $field, $value = null)
 	{
 		$this->field = $field;
-		$this->value = $value;
+		$this->value = $value;//echo $value;
 	}
 
 	/**
@@ -60,7 +60,7 @@ class ARValueMapper
 	}
 
 	/**
-	 * Assignes a value to a field
+	 * Assigns a value to a field
 	 *
 	 * @param mixed $value
 	 */
@@ -71,7 +71,7 @@ class ARValueMapper
 			throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");
 		}
 		
-		if ($this->field instanceof ARForeignKey && !$this->initialID)
+		if ($this->field instanceof ARForeignKey && $this->value && !$this->initialID)
 		{
 			$this->initialID = $value->getID();
 		}

@@ -158,10 +158,10 @@ abstract class ActiveRecord
 	 * @see self::getNewInstance()
 	 * @see self::getInstanceByID()
 	 */
-	protected function __construct()
+	protected function __construct($data = array())
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
-		$this->createDataAccessVariables();
+		$this->createDataAccessVariables($data);
 	}
 
 	/**
@@ -171,13 +171,13 @@ abstract class ActiveRecord
 	 * Record fields type of PKField has no direct access (instance variables are not created)
 	 *
 	 */
-	private function createDataAccessVariables()
+	private function createDataAccessVariables($data = array())
 	{
 		$fieldList = $this->schema->getFieldList();
 
 		foreach($fieldList as $name => $field)
 		{
-			$this->data[$name] = new ARValueMapper($field);
+			$this->data[$name] = new ARValueMapper($field, $data[$name]);
 			if ($field instanceof ARForeignKey)
 			{
 				$varName = $field->getForeignClassName();
@@ -191,6 +191,7 @@ abstract class ActiveRecord
 				$this->$name = $this->data[$name];
 			}
 		}
+
 	}
 
 	/**
@@ -348,13 +349,13 @@ abstract class ActiveRecord
 	 *
 	 * @see self::getInstanceByID()
 	 * @param string $className
+	 * @param array $data Field values (associative array)
 	 * @return ActiveRecord
 	 */
-	public static function getNewInstance($className)
+	public static function getNewInstance($className, $data = array())
 	{
-		$obj = new $className();
+		return new $className($data);
 		//self::getLogger()->logObject($obj);
-		return $obj;
 	}
 
 	/**
@@ -381,12 +382,12 @@ abstract class ActiveRecord
 	 *
 	 * @return ActiveRecord
 	 */
-	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false)
+	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
 	{
 		$instance = self::retrieveFromPool($className, $recordID);
 		if ($instance == null)
 		{
-			$instance = self::getNewInstance($className);
+			$instance = self::getNewInstance($className, $data);
 			$instance->setID($recordID, false);
 			self::storeToPool($instance);
 			//self::getLogger()->logObject($instance, true);
@@ -667,6 +668,7 @@ abstract class ActiveRecord
 	 * @param array $referencedRecordData Referenced record data
 	 *
 	 * @todo optimise recursive setData() calls, to avoid repeated record data setting
+	 * @todo maybe get rid of this method altogether
 	 */
 	protected function setData($recordDataArray, $referencedRecordData = array())
 	{
@@ -675,7 +677,14 @@ abstract class ActiveRecord
 		{
 			$field = $this->schema->getField($fieldName);
 
-			if ($field instanceof ARForeignKey)
+			if (!($field instanceof ARForeignKey))
+			{
+				if (isset($recordDataArray[$fieldName]))
+				{
+					$this->data[$fieldName]->set($recordDataArray[$fieldName], false);	
+				}				
+			}
+			else
 			{
 				$className = $field->getForeignClassName();
 				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName]);
@@ -685,9 +694,27 @@ abstract class ActiveRecord
 				}
 				$this->data[$fieldName]->set($instance, false);
 			}
-			else
+
+		}
+		$this->isLoaded = true;
+	}
+
+	/**
+	 *	@todo finish implementation & cleanup + optimize
+	 */ 
+	protected function testRecordSetsetData($recordDataArray, $referencedRecordData = array())
+	{
+		$fieldNameList = array_keys($recordDataArray);
+		foreach($fieldNameList as $fieldName)
+		{
+			$field = $this->schema->getField($fieldName);
+
+			if ($field instanceof ARForeignKey)
 			{
-				$this->data[$fieldName]->set($recordDataArray[$fieldName], false);
+				$className = $field->getForeignClassName();
+				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName], null, null, $referencedRecordData[$className]);
+
+				$this->data[$fieldName]->set($instance, false);
 			}
 
 		}
@@ -764,12 +791,13 @@ abstract class ActiveRecord
 
 		foreach($queryResultData as $rowData)
 		{
+			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
+			
 			$recordID = self::extractRecordID($className, $rowData);
-			$instance = self::getInstanceByID($className, $recordID);
+			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
 
-			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
-			$instance->setData($parsedRowData['recordData'], $parsedRowData['referenceData']);
+			$instance->testRecordSetsetData($parsedRowData['recordData'], $parsedRowData['referenceData']);
 			if (!empty($parsedRowData['miscData']))
 			{
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
@@ -1393,15 +1421,6 @@ abstract class ActiveRecord
 		}
 		
 		return $ret;
-	}
-
-	/**
-	 * 
-	 *  @todo needed?
-	 */
-	public function restoreDataFromArray($recordData)
-	{
-		$this->setData($recordData);  	
 	}
 
 	public static function getLogger()
