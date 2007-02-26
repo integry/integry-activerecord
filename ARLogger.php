@@ -64,7 +64,7 @@ class ARLogger
 
 	private function addLogItem($msg, $logType)
 	{
-		return false;
+//		return false;
 		$logItem = array("type" => $logType, "msg" => $msg);
 		$this->log[] = $logItem;
 

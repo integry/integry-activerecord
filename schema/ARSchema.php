@@ -77,7 +77,10 @@ class ARSchema
 	 */
 	public function getField($name)
 	{
-		return $this->fieldList[$name];
+		if (isset($this->fieldList[$name]))
+		{
+			return $this->fieldList[$name];		  
+		}
 	}
 
 	/**
@@ -130,6 +133,35 @@ class ARSchema
 			$fieldList[] = $fieldStr;
 		}
 		return implode($separator, $fieldList);
+	}
+
+	/**
+	 * Returns an array of all directly and indirectly referenced schemas (infinite levels of referencing)
+	 *
+	 */
+	public function getReferencedSchemas()
+	{
+		$ret = array();
+		
+		$referenceList = $this->getForeignKeyList();	  	
+
+		foreach($referenceList as $name => $refField)
+		{
+			$foreignClassName = $refField->getForeignClassName();
+			$refSchema = ActiveRecord::getSchemaInstance($foreignClassName);
+			if ($this == $refSchema)
+			{
+			  	break;
+			}
+			
+			$ret[$foreignClassName] = $refSchema;
+			
+			$sub = $refSchema->getReferencedSchemas();
+			
+			$ret = array_merge($ret, $sub);				
+		}
+		
+		return $ret;
 	}
 
 	/**

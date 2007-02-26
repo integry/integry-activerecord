@@ -65,12 +65,24 @@ class ARSelectQueryBuilder
 	 */
 	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
 	{
-		$this->joinList[] = array("tableName" => $tableName, 
+		if (!$tableAliasName)
+		{
+		  	$tableAliasName = $tableName;
+		}
+		
+		if (isset($this->joinList[$tableAliasName]))
+		{
+		  	return false;
+		}
+		
+		$this->joinList[$tableAliasName] = array("tableName" => $tableName, 
 								  "mainTableName" => $mainTableName, 
 								  "tableJoinFieldName" => $tableJoinFieldName, 
 								  "mainTableJoinFieldName" => $mainTableJoinFieldName,
 								  "tableAliasName" => $tableAliasName
 								  );
+								  
+		return true;
 	}
 
 	/**

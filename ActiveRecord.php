@@ -176,12 +176,28 @@ abstract class ActiveRecord
 		$fieldList = $this->schema->getFieldList();
 
 		foreach($fieldList as $name => $field)
-		{
-			$this->data[$name] = new ARValueMapper($field, $data[$name]);
+		{			
+			$this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
+						
 			if ($field instanceof ARForeignKey)
 			{
+
 				$varName = $field->getForeignClassName();
-				// Making first letter lowercase
+
+				if (isset($data[$name]))
+				{					
+					if (isset($data[$varName]) && is_array($data[$varName]))
+					{
+						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null, $data[$varName]));  					  
+					}
+					else
+					{
+						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null));  					  					  
+					}
+				}
+							
+				//echo '<b>' . $varName . '</b><Br>';
+				// Making first letter lowercase				
 				$varName = strtolower(substr($varName, 0, 1)).substr($varName, 1);
 				$this->$varName = $this->data[$name];
 
@@ -478,24 +494,44 @@ abstract class ActiveRecord
 			$query->addField($field->getName(), $schema->getName());
 		}
 
-		$referenceList = $schema->getForeignKeyList();
-		if ($loadReferencedRecords && !empty($referenceList))
+		if ($loadReferencedRecords)
 		{
-			foreach($referenceList as $name => $field)
-			{
-				$foreignClassName = $field->getForeignClassName();
-				$foreignSchema = self::getSchemaInstance($foreignClassName);
-				$query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName());
+			self::joinReferencedTables($schema, $query);		  
+		}
 
+		return $query;
+	}
+	
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query)
+	{
+		$referenceList = $schema->getForeignKeyList();
+
+		foreach($referenceList as $name => $field)
+		{
+			$foreignClassName = $field->getForeignClassName();
+			$foreignSchema = self::getSchemaInstance($foreignClassName);
+			
+			if ($schema == $foreignSchema)
+			{
+			  	continue;
+			}
+			
+			$joined = $query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName());
+
+			if ($joined)
+			{
 				$foreignFieldList = $foreignSchema->getFieldList();
 				$foreignTableName = $foreignSchema->getName();
 				foreach($foreignFieldList as $foreignField)
 				{
 					$query->addField($foreignField->getName(), $foreignTableName, $foreignTableName."_".$foreignField->getName());
 				}
+				
+				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
 			}
+			
+			self::joinReferencedTables($foreignSchema, $query);
 		}
-		return $query;
 	}
 
 	/**
@@ -625,32 +661,52 @@ abstract class ActiveRecord
 
 		if ($loadReferencedRecords)
 		{
-			$referenceList = $schema->getForeignKeyList();
-
-			foreach($referenceList as $name => $field)
+			$schemas = $schema->getReferencedSchemas();
+			
+			foreach ($schemas as $foreignClassName => $foreignSchema)
 			{
-				$foreignClassName = $field->getForeignClassName();
 				$referenceListData[$foreignClassName] = array();
-				$refSchema = self::getSchemaInstance($foreignClassName);
+			}
 
-				foreach($refSchema->getFieldList() as $field)
+			foreach ($schemas as $foreignClassName => $foreignSchema)
+			{
+				$foreignSchemaName = $foreignSchema->getName();
+				
+				foreach($foreignSchema->getFieldList() as $field)
 				{
-					if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$refSchema->getName()."_".$field->getName()]) != "")
+					$fieldName = $field->getName();
+					$keyName = $foreignSchemaName . '_' . $fieldName;
+					
+					if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$keyName]) != "")
 					{
-						$referenceListData[$foreignClassName][$field->getName()] = unserialize($dataArray[$refSchema->getName()."_".$field->getName()]);
-						if (!$referenceListData[$foreignClassName][$field->getName()])
-						{
-//						  	echo $dataArray[$refSchema->getName()."_".$field->getName()];
-						}
+						$referenceListData[$foreignClassName][$fieldName] = unserialize($dataArray[$keyName]);
 					}
 					else
 					{
-						$referenceListData[$foreignClassName][$field->getName()] = $dataArray[$refSchema->getName()."_".$field->getName()];
+						$referenceListData[$foreignClassName][$fieldName] = $dataArray[$keyName];
 					}
-					unset($dataArray[$refSchema->getName()."_".$field->getName()]);
-				}
+					
+					if ($field instanceOf ARForeignKey)
+					{
+						$foreignClass = $field->getForeignClassName();
+						if ($foreignClassName != $foreignClass)
+						{
+							$referenceListData[$foreignClassName][$foreignClass] =& $referenceListData[$foreignClass];						  
+						}
+					}
+					
+					unset($dataArray[$keyName]);
+				}								
 			}
+			
+			foreach($schema->getForeignKeyList() as $field)
+			{
+				$foreignClass = $field->getForeignClassName();				  
+				$recordData[$foreignClass] = $referenceListData[$foreignClass];			  
+			}
+			
 		}
+
 		$miscData = $dataArray;
 
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => $miscData);
@@ -658,6 +714,9 @@ abstract class ActiveRecord
 
 	protected function miscRecordDataHandler($miscRecordDataArray)
 	{
+		echo '<pre style="color: green;">';
+		print_r($miscRecordDataArray);
+		echo '</pre>';
 		throw new ARException("miscRecordDataHandler is not implemented");
 	}
 
@@ -709,12 +768,15 @@ abstract class ActiveRecord
 		{
 			$field = $this->schema->getField($fieldName);
 
-			if ($field instanceof ARForeignKey)
+			if ($field instanceof ARForeignKey && isset($recordDataArray[$fieldName]))
 			{
 				$className = $field->getForeignClassName();
-				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName], null, null, $referencedRecordData[$className]);
-
+//				echo "\n\n $className \n";
+//				echo $recordDataArray[$fieldName];
+				$instance = ActiveRecord::getInstanceByID($className, $recordDataArray[$fieldName], null, null, isset($recordDataArray[$className]) ? $recordDataArray[$className] : array());
+//				print_r($referencedRecordData[$className]);
 				$this->data[$fieldName]->set($instance, false);
+//				echo $fieldName . "\n";
 			}
 
 		}
