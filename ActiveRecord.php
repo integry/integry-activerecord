@@ -432,7 +432,7 @@ abstract class ActiveRecord
 	 */
 	private static function storeToPool(ActiveRecord $instance)
 	{
-		echo '<font color=red>'; print_r($instance->toarray()); echo '</font>';
+//		echo '<font color=red>'; print_r($instance->toarray()); echo '</font>';
 		$hash = self::getRecordHash($instance->getID());
 		$className = get_class($instance);
 		self::$recordPool[$className][$hash] = $instance;
