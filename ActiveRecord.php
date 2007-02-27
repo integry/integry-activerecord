@@ -134,6 +134,8 @@ abstract class ActiveRecord
 	const RECURSIVE = true;
 	const NON_RECURSIVE = false;
 
+	const TRANSFORM_ARRAY = true;
+
 	/**
 	 * Is record data loaded from a database?
 	 *
@@ -188,12 +190,12 @@ abstract class ActiveRecord
 				{					
 					if (isset($data[$varName]) && is_array($data[$varName]))
 					{
-						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null, $data[$varName]));  					  
+						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null, $data[$varName]));  					  
 					}
 					else
 					{
 //echo $name . $data[$name] . '<br>';
-						$this->data[$name]->set(ActiveRecord::getInstanceByID($varName, $data[$name], false, null)); 
+						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null)); 
 //						echo $this->data[$name]->get()->getID();
 					}
 				}
@@ -290,7 +292,7 @@ abstract class ActiveRecord
 				$PKFieldName = key($PKList);
 				if ($this->data[$PKFieldName]->get()instanceof ARForeignKey)
 				{
-					$instance = ActiveRecord::getInstanceByID($this->schema->getField($PKFieldName)->getForeignClassName(), $recordID);
+					$instance = self::getInstanceByID($this->schema->getField($PKFieldName)->getForeignClassName(), $recordID);
 					$this->data[$PKFieldName]->set($instance, $markAsModified);
 				}
 				else
@@ -312,7 +314,7 @@ abstract class ActiveRecord
 				{
 					if ($this->schema->fieldExists($name))
 					{
-						$instance = ActiveRecord::getInstanceByID($this->schema->getField($name)->getForeignClassName(), $value);
+						$instance = self::getInstanceByID($this->schema->getField($name)->getForeignClassName(), $value);
 						$this->data[$name]->set($instance, $markAsModified);
 					}
 					else
@@ -657,7 +659,7 @@ abstract class ActiveRecord
 	 * @param string $className
 	 * @param array $dataArray
 	 */
-	public static function prepareDataArray($className, $dataArray, $loadReferencedRecords = false)
+	public static function prepareDataArray($className, $dataArray, $loadReferencedRecords = false, $transformArray = false)
 	{
 		$referenceListData = array();
 		$recordData = array();
@@ -690,6 +692,11 @@ abstract class ActiveRecord
 
 			unset($dataArray[$name]);
 		}
+
+		if ($transformArray)
+		{
+		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $className));
+		}							
 
 		if ($loadReferencedRecords)
 		{
@@ -728,9 +735,14 @@ abstract class ActiveRecord
 					}
 					
 					unset($dataArray[$keyName]);
-				}								
+				}	
+				
+				if ($transformArray)
+				{
+				  	$referenceListData[$foreignClassName] = call_user_func_array(array($foreignClassName, 'transformArray'), array($referenceListData[$foreignClassName], $foreignClassName));
+				}							
 			}
-			
+								
 			foreach($schema->getForeignKeyList() as $field)
 			{
 				$foreignClass = $field->getForeignClassName();				  
@@ -1373,7 +1385,18 @@ abstract class ActiveRecord
 				$data[$name] = $value->get();
 			}
 		}
+		
+		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
+		
 		return $data;
+	}
+	
+	/**
+	 *	Perform model specific array transformation
+	 */
+	protected static function transformArray($array)
+	{
+		return $array;  	
 	}
 
 	/**
@@ -1399,7 +1422,7 @@ abstract class ActiveRecord
 
 		foreach($queryResultData as $rowData)
 		{
-			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
+			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
 			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
 		}
 
@@ -1488,7 +1511,7 @@ abstract class ActiveRecord
 	{		
 		// only begin the transaction once
 		self::getLogger()->logAction("BEGIN transaction " . ((int)self::$transactionLevel + 1));
-		ActiveRecord::$transactionLevel++;
+		self::$transactionLevel++;
 		if (1 == self::$transactionLevel)
 		{
 			$db = self::getDBConnection();
@@ -1502,9 +1525,9 @@ abstract class ActiveRecord
 	 */
 	public static function commit()
 	{
-		ActiveRecord::$transactionLevel--;
+		self::$transactionLevel--;
 		self::getLogger()->logAction("COMMIT transaction");
-		if (0 == ActiveRecord::$transactionLevel)
+		if (0 == self::$transactionLevel)
 		{
 			$db = self::getDBConnection();
 			$db->commit();
@@ -1517,7 +1540,7 @@ abstract class ActiveRecord
 	 */
 	public static function rollback()
 	{
-		ActiveRecord::$transactionLevel = 0;
+		self::$transactionLevel = 0;
 		self::getLogger()->logAction("ROLLBACK transaction");
 		$db = self::getDBConnection();
 		$db->rollback();
