@@ -13,9 +13,17 @@ class ARSchema
 	 * @var string
 	 */
 	private $tableName = "";
+
 	private $fieldList = array();
+
 	private $foreignKeyList = array();
+
 	private $primaryKeyList = array();
+
+	/**
+	 *	Cache array of referenced schema instances for faster lookups
+	 */
+	private $referencedSchemaList = array();
 
 	public function registerField(ARField $schemaField)
 	{
@@ -39,14 +47,7 @@ class ARSchema
 	 */
 	public function fieldExists($fieldName)
 	{
-		if (!empty($this->fieldList[$fieldName]))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return !empty($this->fieldList[$fieldName]);
 	}
 
 	/**
@@ -141,27 +142,32 @@ class ARSchema
 	 */
 	public function getReferencedSchemas()
 	{
-		$ret = array();
-		
-		$referenceList = $this->getForeignKeyList();	  	
-
-		foreach($referenceList as $name => $refField)
+		if (!$this->referencedSchemaList)
 		{
-			$foreignClassName = $refField->getForeignClassName();
-			$refSchema = ActiveRecord::getSchemaInstance($foreignClassName);
-			if ($this == $refSchema)
+			$ret = array();
+			
+			$referenceList = $this->getForeignKeyList();	  	
+	
+			foreach($referenceList as $name => $refField)
 			{
-			  	break;
+				$foreignClassName = $refField->getForeignClassName();
+				$refSchema = ActiveRecord::getSchemaInstance($foreignClassName);
+				if ($this == $refSchema)
+				{
+				  	break;
+				}
+				
+				$ret[$foreignClassName] = $refSchema;
+				
+				$sub = $refSchema->getReferencedSchemas();
+				
+				$ret = array_merge($ret, $sub);				
 			}
 			
-			$ret[$foreignClassName] = $refSchema;
-			
-			$sub = $refSchema->getReferencedSchemas();
-			
-			$ret = array_merge($ret, $sub);				
+			$this->referencedSchemaList = $ret;
 		}
 		
-		return $ret;
+		return $this->referencedSchemaList;
 	}
 
 	/**

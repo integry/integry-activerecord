@@ -690,16 +690,16 @@ abstract class ActiveRecord
 					$fieldName = $field->getName();
 					$keyName = $foreignSchemaName . '_' . $fieldName;
 					
-					if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$keyName]) != "")
-					{
-						$referenceListData[$foreignClassName][$fieldName] = unserialize($dataArray[$keyName]);
-					}
-					else
+					if (!($field->getDataType() instanceof  ARArray))
 					{
 						$referenceListData[$foreignClassName][$fieldName] = $dataArray[$keyName];
 					}
+					else if (trim($dataArray[$keyName]) != "")
+					{
+						$referenceListData[$foreignClassName][$fieldName] = unserialize($dataArray[$keyName]);						
+					}
 					
-					if ($field instanceOf ARForeignKey)
+					if ($field instanceof ARForeignKey)
 					{
 						$foreignClass = $field->getForeignClassName();
 						if ($foreignClassName != $foreignClass)
