@@ -428,6 +428,18 @@ abstract class ActiveRecord
 	}
 
 	/**
+	 * Removes a ActiveRecord subclass instance from a record pool (needed for unit testing only)
+	 *
+	 * @param ActiveRecord $instance
+	 */
+	public static function removeFromPool(ActiveRecord $instance)
+	{
+		$hash = self::getRecordHash($instance->getID());
+		$className = get_class($instance);
+		unset(self::$recordPool[$className][$hash]);
+	}
+
+	/**
 	 * Stores ActiveRecord subclass instance in a record pool
 	 *
 	 * @param ActiveRecord $instance
@@ -656,17 +668,24 @@ abstract class ActiveRecord
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $name => $field)
 		{
-			if (($field->getDataType() instanceof  ARArray) && trim($dataArray[$name]) != "")
+			if (!($field->getDataType() instanceof  ARArray))
 			{
-				$restoredData = @unserialize($dataArray[$name]);
-				if ($restoredData !== false)
-				{
-					$recordData[$name] = $restoredData;
-				}
+				$recordData[$name] = $dataArray[$name];
 			}
 			else
 			{
-    		    $recordData[$name] = $dataArray[$name];
+				if (trim($dataArray[$name]) != "")
+				{
+					$restoredData = unserialize($dataArray[$name]);
+					if ($restoredData !== false)
+					{
+						$recordData[$name] = $restoredData;
+					}				  
+					else
+					{
+					  	echo $dataArray[$name];
+					}
+				}    		    
 			}
 
 			unset($dataArray[$name]);
@@ -1215,18 +1234,21 @@ abstract class ActiveRecord
 				}
 				else
 				{
+					$value = $dataContainer->get();
 					if ($dataContainer->getField()->getDataType() instanceof ARArray)
 					{
-						$value = "'" . str_replace("'", "\'", serialize($dataContainer->get())) . "'";
-
+						$value = serialize($value);
+						$value = str_replace("\\", "\\\\", $value);
+						$value = "'" . str_replace("'", "\'", $value) . "'";
 					}
-					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric && $dataContainer->get())
+					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric && $value)
 					{
-						$value = $dataContainer->get();
+						// no changes for numeric fields
 					}
 					else
 					{
-						$value = "'" . str_replace("'", "\'", $dataContainer->get()) . "'";
+						$value = str_replace("\\", "\\\\", $value);
+						$value = "'" . str_replace("'", "\'", $value) . "'";
 					}
 				}
 				if ($dataContainer->isNull())
