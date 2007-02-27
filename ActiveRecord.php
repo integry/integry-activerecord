@@ -1166,6 +1166,7 @@ abstract class ActiveRecord
 		}
 		$updateQuery = "DELETE FROM " . $this->schema->getName() . " " . $filter->createString();
 
+		$this->setupDBConnection();
 		self::getLogger()->logQuery($updateQuery);
 		return $this->db->executeUpdate($updateQuery);
 	}
