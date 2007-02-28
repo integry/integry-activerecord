@@ -364,7 +364,7 @@ abstract class ActiveRecord
 
 		return $this->cachedId;
 	}
-
+	
 	/**
 	 * Creates a new instance of record
 	 *
@@ -967,7 +967,8 @@ abstract class ActiveRecord
 		$schema = self::getSchemaInstance($className);
 		$db = self::getDBConnection();
 
-		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString();
+		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString() ."\n";
+
 		self::getLogger()->logQuery($deleteQuery);
 		return $db->executeUpdate($deleteQuery);
 	}
@@ -986,7 +987,7 @@ abstract class ActiveRecord
 		$schema = self::getSchemaInstance($className);
 		$PKList = $schema->getPrimaryKeyList();
 		$PKValueCond = null;
-		if (!is_array($PKValueCond))
+		if (!is_array($recordID))
 		{
 			$PKFieldName = $PKList[key($PKList)]->getName();
 			$PKValueCond = new EqualsCond(new ARFieldHandle($className, $PKFieldName), $recordID);
@@ -1160,7 +1161,7 @@ abstract class ActiveRecord
 			$filter->mergeCondition($cond);
 		}
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
-//echo $updateQuery."\n\n";
+
 		self::getLogger()->logQuery($updateQuery);
 		return $this->db->executeUpdate($updateQuery);
 	}
@@ -1199,29 +1200,7 @@ abstract class ActiveRecord
 	 */
 	public function delete()
 	{
-		$filter = new ARDeleteFilter();
-		$PKList = $this->schema->getPrimaryKeyList();
-		$className = get_class($this);
-
-		foreach($PKList as $PKField)
-		{
-			$recordID = "";
-			if ($PKField instanceof ARForeignKey)
-			{
-				$recordID = $this->data[$PKField->getName()]->getInitialID();
-			}
-			else
-			{
-				$recordID = $this->data[$PKField->getName()]->get();
-			}
-			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
-			$filter->mergeCondition($cond);
-		}
-		$updateQuery = "DELETE FROM " . $this->schema->getName() . " " . $filter->createString();
-
-		$this->setupDBConnection();
-		self::getLogger()->logQuery($updateQuery);
-		return $this->db->executeUpdate($updateQuery);
+		self::deleteByID(get_class($this), $this->getID());
 	}
 
 	/**
