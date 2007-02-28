@@ -163,8 +163,7 @@ abstract class ActiveRecord
 	protected function __construct($data = array())
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
-		$this->createDataAccessVariables($data);
-		//print_r($this->toarray());		
+		$this->createDataAccessVariables($data);		
 	}
 
 	/**
@@ -194,9 +193,7 @@ abstract class ActiveRecord
 					}
 					else
 					{
-//echo $name . $data[$name] . '<br>';
 						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null)); 
-//						echo $this->data[$name]->get()->getID();
 					}
 				}
 				else
@@ -448,7 +445,6 @@ abstract class ActiveRecord
 	 */
 	private static function storeToPool(ActiveRecord $instance)
 	{
-//		echo '<font color=red>'; print_r($instance->toarray()); echo '</font>';
 		$hash = self::getRecordHash($instance->getID());
 		$className = get_class($instance);
 		self::$recordPool[$className][$hash] = $instance;
@@ -461,9 +457,10 @@ abstract class ActiveRecord
 	 * @param mixed $recordID
 	 * @return ActiveRecord Instance of requested object or null if object is not stored in a pool
 	 */
-	private static function retrieveFromPool($className, $recordID)
+	public static function retrieveFromPool($className, $recordID)
 	{
 		$hash = self::getRecordHash($recordID);
+		
 		if (!empty(self::$recordPool[$className][$hash]))
 		{
 			return self::$recordPool[$className][$hash];
@@ -685,7 +682,7 @@ abstract class ActiveRecord
 					}				  
 					else
 					{
-					  	echo $dataArray[$name];
+					  	throw new Exception($dataArray[$name]);
 					}
 				}    		    
 			}
@@ -782,7 +779,7 @@ abstract class ActiveRecord
 
 		$set = self::createRecordSet($className, $query, $loadReferencedRecords);
 		
-//		echo '<font color=blue>'; print_r($set->toarray()); echo '</font>';
+//		echo '<font color=blue><pre>' . print_r($set->toArray(), true) . '</pre></font>';
 		
 		return $set;
 	}
@@ -1140,7 +1137,7 @@ abstract class ActiveRecord
 			$filter->mergeCondition($cond);
 		}
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
-
+//echo $updateQuery."\n\n";
 		self::getLogger()->logQuery($updateQuery);
 		return $this->db->executeUpdate($updateQuery);
 	}
@@ -1167,7 +1164,9 @@ abstract class ActiveRecord
 			    $IDG = $this->db->getIdGenerator();
 				$this->setID($IDG->getId(), false);
 			}
-		}		
+		}	
+
+		self::storeToPool($this);
 		
 		return $result;		
 	}
@@ -1316,20 +1315,14 @@ abstract class ActiveRecord
 	 */
 	public static function objectExists($className, $recordID)
 	{
-		$db = self::getDBConnection();
-		$schema = self::getSchemaInstance($className);
-		$selectString = "SELECT * FROM ".$schema->getName()." WHERE ".self::enumerateID($className, $recordID);
+//		$db = self::getDBConnection();
+//		$schema = self::getSchemaInstance($className);
+//		self::getLogger()->logQuery($selectString);
 
-		self::getLogger()->logQuery($selectString);
-		$result = $db->executeQuery($selectString);
-		if ($result->getRecordCount() == 0)
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
+		
+		$selectString = "SELECT COUNT(*) AS `count` FROM ".$schema->getName()." WHERE ".self::enumerateID($className, $recordID);
+		$result = self::getDataBySQL($selectString);
+		return $result[0]['count'] > 0;
 	}
 
 	/**
@@ -1454,9 +1447,12 @@ abstract class ActiveRecord
 
 		$missingInstances = array();
 		$ret = array();
+		
 		foreach ($recordIDs as $id)
 		{
 			$instance = self::retrieveFromPool($className, $id);
+			
+			
 			if (null == $instance)
 			{
 				$missingInstances[] = $id;
