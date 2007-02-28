@@ -873,6 +873,29 @@ abstract class ActiveRecord
 		return $recordSet;
 	}
 
+	public static function getRecordCount($className, ARSelectFilter $filter)
+	{
+		$db = self::getDBConnection();
+		$counterFilter = clone $filter;
+		$counterFilter->removeFieldList();
+		$counterFilter->setLimit(0, 0);
+
+		$query = new ARSelectQueryBuilder();
+		$query->removeFieldList();
+		$query->addField("COUNT(*)", null, "totalCount");
+		$query->includeTable($className);
+		$query->setFilter($counterFilter);
+
+		$counterQuery = $query->createString();
+
+		self::getLogger()->logQuery($counterQuery);
+		$counterResult = $db->executeQuery($counterQuery);
+		$counterResult->next();
+
+		$resultData = $counterResult->getRow();
+		return $resultData['totalCount'];		
+	}
+
 	/**
 	 * Gets a record set of related (referenced) records by performing a join tu a primary key
 	 *
