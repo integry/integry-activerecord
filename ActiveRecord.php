@@ -417,6 +417,10 @@ abstract class ActiveRecord
 			self::storeToPool($instance);
 			//self::getLogger()->logObject($instance, true);
 		}
+		else if(!$instance->isLoaded() && !empty($data))
+		{
+			$instance->createDataAccessVariables($data);
+		}
 
 		if ($loadRecordData)
 		{
@@ -828,15 +832,13 @@ abstract class ActiveRecord
 
 		$queryResultData = self::fetchDataFromDB($query);
 		$recordSet = new ARSet($query->getFilter());
-
 		foreach($queryResultData as $rowData)
 		{
 			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
-
 			$recordID = self::extractRecordID($className, $rowData);
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
-
+		    
 			if (!empty($parsedRowData['miscData']))
 			{
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
@@ -866,6 +868,7 @@ abstract class ActiveRecord
 			$resultData = $counterResult->getRow();
 			$recordSet->setTotalRecordCount($resultData['totalCount']);
 		}
+		
 		return $recordSet;
 	}
 
