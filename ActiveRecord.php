@@ -715,7 +715,7 @@ abstract class ActiveRecord
 			{
 				$loadReferencedRecords = array_flip($loadReferencedRecords);
 				$schemas = array_intersect_key($schemas, $loadReferencedRecords);	
-			}
+			}					
 			
 			foreach ($schemas as $foreignClassName => $foreignSchema)
 			{
@@ -761,6 +761,7 @@ abstract class ActiveRecord
 			foreach($schema->getForeignKeyList() as $field)
 			{
 				$foreignClass = $field->getForeignClassName();				  
+
 				if (isset($referenceListData[$foreignClass]))
 				{
 					$recordData[$foreignClass] = $referenceListData[$foreignClass];			  					
@@ -1373,10 +1374,15 @@ abstract class ActiveRecord
 	 */
 	public function toArray($recursive = true)
 	{
-		$data = array();
+		$data = array(); 
+		
+		// let's try this for a while
+		// if the DB design is correct without circular references, it shouldn't cause problems
+		$recursive = true;
+		
 		foreach($this->data as $name => $value)
 		{
-			if ($value->getField()instanceof ARForeignKey)
+			if ($value->getField() instanceof ARForeignKey)
 			{
 				if ($value->get() != null)
 				{
@@ -1401,6 +1407,38 @@ abstract class ActiveRecord
 		return $data;
 	}
 	
+	/**
+	 * Creates an array representing record data (without referenced records)
+	 *
+	 * The returned array will NOT contain referenced data, only referenced record ID's
+	 * Use toArray() if you need to retrieve the whole data structure.
+	 *
+	 * @return array
+	 */
+	public function toFlatArray()
+	{
+		$data = array(); 
+		
+		foreach($this->data as $name => $value)
+		{
+			if ($value->getField() instanceof ARForeignKey)
+			{
+				if ($value->get() != null)
+				{
+					$data[$value->getField()->getForeignClassName()] = $value->get()->getID();
+				}
+			}
+			else
+			{
+				$data[$name] = $value->get();
+			}
+		}
+		
+		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
+		
+		return $data;
+	}
+
 	/**
 	 *	Perform model specific array transformation
 	 */

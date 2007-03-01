@@ -82,6 +82,22 @@ class ARSet implements IteratorAggregate
 	}
 
 	/**
+	 * Creates an array representing a record set data (without referenced records)
+	 *
+	 * @see ActiveRecord::toFlatArray()
+	 * @return array
+	 */
+	public function toFlatArray()
+	{
+		$recordSetArray = array();
+		foreach($this->data as $record)
+		{
+			$recordSetArray[] = $record->toFlatArray();
+		}
+		return $recordSetArray;
+	}
+
+	/**
 	 * Gets a record instance by index (starting from 0)
 	 *
 	 * @param int $recordIndex
