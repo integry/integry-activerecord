@@ -1316,11 +1316,10 @@ abstract class ActiveRecord
 	 */
 	public static function objectExists($className, $recordID)
 	{
-//		$db = self::getDBConnection();
-//		$schema = self::getSchemaInstance($className);
-//		self::getLogger()->logQuery($selectString);
+		$db = self::getDBConnection();
+		$schema = self::getSchemaInstance($className);
+		self::getLogger()->logQuery($selectString);
 
-		
 		$selectString = "SELECT COUNT(*) AS `count` FROM ".$schema->getName()." WHERE ".self::enumerateID($className, $recordID);
 		$result = self::getDataBySQL($selectString);
 		return $result[0]['count'] > 0;
