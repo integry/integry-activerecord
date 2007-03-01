@@ -189,11 +189,11 @@ abstract class ActiveRecord
 				{					
 					if (isset($data[$varName]) && is_array($data[$varName]))
 					{
-						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null, $data[$varName]));  					  
+						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null, $data[$varName]), false);  					  
 					}
 					else
 					{
-						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null)); 
+						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null), false); 
 					}
 				}
 				else
@@ -777,11 +777,7 @@ abstract class ActiveRecord
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
 
-		$set = self::createRecordSet($className, $query, $loadReferencedRecords);
-		
-//		echo '<font color=blue><pre>' . print_r($set->toArray(), true) . '</pre></font>';
-		
-		return $set;
+		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
 	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
