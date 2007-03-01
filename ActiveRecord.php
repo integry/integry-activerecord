@@ -522,19 +522,26 @@ abstract class ActiveRecord
 
 		if ($loadReferencedRecords)
 		{
-			self::joinReferencedTables($schema, $query);		  
+			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
+			self::joinReferencedTables($schema, $query, $tables);		  
 		}
 
 		return $query;
 	}
 	
-	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query)
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
 	{
 		$referenceList = $schema->getForeignKeyList();
 
 		foreach($referenceList as $name => $field)
 		{
 			$foreignClassName = $field->getForeignClassName();
+			
+			if (is_array($tables) && !isset($tables[$foreignClassName]))
+			{
+				continue;
+			}
+			
 			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			
 			if ($schema == $foreignSchema)
@@ -556,7 +563,7 @@ abstract class ActiveRecord
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
 			}
 			
-			self::joinReferencedTables($foreignSchema, $query);
+			self::joinReferencedTables($foreignSchema, $query, $tables);
 		}
 	}
 
@@ -703,6 +710,13 @@ abstract class ActiveRecord
 		{
 			$schemas = $schema->getReferencedSchemas();
 			
+			// remove schemas that were not loaded with this query
+			if (is_array($loadReferencedRecords))
+			{
+				$loadReferencedRecords = array_flip($loadReferencedRecords);
+				$schemas = array_intersect_key($schemas, $loadReferencedRecords);	
+			}
+			
 			foreach ($schemas as $foreignClassName => $foreignSchema)
 			{
 				$referenceListData[$foreignClassName] = array();
@@ -747,7 +761,10 @@ abstract class ActiveRecord
 			foreach($schema->getForeignKeyList() as $field)
 			{
 				$foreignClass = $field->getForeignClassName();				  
-				$recordData[$foreignClass] = $referenceListData[$foreignClass];			  
+				if (isset($referenceListData[$foreignClass]))
+				{
+					$recordData[$foreignClass] = $referenceListData[$foreignClass];			  					
+				}
 			}
 			
 		}
