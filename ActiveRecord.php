@@ -1336,9 +1336,10 @@ abstract class ActiveRecord
 	{
 		$db = self::getDBConnection();
 		$schema = self::getSchemaInstance($className);
-		self::getLogger()->logQuery($selectString);
 
 		$selectString = "SELECT COUNT(*) AS `count` FROM ".$schema->getName()." WHERE ".self::enumerateID($className, $recordID);
+		self::getLogger()->logQuery($selectString);
+		
 		$result = self::getDataBySQL($selectString);
 		return $result[0]['count'] > 0;
 	}
