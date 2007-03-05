@@ -24,7 +24,15 @@ class ARUpdateFilter extends ARFilter
 			$statementList = array();
 			foreach($this->modifierList as $fieldName => $newValue)
 			{
-				$statementList[] = $fieldName." = '".$newValue."'";
+				if ($newValue instanceof ARExpressionHandle)
+				{
+					$value = $newValue->toString();
+				}
+				else
+				{
+					$value = "'".$newValue."'";
+				}
+				$statementList[] = $fieldName . " = ". $value;
 			}
 			$result .= implode(", ", $statementList);
 		}
