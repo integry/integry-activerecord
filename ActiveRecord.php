@@ -322,6 +322,7 @@ abstract class ActiveRecord
 			}
 			else
 			{
+				print_r($recordID);
 				throw new ARException("Unknown situation (not implemented?)");
 			}
 		}
