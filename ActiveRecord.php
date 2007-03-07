@@ -440,9 +440,10 @@ abstract class ActiveRecord
 	{
 		$hash = self::getRecordHash($instance->getID());
 		$className = get_class($instance);
+		$instance->markAsNotLoaded();
 		unset(self::$recordPool[$className][$hash]);
 	}
-
+	
 	/**
 	 * Stores ActiveRecord subclass instance in a record pool
 	 *
@@ -462,18 +463,32 @@ abstract class ActiveRecord
 	 * @param mixed $recordID
 	 * @return ActiveRecord Instance of requested object or null if object is not stored in a pool
 	 */
-	public static function retrieveFromPool($className, $recordID)
+	public static function retrieveFromPool($className, $recordID=false)
 	{
-		$hash = self::getRecordHash($recordID);
-		
-		if (!empty(self::$recordPool[$className][$hash]))
+		if($recordID)
 		{
-			return self::$recordPool[$className][$hash];
+		    $hash = self::getRecordHash($recordID);
+			if (!empty(self::$recordPool[$className][$hash]))
+			{
+				return self::$recordPool[$className][$hash];
+			}
+			else
+			{
+				return null;
+			}
 		}
 		else
 		{
-			return null;
+			if (isset(self::$recordPool[$className]))
+			{
+				return self::$recordPool[$className];
+			}
+			else
+			{
+				return null;
+			}
 		}
+		
 	}
 
 	/**
@@ -1546,14 +1561,31 @@ abstract class ActiveRecord
 		return self::$logger;
 	}
 
+	/**
+	 * Check if instance data is loaded
+	 *
+	 * @return boolean
+	 */
 	public function isLoaded()
 	{
 		return $this->isLoaded;
 	}
 
+	/**
+	 * Change record status to loaded
+	 *
+	 */
 	public function markAsLoaded()
 	{
-		$this->loaded = true;
+		$this->isLoaded = true;
+	}
+	
+	/**
+	 * Change record status to not loaded
+	 */
+	public function markAsNotLoaded()
+	{
+		$this->isLoaded = false;
 	}
 
 	/**
