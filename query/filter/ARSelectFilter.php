@@ -281,19 +281,12 @@ class ARSelectFilter extends ARFilter
 					  "tableAliasName" => $tableAliasName
 					  );
 
-		if ($tableAliasName)
+		if (!$tableAliasName)
 		{
-		  	if (isset($this->joinList[$tableAliasName]))
-		  	{
-			    return false;
-			}
+            $tableAliasName = $tableName;
+        }  
 			
-			$this->joinList[$tableAliasName] = $join;
-		} 
-		else
-		{
-			$this->joinList[] = $join;
-		}	
+		$this->joinList[$tableAliasName] = $join;
 	}	
 	
 	public function getJoinList()

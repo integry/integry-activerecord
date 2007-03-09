@@ -136,7 +136,7 @@ class ARSelectQueryBuilder
 				}
 				if (!empty($fieldInfo['fieldNameInResult']))
 				{
-					$field .= " AS ".$fieldInfo['fieldNameInResult'];
+					$field .= ' AS "' . $fieldInfo['fieldNameInResult'] . '"';
 				}
 				$preparedFieldList[] = $field;
 			}
