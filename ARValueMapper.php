@@ -67,7 +67,12 @@ class ARValueMapper
 	 */
 	public function set($value, $markAsModified = true)
 	{
-		if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord))
+		if (!is_object($value) && ($value == $this->value))
+		{
+            return false;
+        }
+        
+        if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord))
 		{
 			throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");
 		}
