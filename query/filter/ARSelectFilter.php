@@ -30,7 +30,7 @@ class ARSelectFilter extends ARFilter
 	private $recordLimit = 0;
 
 	/**
-	 * A list of fields to order by
+	 * A list of fields to ORDER BY
 	 *
 	 * @var array
 	 */
@@ -44,7 +44,14 @@ class ARSelectFilter extends ARFilter
 	private $orderType = self::ORDER_ASC;
 
 	/**
-	 * A list of tables to join
+	 * A list of fields to GROUP BY
+	 *
+	 * @var array
+	 */
+    private $fieldListForGroup = array();
+
+	/**
+	 * A list of tables to JOIN
 	 *
 	 * @var array
 	 */
@@ -58,6 +65,13 @@ class ARSelectFilter extends ARFilter
 	private $fieldList = array();
 
 	/**
+	 * Condition for HAVING clause
+	 *
+	 * @var array
+	 */
+    private $havingCondition;
+
+	/**
 	 * Creates a string by using filter data
 	 *
 	 * @return string
@@ -65,14 +79,19 @@ class ARSelectFilter extends ARFilter
 	public function createString()
 	{
 		$result = parent::createString();
-		if (!empty($this->fieldListForOrder))
-		{
-			$result .= $this->createOrderString();
-		}
+
+        $params = array();
+        $params[] = $this->createGroupString();
+        $params[] = $this->createHavingString();
+        $params[] = $this->createOrderString();
+
 		if ($this->recordLimit != 0)
 		{
-			$result .= " LIMIT ".$this->recordOffset.", ".$this->recordLimit;
+			$params[] = " LIMIT ".$this->recordOffset.", ".$this->recordLimit;
 		}
+
+        $result .= implode(' ', $params);
+        			
 		return $result;
 	}
 
@@ -120,19 +139,58 @@ class ARSelectFilter extends ARFilter
 	}
 
 	/**
+	 * Sets record grouping by a given field name
+	 *
+	 * @param string $fieldName
+	 */
+	public function setGrouping(ARFieldHandleInterface $fieldHandle)
+	{
+		$this->fieldListForGroup[$fieldHandle->toString()] = true;
+	}
+	
+	/**
 	 * Creates an "ORDER BY" statement string
 	 *
 	 * @return string
 	 */
 	public function createOrderString()
 	{
-
-		$orderList = array();
-		foreach($this->fieldListForOrder as $fieldName => $order)
+    	if (!empty($this->fieldListForOrder))
 		{
-			$orderList[] = $fieldName." ".$order;
+    		$orderList = array();
+    		foreach($this->fieldListForOrder as $fieldName => $order)
+    		{
+    			$orderList[] = $fieldName." ".$order;
+    		}
+    		return " ORDER BY " . implode(", ", $orderList);
 		}
-		return " ORDER BY ".implode(", ", $orderList);
+	}
+
+	/**
+	 * Creates "GROUP BY" statement string
+	 *
+	 * @return string
+	 */
+	public function createGroupString()
+	{
+        if ($this->fieldListForGroup)
+        {
+    		return " GROUP BY " . implode(", ", array_keys($this->fieldListForGroup)); 
+        }
+	}
+
+	/**
+	 * Creates a textual filter representation
+	 *
+	 * This string might be used as a part of SQL query
+	 *
+	 */
+	public function createHavingString()
+	{
+		if ($this->havingCondition != null)
+		{
+			return " HAVING " . $this->havingCondition->createChain();
+		}
 	}
 
 	/**
@@ -158,18 +216,16 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function merge(ARSelectFilter $filter)
 	{
-		if ($this->isConditionSet() && $filter->isConditionSet())
+		if ($filter->isConditionSet())
 		{
-			$this->getCondition()->addAND($filter->getCondition());
+			$this->mergeCondition($filter->getCondition());
 		}
-		else
+
+		if ($filter->isHavingConditionSet())
 		{
-			if ($filter->isConditionSet())
-			{
-				$this->setCondition($filter->getCondition());
-			}
+			$this->mergeHavingCondition($filter->getHavingCondition());
 		}
-		//$this->setOrder($filter->getOrder(), $filter->getOrderType());
+
 		$this->setFieldOrder($filter->getFieldOrder());
 		$this->setLimit($filter->getLimit(), $filter->getOffset());
 		
@@ -179,6 +235,33 @@ class ARSelectFilter extends ARFilter
 		$this->fieldList = array_merge($this->fieldList, $fields);
 	}
 	
+	public function mergeHavingCondition(Condition $cond)
+	{
+		if ($this->havingCondition != null)
+		{
+			$this->havingCondition->addAND($cond);
+		}
+		else
+		{
+			$this->havingCondition = $cond;
+		}
+	}	
+	
+	public function setHavingCondition(Condition $cond)
+	{
+		$this->havingCondition = $cond;
+	}	
+
+	public function getHavingCondition(Condition $cond)
+	{
+		return $this->havingCondition;
+	}	
+	
+	public function isHavingConditionSet()
+	{
+        return ($this->havingCondition instanceof Condition);
+    }
+
 	/**
 	 * Joins table by using supplied params
 	 *

@@ -51,14 +51,7 @@ abstract class ARFilter
 
 	public function isConditionSet()
 	{
-		if ($this->condition instanceof Condition)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+        return ($this->condition instanceof Condition);
 	}
 
 	public function mergeCondition(Condition $cond)
