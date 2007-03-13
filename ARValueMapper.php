@@ -67,7 +67,7 @@ class ARValueMapper
 	 */
 	public function set($value, $markAsModified = true)
 	{
-		if (!is_object($value) && ($value == $this->value))
+	    if (!is_object($value) && ($value === $this->value))
 		{
             return false;
         }

@@ -1234,6 +1234,10 @@ abstract class ActiveRecord
 	public function delete()
 	{
 		self::deleteByID(get_class($this), $this->getID());
+		$this->markAsNotLoaded();
+		$this->setID(false);
+		
+		return true;
 	}
 
 	/**
