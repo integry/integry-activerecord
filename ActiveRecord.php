@@ -1238,8 +1238,8 @@ abstract class ActiveRecord
 	{
 		self::deleteByID(get_class($this), $this->getID());
 		$this->markAsNotLoaded();
-		$this->cachedId = false;		
-		
+		$this->cachedId = false;	
+				
 		return true;
 	}
 
