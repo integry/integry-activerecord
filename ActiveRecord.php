@@ -183,8 +183,9 @@ abstract class ActiveRecord
 						
 			if ($field instanceof ARForeignKey)
 			{
-				$varName = $field->getForeignClassName();
-
+			    $varName = $field->getForeignClassName();
+			    if(preg_match('/ID$/', $name)) $varName = substr($name, 0, -2);
+			    			    
 				if (isset($data[$name]))
 				{					
 					if (isset($data[$varName]) && is_array($data[$varName]))
@@ -193,7 +194,7 @@ abstract class ActiveRecord
 					}
 					else
 					{
-						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null), false); 
+						$this->data[$name]->set(self::getInstanceByID($field->getForeignClassName(), $data[$name], false, null), false); 
 					}
 				}
 				else
@@ -205,6 +206,7 @@ abstract class ActiveRecord
 				// Making first letter lowercase				
 				$varName = strtolower(substr($varName, 0, 1)).substr($varName, 1);
 				$this->$varName = $this->data[$name];
+				
 			}
 			else if (!($field instanceof ARPrimaryKey))
 			{
@@ -300,7 +302,8 @@ abstract class ActiveRecord
 			}
 			else
 			{
-				throw new ARException("Primary key consists of more than one field (recordID parameter must be an associative array)");
+				debug_print_backtrace();
+			    throw new ARException("Primary key consists of more than one field (recordID parameter must be an associative array)");
 			}
 		}
 		else
@@ -379,7 +382,7 @@ abstract class ActiveRecord
 	 */
 	public static function getNewInstance($className, $data = array())
 	{
-		return new $className($data);
+	    return new $className($data);
 		//self::getLogger()->logObject($obj);
 	}
 
@@ -1235,7 +1238,7 @@ abstract class ActiveRecord
 	{
 		self::deleteByID(get_class($this), $this->getID());
 		$this->markAsNotLoaded();
-		$this->setID(false);
+		$this->cachedId = false;		
 		
 		return true;
 	}
@@ -1403,7 +1406,7 @@ abstract class ActiveRecord
 		
 		foreach($this->data as $name => $value)
 		{
-			if ($value->getField() instanceof ARForeignKey)
+		    if ($value->getField() instanceof ARForeignKey)
 			{
 				if ($value->get() != null)
 				{
