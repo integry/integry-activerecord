@@ -1533,7 +1533,6 @@ abstract class ActiveRecord
         if (!is_null($getRecordCount))
         {
             $getRecordCount = self::getRecordCountByQuery($query);    
-            echo $getRecordCount;
         }
 		
         return $resultDataArray;
