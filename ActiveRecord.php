@@ -153,7 +153,17 @@ abstract class ActiveRecord
 	public static $logger = null;
 	
 	protected $cachedId = null;
+	
+	/**
+	 * ARSelectQueryBuilder object used in the last query
+	 */
+    protected static $lastQuery = null;
 
+	/**
+	 * ARSelectFilter object used in the last query
+	 */
+	protected static $lastFilter = null;
+	
 	/**
 	 * ActiveRecord constructor. Never use it directly
 	 *
@@ -818,7 +828,9 @@ abstract class ActiveRecord
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
 
-		return self::createRecordSet($className, $query, $loadReferencedRecords);
+		self::$lastQuery = $query;
+        
+        return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
 	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
@@ -931,6 +943,24 @@ abstract class ActiveRecord
 		$resultData = $counterResult->getRow();
 		return $resultData['totalCount'];		
 	}
+
+    public static function getRecordCountByQuery(ARSelectQueryBuilder $query)
+    {
+        $query = clone $query;
+		$query->removeFieldList();
+		$query->addField("COUNT(*)", null, "totalCount");
+
+		$counterQuery = $query->createString();
+
+		self::getLogger()->logQuery($counterQuery);
+
+		$db = self::getDBConnection();
+		$counterResult = $db->executeQuery($counterQuery);
+		$counterResult->next();
+
+		$resultData = $counterResult->getRow();
+		return $resultData['totalCount'];		
+    }
 
 	/**
 	 * Gets a record set of related (referenced) records by performing a join tu a primary key
@@ -1484,10 +1514,12 @@ abstract class ActiveRecord
 	 * @param bool $loadReferencedRecords
 	 * @return array
 	 */
-	public static function getRecordSetArray($className, ARSelectFilter $filter, $loadReferencedRecords = false)
+	public static function getRecordSetArray($className, ARSelectFilter $filter, $loadReferencedRecords = false, &$getRecordCount = null)
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
+
+		self::$lastQuery = $query;
 
 		$queryResultData = self::fetchDataFromDB($query);
 		$resultDataArray = array();
@@ -1497,8 +1529,14 @@ abstract class ActiveRecord
 			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
 			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
 		}
-
-		return $resultDataArray;
+    
+        if (!is_null($getRecordCount))
+        {
+            $getRecordCount = self::getRecordCountByQuery($query);    
+            echo $getRecordCount;
+        }
+		
+        return $resultDataArray;
 	}
 
 	/**
@@ -1567,6 +1605,11 @@ abstract class ActiveRecord
 		}
 		return self::$logger;
 	}
+	
+	public static function getLastQuery()
+	{
+        return self::$lastQuery;
+    }
 
 	/**
 	 * Check if instance data is loaded
