@@ -139,6 +139,21 @@ class ARSet implements IteratorAggregate
 	{
 		return $this->filter;
 	}
+
+	public function removeRecord(ActiveRecord $removeRecord)
+	{
+	    $i = 0;
+	    foreach($this as $record)
+	    {
+	        if($record === $removeRecord)
+	        {
+	            $this->remove($i);
+	            return true;
+	        }
+	        $i++;
+	    }
+	    return false;
+	}
 }
 
 ?>
