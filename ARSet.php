@@ -42,6 +42,11 @@ class ARSet implements IteratorAggregate
 	{
 		$this->data[] = $record;
 	}
+	
+	public function unshift(ActiveRecord $record)
+	{
+	    array_unshift($this->data, $record);
+	}
 
 	/**
 	 * Removes a record from record set
