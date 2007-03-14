@@ -262,6 +262,16 @@ class INCond extends BinaryCondition
 }
 
 /**
+ * Condition using NOT IN operator
+ *
+ * @package activerecord.query.filter
+ */
+class NotINCond extends INCond
+{
+	protected $operatorString = " NOT IN ";
+}
+
+/**
  * Condition using "=>" operator
  *
  * @package activerecord.query.filter
