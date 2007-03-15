@@ -1192,7 +1192,7 @@ abstract class ActiveRecord
 		$this->resetModifiedStatus();
 	}
 
-	protected function resetModifiedStatus()
+	public function resetModifiedStatus()
 	{
 		foreach($this->data as $dataContainer)
 		{
