@@ -70,7 +70,7 @@ class ARSelectQueryBuilder
 		  	$tableAliasName = $tableName;
 		}
 		
-		if (isset($this->joinList[$tableAliasName]))
+		if (isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName]))
 		{
 		  	return false;
 		}
@@ -92,7 +92,7 @@ class ARSelectQueryBuilder
 	 */
 	public function includeTable($tableName)
 	{
-		$this->tableList[] = $tableName;
+		$this->tableList[$tableName] = true;
 	}
 
 	public function addField($fieldName, $tableName = null, $fieldNameInResult = null)
@@ -143,7 +143,7 @@ class ARSelectQueryBuilder
 		}
 		$fieldListStr = implode(", ", $preparedFieldList);
 
-		$tableListStr = implode(", ", $this->tableList);
+		$tableListStr = implode(", ", array_keys($this->tableList));
 	
 		// add joins from select filter
 		$filterJoins = $this->filter->getJoinList();

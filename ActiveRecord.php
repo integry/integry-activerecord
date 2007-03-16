@@ -590,9 +590,9 @@ abstract class ActiveRecord
 				}
 				
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
+
+    			self::joinReferencedTables($foreignSchema, $query, $tables);
 			}
-			
-			self::joinReferencedTables($foreignSchema, $query, $tables);
 		}
 	}
 
@@ -739,6 +739,9 @@ abstract class ActiveRecord
 		{
 			$schemas = $schema->getReferencedSchemas();
 			
+			// remove circular references
+			unset($schemas[$className]);
+			
 			// remove schemas that were not loaded with this query
 			if (is_array($loadReferencedRecords))
 			{
@@ -760,7 +763,7 @@ abstract class ActiveRecord
 					$fieldName = $field->getName();
 					$keyName = $foreignSchemaName . '_' . $fieldName;
 					
-					if (!($field->getDataType() instanceof  ARArray))
+					if (!($field->getDataType() instanceof ARArray))
 					{
 						$referenceListData[$foreignClassName][$fieldName] = $dataArray[$keyName];
 					}

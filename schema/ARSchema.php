@@ -139,8 +139,9 @@ class ARSchema
 	/**
 	 * Returns an array of all directly and indirectly referenced schemas (infinite levels of referencing)
 	 *
+	 * @todo Think of a better way to handle circular references
 	 */
-	public function getReferencedSchemas()
+	public function getReferencedSchemas($circularReference = false)
 	{
 		if (!$this->referencedSchemaList)
 		{
@@ -159,9 +160,11 @@ class ARSchema
 				
 				$ret[$foreignClassName] = $refSchema;
 				
-				$sub = $refSchema->getReferencedSchemas();
-				
-				$ret = array_merge($ret, $sub);				
+				if ($refSchema !== $circularReference)
+				{
+                    $sub = $refSchema->getReferencedSchemas($this);                    
+    				$ret = array_merge($ret, $sub);
+                }
 			}
 			
 			$this->referencedSchemaList = $ret;
