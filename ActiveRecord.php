@@ -82,7 +82,7 @@ abstract class ActiveRecord
 	 */
 	protected static $schemaMap = null;
 
-	private static $recordPool = null;
+	public static $recordPool = null;
 
 	/**
 	 * Path to a Creole library
@@ -190,7 +190,7 @@ abstract class ActiveRecord
 		foreach($fieldList as $name => $field)
 		{			
 			$this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
-						
+		
 			if ($field instanceof ARForeignKey)
 			{
 			    $varName = $field->getForeignClassName();
@@ -1434,23 +1434,27 @@ abstract class ActiveRecord
 	{
 		$data = array(); 
 		
+
+		
 		// let's try this for a while
 		// if the DB design is correct without circular references, it shouldn't cause problems
 		$recursive = true;
-		
 		foreach($this->data as $name => $value)
 		{
 		    if ($value->getField() instanceof ARForeignKey)
 			{
 				if ($value->get() != null)
 				{
+				    $varName = $value->getField()->getForeignClassName();
+				    if(preg_match('/ID$/', $name)) $varName = ucfirst(substr($name, 0, -2));
+						    
 					if ($recursive)
 					{
-						$data[$value->getField()->getForeignClassName()] = $value->get()->toArray();
+					    $data[$varName] = $value->get()->toArray();
 					}
 					else
 					{
-						$data[$value->getField()->getForeignClassName()] = $value->get()->getID();
+						$data[$varName] = $value->get()->getID();
 					}
 				}
 			}
