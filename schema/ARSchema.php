@@ -153,18 +153,15 @@ class ARSchema
 			{
 				$foreignClassName = $refField->getForeignClassName();
 				$refSchema = ActiveRecord::getSchemaInstance($foreignClassName);
-				if ($this == $refSchema)
+				if ($this === $refSchema || $refSchema === $circularReference)
 				{
-				  	break;
+				  	continue;
 				}
 				
 				$ret[$foreignClassName] = $refSchema;
 				
-				if ($refSchema !== $circularReference)
-				{
-                    $sub = $refSchema->getReferencedSchemas($this);                    
-    				$ret = array_merge($ret, $sub);
-                }
+                $sub = $refSchema->getReferencedSchemas($this);                    
+				$ret = array_merge($ret, $sub);
 			}
 			
 			$this->referencedSchemaList = $ret;
