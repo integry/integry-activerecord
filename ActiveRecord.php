@@ -458,6 +458,15 @@ abstract class ActiveRecord
 	}
 	
 	/**
+	 * This method should only be used for unit testing in teadDowh method
+	 *
+	 */
+	public static function removeClassFromPool($className)
+	{
+		unset(self::$recordPool[$className]);
+	}
+	
+	/**
 	 * Stores ActiveRecord subclass instance in a record pool
 	 *
 	 * @param ActiveRecord $instance
@@ -479,28 +488,19 @@ abstract class ActiveRecord
 	public static function retrieveFromPool($className, $recordID=false)
 	{
 		if($recordID)
-		{
+		{		    
 		    $hash = self::getRecordHash($recordID);
 			if (!empty(self::$recordPool[$className][$hash]))
 			{
 				return self::$recordPool[$className][$hash];
 			}
-			else
-			{
-				return null;
-			}
 		}
-		else
+		else if (isset(self::$recordPool[$className]))
 		{
-			if (isset(self::$recordPool[$className]))
-			{
-				return self::$recordPool[$className];
-			}
-			else
-			{
-				return null;
-			}
+			return self::$recordPool[$className];
 		}
+		
+		return null;
 		
 	}
 
@@ -518,9 +518,9 @@ abstract class ActiveRecord
 		}
 		else
 		{
-			asort(&$recordID);
+			ksort($recordID);
 			$hashElements = array();
-			foreach($recordID as $value)
+			foreach($recordID as $key => $value)
 			{
 				$hashElements[] = $value;
 			}
@@ -1394,6 +1394,7 @@ abstract class ActiveRecord
 		self::getLogger()->logQuery($selectString);
 		
 		$result = self::getDataBySQL($selectString);
+		
 		return $result[0]['count'] > 0;
 	}
 
