@@ -194,7 +194,10 @@ abstract class ActiveRecord
 			if ($field instanceof ARForeignKey)
 			{
 			    $varName = $field->getForeignClassName();
-			    if(preg_match('/ID$/', $name)) $varName = substr($name, 0, -2);
+			    if(preg_match('/ID$/', $name)) 
+				{
+					$varName = ucfirst(substr($name, 0, -2));					
+				}
 			    			    
 				if (isset($data[$name]))
 				{					
