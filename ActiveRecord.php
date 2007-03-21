@@ -186,24 +186,20 @@ abstract class ActiveRecord
 	private function createDataAccessVariables($data = array())
 	{
 		$fieldList = $this->schema->getFieldList();
-
+		
 		foreach($fieldList as $name => $field)
 		{			
-			$this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
+		    $this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
 		
 			if ($field instanceof ARForeignKey)
 			{
-			    $varName = $field->getForeignClassName();
-			    if(preg_match('/ID$/', $name)) 
-				{
-					$varName = ucfirst(substr($name, 0, -2));					
-				}
+				$varName = ucfirst(substr($name, 0, -2));
 			    			    
 				if (isset($data[$name]))
 				{					
 					if (isset($data[$varName]) && is_array($data[$varName]))
 					{
-						$this->data[$name]->set(self::getInstanceByID($varName, $data[$name], false, null, $data[$varName]), false);  					  
+						$this->data[$name]->set(self::getInstanceByID($field->getForeignClassName(), $data[$name], false, null, $data[$field->getReferenceName()]), false);  			
 					}
 					else
 					{
@@ -215,7 +211,6 @@ abstract class ActiveRecord
 				  	//echo $data[$name];
 				}
 							
-				//echo '<b>' . $varName . '</b><Br>';
 				// Making first letter lowercase				
 				$varName = strtolower(substr($varName, 0, 1)).substr($varName, 1);
 				$this->$varName = $this->data[$name];
@@ -237,6 +232,7 @@ abstract class ActiveRecord
 	 * Creates or gets an already created Schema object for a given class $className
 	 *
 	 * @param string $className
+	 * 
 	 * @return ARSchema
 	 */
 	public static function getSchemaInstance($className)
@@ -555,13 +551,13 @@ abstract class ActiveRecord
 		if ($loadReferencedRecords)
 		{
 			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
-			self::joinReferencedTables($schema, $query, $tables);		  
+			self::joinReferencedTables($schema, $query, $tables, '');		  
 		}
 
 		return $query;
 	}
 	
-	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false, $prefix = '')
 	{
 		$referenceList = $schema->getForeignKeyList();
 
@@ -574,6 +570,12 @@ abstract class ActiveRecord
 				continue;
 			}
 			
+			if(is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $field->getReferenceName())
+			{
+			    continue;
+			}
+			
+			
 			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			
 			if ($schema == $foreignSchema)
@@ -581,20 +583,22 @@ abstract class ActiveRecord
 			  	continue;
 			}
 			
-			$joined = $query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName());
-
+			$tableAlias = $field->getReferenceName();
+			$joined = $query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName(), $tableAlias);
+			
+			
 			if ($joined)
 			{
 				$foreignFieldList = $foreignSchema->getFieldList();
 				$foreignTableName = $foreignSchema->getName();
 				foreach($foreignFieldList as $foreignField)
 				{
-					$query->addField($foreignField->getName(), $foreignTableName, $foreignTableName."_".$foreignField->getName());
+					$query->addField($foreignField->getName(), $tableAlias, $tableAlias."_".$foreignField->getName());
 				}
 				
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
 
-    			self::joinReferencedTables($foreignSchema, $query, $tables);
+				self::joinReferencedTables($foreignSchema, $query, $tables, $prefix . '_' . $tableAlias);
 			}
 		}
 	}
@@ -736,10 +740,11 @@ abstract class ActiveRecord
 		if ($transformArray)
 		{
 		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $className));
-		}							
+		}					
 
 		if ($loadReferencedRecords)
 		{
+		    $schema = self::getSchemaInstance($className);
 			$schemas = $schema->getReferencedSchemas();
 			
 			// remove circular references
@@ -749,38 +754,60 @@ abstract class ActiveRecord
 			if (is_array($loadReferencedRecords))
 			{
 				$loadReferencedRecords = array_flip($loadReferencedRecords);
-				$schemas = array_intersect_key($schemas, $loadReferencedRecords);	
-			}					
-			
-			foreach ($schemas as $foreignClassName => $foreignSchema)
-			{
-				$referenceListData[$foreignClassName] = array();
+				$filteredSchemas = array();
+				foreach($loadReferencedRecords as $tableName => $tableAlias)
+				{   
+				    if(is_numeric($tableAlias))
+				    {
+				        $filteredSchemas[$tableName] = array();
+				        $filteredSchemas[$tableName] = $schemas[$tableName][0];
+				    }
+				    else
+				    {
+				        foreach($schemas[$tableAlias] as $unfilteredSchema)
+				        {
+				            if($unfilteredSchema->getName() == $tableName)
+				            {
+				                $filteredSchemas[$tableAlias] = array();
+				                $filteredSchemas[$tableAlias] = $unfilteredSchema;
+				            }
+				        }
+				    }
+				}
+				$schemas = $filteredSchemas;
 			}
-
-			foreach ($schemas as $foreignClassName => $foreignSchema)
+			else foreach ($schemas as $referenceName => $foreignSchema) $schemas[$referenceName] = $foreignSchema[0];
+			
+			
+			foreach ($schemas as $referenceName => $foreignSchema)
+			{
+				$referenceListData[$referenceName] = array();
+			}
+			
+			foreach ($schemas as $referenceName => $foreignSchema)
 			{
 				$foreignSchemaName = $foreignSchema->getName();
 				
 				foreach($foreignSchema->getFieldList() as $field)
 				{
 					$fieldName = $field->getName();
-					$keyName = $foreignSchemaName . '_' . $fieldName;
+					$keyName = $referenceName . '_' . $fieldName;
 					
 					if (!($field->getDataType() instanceof ARArray))
 					{
-						$referenceListData[$foreignClassName][$fieldName] = $dataArray[$keyName];
+					    $referenceListData[$referenceName][$fieldName] = $dataArray[$keyName];
 					}
 					else if (trim($dataArray[$keyName]) != "")
 					{
-						$referenceListData[$foreignClassName][$fieldName] = unserialize($dataArray[$keyName]);						
+						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);						
 					}
 					
 					if ($field instanceof ARForeignKey)
 					{
-						$foreignClass = $field->getForeignClassName();
-						if ($foreignClassName != $foreignClass)
+						$deeperForeignSchemaName = $field->getForeignTableName();
+						if ($foreignSchemaName != $deeperForeignSchemaName)
 						{
-							$referenceListData[$foreignClassName][$foreignClass] =& $referenceListData[$foreignClass];						  
+							$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];						  
 						}
 					}
 					
@@ -789,24 +816,24 @@ abstract class ActiveRecord
 				
 				if ($transformArray)
 				{
-				  	$referenceListData[$foreignClassName] = call_user_func_array(array($foreignClassName, 'transformArray'), array($referenceListData[$foreignClassName], $foreignClassName));
+				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $referenceName));
 				}							
 			}
-								
+			
 			foreach($schema->getForeignKeyList() as $field)
 			{
-				$foreignClass = $field->getForeignClassName();				  
+				$referenceName = $field->getReferenceName();				  
 
-				if (isset($referenceListData[$foreignClass]))
+				if (isset($referenceListData[$referenceName]))
 				{
-					$recordData[$foreignClass] = $referenceListData[$foreignClass];			  					
+					$recordData[$referenceName] = $referenceListData[$referenceName];			  					
 				}
 			}
 			
 		}
-
+	
 		$miscData = $dataArray;
-
+		
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => $miscData);
 	}
 
@@ -835,7 +862,6 @@ abstract class ActiveRecord
 		$query->getFilter()->merge($filter);
 
 		self::$lastQuery = $query;
-        
         return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
@@ -1433,12 +1459,14 @@ abstract class ActiveRecord
 	 *
 	 * @return array
 	 */
-	public function toArray($recursive = true)
+	public function toArray($recursive = true, $usedClasses = array())
 	{
-		$data = array(); 
-		
-
-		
+	    $data = array(); 
+	    static $usedClasses = array();
+	    if(in_array(get_class($this), $usedClasses)) return null;
+	    else $usedClasses[] = get_class($this);
+	    
+	   
 		// let's try this for a while
 		// if the DB design is correct without circular references, it shouldn't cause problems
 		$recursive = true;
@@ -1453,7 +1481,7 @@ abstract class ActiveRecord
 						    
 					if ($recursive)
 					{
-					    $data[$varName] = $value->get()->toArray();
+				        $data[$varName] = $value->get()->toArray();   
 					}
 					else
 					{
@@ -1468,6 +1496,12 @@ abstract class ActiveRecord
 		}
 		
 		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
+		
+		$backtrace = debug_backtrace();
+		if($backtrace[1]['class'] != __CLASS__ || $backtrace[1]['function'] != __FUNCTION__)
+		{
+		    $usedClasses = array();
+		}
 		
 		return $data;
 	}

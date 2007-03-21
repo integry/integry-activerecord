@@ -70,6 +70,11 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 	{
 		return $this->foreignFieldName;
 	}
+
+	public function getReferenceName()
+	{
+	    return ucfirst(substr($this->name, 0, -2));
+	}
 }
 
 ?>

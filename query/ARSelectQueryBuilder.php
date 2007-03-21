@@ -62,27 +62,30 @@ class ARSelectQueryBuilder
 	 * @param string $tableJoinFieldName
 	 * @param string $mainTableJoinFieldName
 	 * @param string $tableAliasName	Necessary when joining the same table more than one time (LEFT JOIN sometable AS table_1 ON ... LEFT JOIN sometable AS table_2 ON ...)
-	 */
-	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
+	 *
+	 * @return string Table alias name or false if couldn't join
+	 **/
+	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = false)
 	{
 		if (!$tableAliasName)
 		{
 		  	$tableAliasName = $tableName;
 		}
 		
-		if (isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName]))
+	    if(!(isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName])))
 		{
-		  	return false;
+		    $this->joinList[$tableAliasName] = array(
+				"tableName" => $tableName, 
+			    "mainTableName" => $mainTableName, 
+			    "tableJoinFieldName" => $tableJoinFieldName, 
+			    "mainTableJoinFieldName" => $mainTableJoinFieldName,
+			    "tableAliasName" => $tableAliasName
+		    );
+		    
+		    return true;
 		}
-		
-		$this->joinList[$tableAliasName] = array("tableName" => $tableName, 
-								  "mainTableName" => $mainTableName, 
-								  "tableJoinFieldName" => $tableJoinFieldName, 
-								  "mainTableJoinFieldName" => $mainTableJoinFieldName,
-								  "tableAliasName" => $tableAliasName
-								  );
 								  
-		return true;
+		return false;
 	}
 
 	/**
@@ -174,7 +177,8 @@ class ARSelectQueryBuilder
 		if ($this->filter != null)
 		{
 			$selectQueryString .= $this->filter->createString();
-		}//echo $selectQueryString . '<br><br><br>';
+		}
+//		echo $selectQueryString . '<br><br><br>';
 		return $selectQueryString;
 	}
 }

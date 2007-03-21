@@ -147,7 +147,7 @@ class ARSchema
 		{
 			$ret = array();
 			
-			$referenceList = $this->getForeignKeyList();	  	
+			$referenceList = $this->getForeignKeyList();		
 	
 			foreach($referenceList as $name => $refField)
 			{
@@ -158,7 +158,8 @@ class ARSchema
 				  	continue;
 				}
 				
-				$ret[$foreignClassName] = $refSchema;
+				if(!isset($ret[$refField->getReferenceName()])) $ret[$refField->getReferenceName()] = array();
+				$ret[$refField->getReferenceName()][] = $refSchema;
 				
                 $sub = $refSchema->getReferencedSchemas($this);                    
 				$ret = array_merge($ret, $sub);
