@@ -196,12 +196,10 @@ abstract class ActiveRecord
 				$referenceName = $field->getReferenceName();
 				$foreignClassName = $field->getForeignClassName();
 			    			    
-				echo get_class($this)  . " -> $referenceName<br />";
 				if (isset($data[$name]))
 				{					
 					if (isset($data[$referenceName]) && is_array($data[$referenceName]))
 				    {
-//				        $field = new ARForeignKeyField();
 
 				        foreach($data as $referecedTableName => $referencedData)
 				        {
@@ -930,7 +928,6 @@ abstract class ActiveRecord
 		{
 			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
 			$recordID = self::extractRecordID($className, $rowData);
-			echo "<hr /><h3>$className</h3>";
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
 		    
