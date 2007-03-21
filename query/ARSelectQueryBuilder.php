@@ -118,6 +118,8 @@ class ARSelectQueryBuilder
 		$filterFieldList = $this->filter->getFieldList();
 		$fields = array_merge($this->fieldList, $filterFieldList);
 		
+		$tableAliases = array();
+		
 		$fieldListStr = "";
 		if (empty($fields))
 		{
@@ -168,7 +170,17 @@ class ARSelectQueryBuilder
 				  	$alias = '';
 				  	$tableName = $joinItem['tableName'];
 				}
-				$preparedJoinList[] = "LEFT JOIN ".$joinItem['tableName'].$alias." ON ".$joinItem['mainTableName'].".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'];
+				
+				if(empty($joinItem['tableAliasName'])) 
+				{
+				    $tableAliases[$joinItem['tableName']] = $joinItem['tableName'];
+				}
+				else if(!isset($tableAliases[$joinItem['tableName']])) 
+				{
+				    $tableAliases[$joinItem['tableName']] = $joinItem['tableAliasName'];
+				}
+				
+				$preparedJoinList[] = "LEFT JOIN ".$joinItem['tableName'].$alias." ON ".(isset($tableAliases[$joinItem['mainTableName']]) ? $tableAliases[$joinItem['mainTableName']] : $joinItem['mainTableName']).".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'];
 			}
 			$joinListStr = implode(" ", $preparedJoinList);
 		}

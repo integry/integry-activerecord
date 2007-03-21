@@ -193,17 +193,29 @@ abstract class ActiveRecord
 		
 			if ($field instanceof ARForeignKey)
 			{
-				$varName = ucfirst(substr($name, 0, -2));
+				$referenceName = $field->getReferenceName();
+				$foreignClassName = $field->getForeignClassName();
 			    			    
+				echo get_class($this)  . " -> $referenceName<br />";
 				if (isset($data[$name]))
 				{					
-					if (isset($data[$varName]) && is_array($data[$varName]))
-					{
-						$this->data[$name]->set(self::getInstanceByID($field->getForeignClassName(), $data[$name], false, null, $data[$field->getReferenceName()]), false);  			
+					if (isset($data[$referenceName]) && is_array($data[$referenceName]))
+				    {
+//				        $field = new ARForeignKeyField();
+
+				        foreach($data as $referecedTableName => $referencedData)
+				        {
+				            if($referenceName != $referecedTableName && is_array($referencedData) && !isset($data[$referenceName][$referecedTableName])) 
+				            {
+				                $data[$referenceName][$referecedTableName] = $referencedData;
+				            }
+				        }
+				        
+						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);  			
 					}
 					else
 					{
-						$this->data[$name]->set(self::getInstanceByID($field->getForeignClassName(), $data[$name], false, null), false); 
+						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
 					}
 				}
 				else
@@ -211,9 +223,9 @@ abstract class ActiveRecord
 				  	//echo $data[$name];
 				}
 							
-				// Making first letter lowercase				
-				$varName = strtolower(substr($varName, 0, 1)).substr($varName, 1);
-				$this->$varName = $this->data[$name];
+				// Making first letter lowercase
+				$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
+				$this->$referenceName = $this->data[$name];
 				
 			}
 			else if (!($field instanceof ARPrimaryKey))
@@ -551,13 +563,13 @@ abstract class ActiveRecord
 		if ($loadReferencedRecords)
 		{
 			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
-			self::joinReferencedTables($schema, $query, $tables, '');		  
+			self::joinReferencedTables($schema, $query, $tables);		  
 		}
 
 		return $query;
 	}
 	
-	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false, $prefix = '')
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
 	{
 		$referenceList = $schema->getForeignKeyList();
 
@@ -598,7 +610,7 @@ abstract class ActiveRecord
 				
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
 
-				self::joinReferencedTables($foreignSchema, $query, $tables, $prefix . '_' . $tableAlias);
+				self::joinReferencedTables($foreignSchema, $query, $tables);
 			}
 		}
 	}
@@ -817,23 +829,24 @@ abstract class ActiveRecord
 				if ($transformArray)
 				{
 				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $referenceName));
-				}							
+				}		
+
+				$recordData[$referenceName] = $referenceListData[$referenceName];			  					
 			}
 			
-			foreach($schema->getForeignKeyList() as $field)
-			{
-				$referenceName = $field->getReferenceName();				  
-
-				if (isset($referenceListData[$referenceName]))
-				{
-					$recordData[$referenceName] = $referenceListData[$referenceName];			  					
-				}
-			}
+//			foreach($schema->getForeignKeyList() as $field)
+//			{
+//				$referenceName = $field->getReferenceName();				  
+//				echo "$referenceName<Br />";
+//				if (isset($referenceListData[$referenceName]))
+//				{
+//					$recordData[$referenceName] = $referenceListData[$referenceName];			  					
+//				}
+//			}
 			
 		}
 	
 		$miscData = $dataArray;
-		
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => $miscData);
 	}
 
@@ -917,6 +930,7 @@ abstract class ActiveRecord
 		{
 			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
 			$recordID = self::extractRecordID($className, $rowData);
+			echo "<hr /><h3>$className</h3>";
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
 		    
@@ -1464,7 +1478,7 @@ abstract class ActiveRecord
 	    $data = array(); 
 	    static $usedClasses = array();
 	    if(in_array(get_class($this), $usedClasses)) return null;
-	    else $usedClasses[] = get_class($this);
+	    else if($this->isLoaded()) $usedClasses[] = get_class($this);
 	    
 	   
 		// let's try this for a while
