@@ -135,6 +135,15 @@ abstract class ActiveRecord
 	const NON_RECURSIVE = false;
 
 	const TRANSFORM_ARRAY = true;
+	
+	/**
+	 * Array depth shows not the actual depth of self::toArray() result but the death of the recursion of the individual classes.
+	 * If, say, you have a recursion like this Product->ProductImage->Product->ProductImage then setting array depth to 2 
+	 * self::toArray() will process until any class is met at most 2 times. So, in this example the recursion will stop second
+	 * time the Product class is proceded
+	 *
+	 */
+	const ARRAY_DEPTH = 2;
 
 	/**
 	 * Is record data loaded from a database?
@@ -186,21 +195,21 @@ abstract class ActiveRecord
 	private function createDataAccessVariables($data = array())
 	{
 		$fieldList = $this->schema->getFieldList();
+	
 		
 		foreach($fieldList as $name => $field)
 		{			
 		    $this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
-		
+			    
 			if ($field instanceof ARForeignKey)
 			{
 				$referenceName = $field->getReferenceName();
 				$foreignClassName = $field->getForeignClassName();
-			    			    
+	    
 				if (isset($data[$name]))
 				{					
-					if (isset($data[$referenceName]) && is_array($data[$referenceName]))
+					if (isset($data[$referenceName]))
 				    {
-
 				        foreach($data as $referecedTableName => $referencedData)
 				        {
 				            if($referenceName != $referecedTableName && is_array($referencedData) && !isset($data[$referenceName][$referecedTableName])) 
@@ -208,12 +217,12 @@ abstract class ActiveRecord
 				                $data[$referenceName][$referecedTableName] = $referencedData;
 				            }
 				        }
-				        
+	
 						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);  			
 					}
 					else
 					{
-						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
+					    $this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
 					}
 				}
 				else
@@ -400,7 +409,7 @@ abstract class ActiveRecord
 	 * @return ActiveRecord
 	 */
 	public static function getNewInstance($className, $data = array())
-	{
+	{	    
 	    return new $className($data);
 		//self::getLogger()->logObject($obj);
 	}
@@ -431,7 +440,7 @@ abstract class ActiveRecord
 	 * @return ActiveRecord
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
-	{
+	{		    
 		$instance = self::retrieveFromPool($className, $recordID);
 		if ($instance == null)
 		{
@@ -1474,8 +1483,11 @@ abstract class ActiveRecord
 	{
 	    $data = array(); 
 	    static $usedClasses = array();
-	    if(in_array(get_class($this), $usedClasses)) return null;
-	    else if($this->isLoaded()) $usedClasses[] = get_class($this);
+	    
+   	    if(!isset($usedClasses[get_class($this)])) $usedClasses[get_class($this)] = 0;
+	    else $usedClasses[get_class($this)]++;
+	    
+	    if($usedClasses[get_class($this)] == self::ARRAY_DEPTH) return null;
 	    
 	   
 		// let's try this for a while
@@ -1505,7 +1517,7 @@ abstract class ActiveRecord
 				$data[$name] = $value->get();
 			}
 		}
-		
+	
 		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
 		
 		$backtrace = debug_backtrace();
