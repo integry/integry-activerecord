@@ -96,7 +96,7 @@ abstract class ActiveRecord
 	 *
 	 * @var boolean
 	 */
-	private $deleted = false;
+	private $isDeleted = false;
 	
 	/**
 	 * Database connection instance (refererences to self::$dbConnection)
@@ -642,6 +642,7 @@ abstract class ActiveRecord
 		}
 		$query = self::createSelectQuery(get_class($this), $loadReferencedRecords);
 		$this->loadData($loadReferencedRecords, $query);
+		$this->isDeleted = false;
 	}
 
 	protected final function loadData($loadReferencedRecords, ARSelectQueryBuilder $query)
@@ -1093,7 +1094,15 @@ abstract class ActiveRecord
 		$db = self::getDBConnection();
 
 		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString() ."\n";
-
+		if(isset(self::$recordPool[$className]))
+		{
+			foreach(self::$recordPool[$className] as $record)
+			{
+				$record->markAsNotLoaded();
+				$record->markAsDeleted();
+			}
+		}
+		
 		self::getLogger()->logQuery($deleteQuery);
 		return $db->executeUpdate($deleteQuery);
 	}
@@ -1328,7 +1337,7 @@ abstract class ActiveRecord
 		self::deleteByID(get_class($this), $this->getID());
 		$this->markAsNotLoaded();
 		$this->cachedId = false;
-		$this->deleted = true;
+		$this->markAsDeleted();
 				
 		return true;
 	}
@@ -1342,7 +1351,7 @@ abstract class ActiveRecord
 	{
 		$PKFieldList = $this->schema->getPrimaryKeyList();
 		
-		if($this->deleted) return false;
+		if($this->isDeleted) return false;
 		
 		foreach($PKFieldList as $field)
 		{
@@ -1713,6 +1722,14 @@ abstract class ActiveRecord
 	public function markAsNotLoaded()
 	{
 		$this->isLoaded = false;
+	}
+	
+	/**
+	 * Mark as deleted record
+	 */
+	public function markAsDeleted()
+	{
+		$this->isDeleted = false;
 	}
 
 	/**
