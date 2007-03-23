@@ -92,6 +92,13 @@ abstract class ActiveRecord
 	public static $creolePath = "";
 
 	/**
+	 * Indicates if the record is deleted from database
+	 *
+	 * @var boolean
+	 */
+	private $deleted = false;
+	
+	/**
 	 * Database connection instance (refererences to self::$dbConnection)
 	 *
 	 * @see self::$dbConnection
@@ -1320,7 +1327,8 @@ abstract class ActiveRecord
 	{
 		self::deleteByID(get_class($this), $this->getID());
 		$this->markAsNotLoaded();
-		$this->cachedId = false;	
+		$this->cachedId = false;
+		$this->deleted = true;
 				
 		return true;
 	}
@@ -1332,8 +1340,10 @@ abstract class ActiveRecord
 	 */
 	public function hasID()
 	{
-
 		$PKFieldList = $this->schema->getPrimaryKeyList();
+		
+		if($this->deleted) return false;
+		
 		foreach($PKFieldList as $field)
 		{
 			if (!$this->data[$field->getName()]->hasValue())
