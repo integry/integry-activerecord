@@ -26,13 +26,26 @@ class ARValueMapper
 	private $value = null;
 
 	/**
-	 * Initial value (reset after saving)
+	 * Initial ID value (reset after saving)
 	 *
 	 * Necessary when a record primary key values change and record needs to be updated (referencing the old ID values)
 	 *
 	 * @var mixed
 	 */
 	private $initialID = null;
+
+	/**
+	 * Initial value (reset after saving)
+	 *
+	 * Necessary to know when value changes change (other) objects state
+	 *
+	 * For example, changing products stock count from 0 to 5 would increase the count of the available 
+     * products by 1, but changing the stock count from 5 to 10 wouldn't affect affect this count, so it's
+     * sometimes not enough just to be able to check that the value has been changed.
+	 *
+	 * @var mixed
+	 */
+	private $initialValue = null;
 
 	/**
 	 * A mark to indicate if a record was modified
@@ -46,8 +59,8 @@ class ARValueMapper
 	public function __construct(ARField $field, $value = null)
 	{
 		$this->field = $field;
-		$this->value = $value;//echo $value;
-//		echo '<font color=green>' . $this->field->getName() . '--' . $value . '</font><br>';
+		$this->value = $value;
+        $this->initialValue = $value;
 	}
 
 	/**
@@ -112,7 +125,7 @@ class ARValueMapper
 	}
 
 	/**
-	 * Gets initial field value
+	 * Gets initial field ID value
 	 *
 	 * @return mixed
 	 */
@@ -126,6 +139,16 @@ class ARValueMapper
 		{
 			return $this->initialID;  
 		}		
+	}
+
+	/**
+	 * Gets initial field value
+	 *
+	 * @return mixed
+	 */
+	public function getInitialValue()
+	{
+		return $this->initialValue;  
 	}
 
 	/**
@@ -144,10 +167,13 @@ class ARValueMapper
 	public function resetModifiedStatus()
 	{
 		$this->isModified = false;
+
 		if ($this->field instanceof ARForeignKey && !is_null($this->value))
 		{
 			$this->initialID = $this->value->getID();		  
 		}
+
+		$this->initialValue = $this->value;
 	}
 
 	/**
