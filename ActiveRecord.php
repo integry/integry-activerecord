@@ -142,15 +142,7 @@ abstract class ActiveRecord
 	const NON_RECURSIVE = false;
 
 	const TRANSFORM_ARRAY = true;
-	
-	/**
-	 * Array depth shows not the actual depth of self::toArray() result but the death of the recursion of the individual classes.
-	 * If, say, you have a recursion like this Product->ProductImage->Product->ProductImage then setting array depth to 2 
-	 * self::toArray() will process until any class is met at most 2 times. So, in this example the recursion will stop second
-	 * time the Product class is proceded
-	 *
-	 */
-	const ARRAY_DEPTH = 4;
+
 
 	/**
 	 * Is record data loaded from a database?
@@ -1498,20 +1490,14 @@ abstract class ActiveRecord
 	 *
 	 * @return array
 	 */
-	public function toArray($recursive = true, $usedClasses = array())
+	public function toArray($recursive = true, $displayedObjects = array())
 	{
 	    $data = array(); 
-	    static $usedClasses = array();
 	    
-   	    if(!isset($usedClasses[get_class($this)])) $usedClasses[get_class($this)] = 0;
-	    else $usedClasses[get_class($this)]++;
-	    
-	    if($usedClasses[get_class($this)] == self::ARRAY_DEPTH) 
-	    {
-//	        echo '-->';
-	        return null;
-	    }
-	    
+	    $className = get_class($this);
+	    $recordHash = self::getRecordHash($this->getID());
+	    $currentIdentifier = "$className-$recordHash";
+
 	   
 		// let's try this for a while
 		// if the DB design is correct without circular references, it shouldn't cause problems
@@ -1524,10 +1510,15 @@ abstract class ActiveRecord
 				{
 				    $varName = $value->getField()->getForeignClassName();
 				    if(preg_match('/ID$/', $name)) $varName = ucfirst(substr($name, 0, -2));
-						    
+		    
 					if ($recursive)
-					{
-				        $data[$varName] = $value->get()->toArray();   
+					{	
+				        if(in_array(get_class($value->get()) . "-"  . self::getRecordHash($value->get()->getID()) , $displayedObjects)) 
+					    {
+					        $recursive = false;
+				        }
+					    
+				        $data[$varName] = $value->get()->toArray($recursive, array_merge($displayedObjects, array($currentIdentifier)));   
 					}
 					else
 					{
