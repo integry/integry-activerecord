@@ -150,7 +150,7 @@ abstract class ActiveRecord
 	 * time the Product class is proceded
 	 *
 	 */
-	const ARRAY_DEPTH = 2;
+	const ARRAY_DEPTH = 4;
 
 	/**
 	 * Is record data loaded from a database?
@@ -1506,7 +1506,11 @@ abstract class ActiveRecord
    	    if(!isset($usedClasses[get_class($this)])) $usedClasses[get_class($this)] = 0;
 	    else $usedClasses[get_class($this)]++;
 	    
-	    if($usedClasses[get_class($this)] == self::ARRAY_DEPTH) return null;
+	    if($usedClasses[get_class($this)] == self::ARRAY_DEPTH) 
+	    {
+//	        echo '-->';
+	        return null;
+	    }
 	    
 	   
 		// let's try this for a while
