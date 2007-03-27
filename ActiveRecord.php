@@ -1496,12 +1496,11 @@ abstract class ActiveRecord
 	    
 	    $className = get_class($this);
 	    $recordHash = self::getRecordHash($this->getID());
-	    $currentIdentifier = "$className-$recordHash";
-
+	    $currentIdentifier = $className . '-' . $recordHash;
 	   
 		// let's try this for a while
 		// if the DB design is correct without circular references, it shouldn't cause problems
-		$recursive = true;
+//		$recursive = true;
 		foreach($this->data as $name => $value)
 		{
 		    if ($value->getField() instanceof ARForeignKey)
