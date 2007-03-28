@@ -76,7 +76,7 @@ class ARSet implements IteratorAggregate
 	 * @see ActiveRecord::toArray()
 	 * @return array
 	 */
-	public function toArray($recursive = false)
+	public function toArray($recursive = true)
 	{
 		$recordSetArray = array();
 		foreach($this->data as $record)

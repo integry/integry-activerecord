@@ -1500,7 +1500,6 @@ abstract class ActiveRecord
 	   
 		// let's try this for a while
 		// if the DB design is correct without circular references, it shouldn't cause problems
-//		$recursive = true;
 		foreach($this->data as $name => $value)
 		{
 		    if ($value->getField() instanceof ARForeignKey)
@@ -1512,6 +1511,7 @@ abstract class ActiveRecord
 		    
 					if ($recursive)
 					{	
+					    if(!is_array($displayedObjects)) throw new Exception();
 				        if(in_array(get_class($value->get()) . "-"  . self::getRecordHash($value->get()->getID()) , $displayedObjects)) 
 					    {
 					        $recursive = false;
