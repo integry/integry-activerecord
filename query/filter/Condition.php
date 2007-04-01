@@ -243,6 +243,16 @@ class RegexpCond extends BinaryCondition
 }
 
 /**
+ * Condition using IS operator
+ *
+ * @package activerecord.query.filter
+ */
+class ISCond extends BinaryCondition
+{
+	protected $operatorString = " IS ";
+}
+
+/**
  * Condition using IN operator
  *
  * @package activerecord.query.filter

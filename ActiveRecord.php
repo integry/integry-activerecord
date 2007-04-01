@@ -158,7 +158,17 @@ abstract class ActiveRecord
 	 */
 	public static $transactionLevel = 0;
 	
-	public static $logger = null;
+	public static $logger = null;	
+	
+	/**
+	 *	Current level of toArray call stack
+	 */
+	protected static $toArrayLevel = 0;
+	
+	/**
+	 *	Cached object array data from the current toArray call stack
+	 */
+	protected static $toArrayData = array();
 	
 	protected $cachedId = null;
 	
@@ -1326,7 +1336,11 @@ abstract class ActiveRecord
 	 */
 	public function delete()
 	{
-		self::deleteByID(get_class($this), $this->getID());
+		if ($this->getID())
+		{
+			self::deleteByID(get_class($this), $this->getID());			
+		}
+
 		$this->markAsNotLoaded();
 		$this->cachedId = false;
 		$this->markAsDeleted();
@@ -1490,16 +1504,24 @@ abstract class ActiveRecord
 	 *
 	 * @return array
 	 */
-	public function toArray($recursive = true, $displayedObjects = array())
-	{
-	    $data = array(); 
-	    
-	    $className = get_class($this);
+	public function toArray()
+	{    
+	    // create a unique identifier of the current record
+		$className = get_class($this);
 	    $recordHash = self::getRecordHash($this->getID());
 	    $currentIdentifier = $className . '-' . $recordHash;
-	   
-		// let's try this for a while
-		// if the DB design is correct without circular references, it shouldn't cause problems
+
+		// check if this record has been processed already
+		if (isset(self::$toArrayData[$currentIdentifier]))
+	   	{
+			return self::$toArrayData[$currentIdentifier];
+		}
+
+	    self::$toArrayLevel++;
+	    
+		$data = array(); 
+		self::$toArrayData[$currentIdentifier] =& $data;
+		
 		foreach($this->data as $name => $value)
 		{
 		    if ($value->getField() instanceof ARForeignKey)
@@ -1507,22 +1529,12 @@ abstract class ActiveRecord
 				if ($value->get() != null)
 				{
 				    $varName = $value->getField()->getForeignClassName();
-				    if(preg_match('/ID$/', $name)) $varName = ucfirst(substr($name, 0, -2));
-		    
-					if ($recursive)
-					{	
-					    if(!is_array($displayedObjects)) throw new Exception();
-				        if(in_array(get_class($value->get()) . "-"  . self::getRecordHash($value->get()->getID()) , $displayedObjects)) 
-					    {
-					        $recursive = false;
-				        }
-					    
-				        $data[$varName] = $value->get()->toArray($recursive, array_merge($displayedObjects, array($currentIdentifier)));   
-					}
-					else
+				    if(preg_match('/ID$/', $name)) 
 					{
-						$data[$varName] = $value->get()->getID();
-					}
+						$varName = ucfirst(substr($name, 0, -2));
+		    		}
+		    				    
+					$data[$varName] =& $value->get()->toArray();   
 				}
 			}
 			else
@@ -1531,12 +1543,13 @@ abstract class ActiveRecord
 			}
 		}
 	
-		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
+		$data = call_user_func_array(array($className, 'transformArray'), array($data, $className));
 		
-		$backtrace = debug_backtrace();
-		if($backtrace[1]['class'] != __CLASS__ || $backtrace[1]['function'] != __FUNCTION__)
+	    self::$toArrayLevel--;		
+		
+		if (0 == self::$toArrayLevel)
 		{
-		    $usedClasses = array();
+			self::$toArrayData = array();	
 		}
 		
 		return $data;
