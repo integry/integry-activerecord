@@ -20,6 +20,8 @@ class ARSchema
 
 	private $primaryKeyList = array();
 
+	private $arrayFieldList = null;
+
 	/**
 	 *	Cache array of referenced schema instances for faster lookups
 	 */
@@ -33,6 +35,7 @@ class ARSchema
 		{
 			$this->foreignKeyList[$schemaField->getName()] = $schemaField;
 		}
+		
 		if ($schemaField instanceof ARPrimaryKey)
 		{
 			$this->primaryKeyList[$schemaField->getName()] = $schemaField;
@@ -98,7 +101,7 @@ class ARSchema
 	/**
 	 * Gets a list of foreign keys defined for this schema
 	 *
-	 * @return ARPrimaKey[]
+	 * @return ARPrimaryKey[]
 	 */
 	public function getForeignKeyList()
 	{
@@ -106,15 +109,38 @@ class ARSchema
 	}
 
 	/**
-	 * Gets alist o primary key fields defined for this schema
+	 * Gets a list of primary key fields defined for this schema
 	 *
-	 * @return ARForeigKey[]
+	 * @return ARForeignKey[]
 	 */
 	public function getPrimaryKeyList()
 	{
 		return $this->primaryKeyList;
 	}
 
+	/**
+	 * Returns a list of ARArray schema fields
+	 *
+	 * @return ARForeignKey[]
+	 */
+	public function getArrayFieldList()
+	{
+		if (!is_array($this->arrayFieldList))
+		{
+            $this->arrayFieldList = array();
+            
+            foreach ($this->getFieldList() as $field)
+            {
+                if ($field->getDataType() instanceof ARArray)
+                {
+                    $this->arrayFieldList[] = $field;
+                }
+            }    
+        }
+        
+        return $this->arrayFieldList;
+	}
+	
 	/**
 	 * Creatres a sting of enumerated fields
 	 *
