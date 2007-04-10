@@ -1355,10 +1355,13 @@ abstract class ActiveRecord
 	 */
 	public function hasID()
 	{
+		if ($this->isDeleted) 
+		{
+			return false;	
+		}
+
 		$PKFieldList = $this->schema->getPrimaryKeyList();
-		
-		if($this->isDeleted) return false;
-		
+				
 		foreach($PKFieldList as $field)
 		{
 			if (!$this->data[$field->getName()]->hasValue())
@@ -1366,6 +1369,7 @@ abstract class ActiveRecord
 				return false;
 			}
 		}
+		
 		return true;
 	}
 
@@ -1795,6 +1799,14 @@ abstract class ActiveRecord
 	protected static function defineSchema($className = __CLASS__)
 	{
 		throw new Exception('ActiveRecord::defineSchema must be implemented');  	
+	}
+	
+	public function __clone()
+	{
+		foreach ($this->data as $key => $valueMapper)
+		{
+			$this->data[$key] = clone $valueMapper;
+		}
 	}
 }
 ?>

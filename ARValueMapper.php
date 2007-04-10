@@ -192,6 +192,22 @@ class ARValueMapper
 			return false;
 		}
 	}
+	
+	public function __clone()
+	{
+		if ($this->field instanceof ARForeignKey)
+		{
+			return false;
+		}
+		
+		$this->isModified = true;
+		
+		if ($this->field instanceof ARPrimaryKeyField)
+		{
+			$this->set(null);
+			$this->isModified = false;
+		}
+	}
 }
 
 ?>
