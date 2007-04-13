@@ -9,7 +9,7 @@ require_once("schema/ARField.php");
  * @package activerecord
  * @author Saulius Rupainis <saulius@integry.net>
  */
-class ARValueMapper
+class ARValueMapper implements Serializable
 {
 	/**
 	 * Schema field instance
@@ -74,6 +74,18 @@ class ARValueMapper
 	}
 
 	/**
+	 * Sets a related schema field. 
+	 *
+	 * This method should never be called directly
+	 *
+	 * @return ARField
+	 */
+	public function setField(ARField $field)
+	{
+		$this->field = $field;
+	}
+
+	/**
 	 * Assigns a value to a field
 	 *
 	 * @param mixed $value
@@ -94,6 +106,13 @@ class ARValueMapper
 		{
 			$this->initialID = $value->getID();
 		}
+
+    if ($value instanceof ARValueMapper)
+    {
+        echo '<pre style="background:yellow;">';
+        print_r(new Exception('Setting ARValuemapper'));
+        echo '</pre>';
+    }
 
 		$this->value = $value;
 		
@@ -192,6 +211,16 @@ class ARValueMapper
 			return false;
 		}
 	}
+	
+	public function serialize()
+	{
+        return serialize($this->value);
+    }
+    
+    public function unserialize($serialized)
+    {
+        $this->set(unserialize($serialized), false);        
+    }
 	
 	public function __clone()
 	{

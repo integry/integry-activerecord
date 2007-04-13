@@ -57,7 +57,7 @@ function __invokeStaticMethod($className, $methodName, $paramList = array())
  * @todo methods for setting self::$creolePath
  *
  */
-abstract class ActiveRecord
+abstract class ActiveRecord implements Serializable
 {
 
 	/**
@@ -104,7 +104,7 @@ abstract class ActiveRecord
 	 * @see self::$dbConnection
 	 * @var Creole
 	 */
-	protected $db = null;
+	private $db = null;
 
 	/**
 	 * Schema of this instance (defines a record structure)
@@ -203,46 +203,65 @@ abstract class ActiveRecord
 	 */
 	private function createDataAccessVariables($data = array())
 	{
-		$fieldList = $this->schema->getFieldList();
-	
+		$fieldList = $this->schema->getFieldList();	
 		
 		foreach($fieldList as $name => $field)
 		{			
-		    $this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
+		    if (isset($data[$name]))
+		    {
+                if ($data[$name] instanceof ARValueMapper)
+                {
+                    $valueMapper = $data[$name];
+                    $valueMapper->setField($field);
+                    $data[$name] = $valueMapper->get();
+                }    
+                else
+                {
+                    $valueMapper = new ARValueMapper($field, $data[$name]);   
+                }
+            }
+            else
+            {
+                $valueMapper = new ARValueMapper($field, null);                   
+            }
+            
+            $this->data[$name] = $valueMapper;
 			    
 			if ($field instanceof ARForeignKey)
 			{
 				$referenceName = $field->getReferenceName();
 				$foreignClassName = $field->getForeignClassName();
 	    
-				if (isset($data[$name]))
-				{					
-					if (isset($data[$referenceName]))
-				    {
-				        foreach($data as $referecedTableName => $referencedData)
-				        {
-				            if($referenceName != $referecedTableName && is_array($referencedData) && !isset($data[$referenceName][$referecedTableName])) 
-				            {
-				                $data[$referenceName][$referecedTableName] = $referencedData;
-				            }
-				        }
-	
-						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);  			
-					}
-					else
-					{
-					    $this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
-					}
-				}
-				else
+				if (!($valueMapper->get() instanceof ActiveRecord))
 				{
-				  	//echo $data[$name];
-				}
+                    if (isset($data[$name]))
+    				{					
+    					if (isset($data[$referenceName]))
+    				    {
+    				        foreach($data as $referecedTableName => $referencedData)
+    				        {
+    				            if($referenceName != $referecedTableName && is_array($referencedData) && !isset($data[$referenceName][$referecedTableName])) 
+    				            {
+    				                $data[$referenceName][$referecedTableName] = $referencedData;
+    				            }
+    				        }
+    	
+    						$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);  			
+    					}
+    					else
+    					{
+    					    $this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
+    					}
+    				}
+    				else
+    				{
+    				  	//echo $data[$name];
+    				}
+    			}
 							
 				// Making first letter lowercase
 				$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
-				$this->$referenceName = $this->data[$name];
-				
+				$this->$referenceName = $this->data[$name];				
 			}
 			else if (!($field instanceof ARPrimaryKey))
 			{
@@ -380,7 +399,8 @@ abstract class ActiveRecord
 	{
 		if (!$this->cachedId)
 		{
-			$PKList = $this->schema->getPrimaryKeyList();
+            $PKList = $this->schema->getPrimaryKeyList();
+
 			$PK = array();
 			foreach($PKList as $name => $field)
 			{
@@ -393,6 +413,7 @@ abstract class ActiveRecord
 					$PK[$name] = $this->data[$name]->get();
 				}
 			}
+
 			if (count($PK) == 1)
 			{
 				$this->cachedId = $PK[key($PK)];
@@ -1538,7 +1559,7 @@ abstract class ActiveRecord
 						$varName = ucfirst(substr($name, 0, -2));
 		    		}
 		    				    
-					$data[$varName] =& $value->get()->toArray();   
+                    $data[$varName] =& $value->get()->toArray();   
 				}
 			}
 			else
@@ -1801,33 +1822,70 @@ abstract class ActiveRecord
 		throw new Exception('ActiveRecord::defineSchema must be implemented');  	
 	}
 	
-	public function __clone()
+    private function getVars()
+    {
+        return get_object_vars(&$this);
+    }
+	
+	public function serialize($skippedRelations = array(), $properties = array())
+	{
+        if (!is_array($skippedRelations))
+        {
+            $skippedRelations = array();
+        }
+        $skippedRelations = array_flip($skippedRelations);
+        
+        $serialized = array('data' => array());
+        
+        // serialize data variables
+        foreach ($this->data as $key => $value)
+        {
+            if (isset($skippedRelations[$key]))
+            {
+                $id = $value->get()->getID();
+                $value = ActiveRecordModel::getNewInstance(get_class($value->get()));
+                $value->setID($id, false);
+            }
+
+            $serialized['data'][$key] = serialize($value);
+        }
+        
+        // serialize custom variables
+        foreach ($properties as $key)
+        {
+            $serialized[$key] = serialize($this->$key);                
+        }
+        
+        return serialize($serialized);
+    }
+    
+    public function unserialize($serialized)
+    {
+        $this->schema = self::getSchemaInstance(get_class($this));
+        
+        $array = unserialize($serialized);
+        
+        $values = array();
+        foreach ($array['data'] as $key => $value)
+        {
+            $values[$key] = unserialize($value);
+        }
+        unset($array['data']);
+        
+        $this->createDataAccessVariables($values);
+        
+        foreach ($array as $key => $value)
+        {
+            $this->$key = unserialize($value);
+        }        
+    }
+    
+    public function __clone()
 	{
 		foreach ($this->data as $key => $valueMapper)
 		{
 			$this->data[$key] = clone $valueMapper;
 		}
-	}
-
-	/**
-	 *	Reference to database connection object needs to be unset before serialization
-	 */
-	public function __sleep()
-	{
-		$result = array();
-		foreach (get_class_vars($this) as $var => $value)
-		{
-			$result[$var] = $value;
-		}
-		
-		unset($result['db']);
-		
-		return $result;
-	}	
-		
-	public function __wake()
-	{
-		unset($this->db);
 	}
 	
 	private function __get($name)
