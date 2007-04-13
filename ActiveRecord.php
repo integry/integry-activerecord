@@ -1808,5 +1808,40 @@ abstract class ActiveRecord
 			$this->data[$key] = clone $valueMapper;
 		}
 	}
+
+	/**
+	 *	Reference to database connection object needs to be unset before serialization
+	 */
+	public function __sleep()
+	{
+		$result = array();
+		foreach (get_class_vars($this) as $var => $value)
+		{
+			$result[$var] = $value;
+		}
+		
+		unset($result['db']);
+		
+		return $result;
+	}	
+		
+	public function __wake()
+	{
+		unset($this->db);
+	}
+	
+	private function __get($name)
+	{
+		switch ($name)
+	  	{
+		    case 'db':
+		    	$this->db = self::getDBConnection();
+				return $this->db;
+		    break;
+
+			default:
+		    break;
+		}
+	}	
 }
 ?>
