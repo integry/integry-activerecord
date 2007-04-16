@@ -1824,7 +1824,7 @@ abstract class ActiveRecord implements Serializable
 	
     private function getVars()
     {
-        return get_object_vars(&$this);
+        return get_object_vars($this);
     }
 	
 	public function serialize($skippedRelations = array(), $properties = array())
