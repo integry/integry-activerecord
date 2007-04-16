@@ -1829,6 +1829,7 @@ abstract class ActiveRecord implements Serializable
 	
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
+//echo get_class($this) . '<br>';
         if (!is_array($skippedRelations))
         {
             $skippedRelations = array();
@@ -1842,7 +1843,13 @@ abstract class ActiveRecord implements Serializable
         {
             if (isset($skippedRelations[$key]))
             {
+                if (!$value->get())
+                {
+                    continue;
+                }
+                
                 $id = $value->get()->getID();
+                
                 $value = ActiveRecordModel::getNewInstance(get_class($value->get()));
                 $value->setID($id, false);
             }
