@@ -97,22 +97,24 @@ class ARValueMapper implements Serializable
             return false;
         }
         
-        if ($this->field instanceof ARForeignKey && !($value instanceof ActiveRecord))
+        if ($this->field instanceof ARForeignKey)
 		{
-			throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");
+            if (is_null($value))
+            {
+                $this->setNull();
+                return;   
+            }            
+            
+            if (!($value instanceof ActiveRecord))
+			{
+                throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");  
+            }           
 		}
 		
 		if ($this->field instanceof ARForeignKey && $this->value && !$this->initialID)
 		{
 			$this->initialID = $value->getID();
 		}
-
-    if ($value instanceof ARValueMapper)
-    {
-        echo '<pre style="background:yellow;">';
-        print_r(new Exception('Setting ARValuemapper'));
-        echo '</pre>';
-    }
 
 		$this->value = $value;
 		
@@ -224,11 +226,6 @@ class ARValueMapper implements Serializable
 	
 	public function __clone()
 	{
-		if ($this->field instanceof ARForeignKey)
-		{
-			return false;
-		}
-		
 		$this->isModified = true;
 		
 		if ($this->field instanceof ARPrimaryKeyField)
