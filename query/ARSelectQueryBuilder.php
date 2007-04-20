@@ -162,7 +162,7 @@ class ARSelectQueryBuilder
 			{
 				if (!empty($joinItem['tableAliasName']))
 				{
-				  	$alias = ' AS ' . $joinItem['tableAliasName'] . ' ';
+				  	$alias = '` AS `' . $joinItem['tableAliasName'];
 				  	$tableName = $joinItem['tableAliasName'];
 				}
 				else
@@ -180,7 +180,7 @@ class ARSelectQueryBuilder
 				    $tableAliases[$joinItem['tableName']] = $joinItem['tableAliasName'];
 				}
 				
-				$preparedJoinList[] = "LEFT JOIN ".$joinItem['tableName'].$alias." ON ".(isset($tableAliases[$joinItem['mainTableName']]) ? $tableAliases[$joinItem['mainTableName']] : $joinItem['mainTableName']).".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'];
+				$preparedJoinList[] = "LEFT JOIN `".$joinItem['tableName'].$alias."` ON `".(isset($tableAliases[$joinItem['mainTableName']]) ? $tableAliases[$joinItem['mainTableName']] : $joinItem['mainTableName'])."`.`".$joinItem['mainTableJoinFieldName']."` = `".$tableName."`.`".$joinItem['tableJoinFieldName'].'`';
 			}
 			$joinListStr = implode(" ", $preparedJoinList);
 		}
