@@ -472,7 +472,8 @@ abstract class ActiveRecord implements Serializable
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
 	{		    
 		$instance = self::retrieveFromPool($className, $recordID);
-		if ($instance == null)
+
+        if ($instance == null)
 		{
 			$instance = self::getNewInstance($className, $data);
 			$instance->setID($recordID, false);
@@ -506,12 +507,21 @@ abstract class ActiveRecord implements Serializable
 	}
 	
 	/**
-	 * This method should only be used for unit testing in teadDowh method
+	 * This method should only be used for unit testing in tearDown method
 	 *
 	 */
 	public static function removeClassFromPool($className)
 	{
 		unset(self::$recordPool[$className]);
+	}
+	
+	/**
+	 * This method should only be used for unit testing
+	 *
+	 */
+	public static function clearPool()
+	{
+		self::$recordPool = array();
 	}
 	
 	/**
@@ -1281,6 +1291,7 @@ abstract class ActiveRecord implements Serializable
 		}
 		
 		$this->resetModifiedStatus();
+		$this->markAsLoaded();
 	}
 
 	public function resetModifiedStatus()
@@ -1829,7 +1840,10 @@ abstract class ActiveRecord implements Serializable
 	
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
-//echo get_class($this) . '<br>';
+        echo get_class($this) . '/' . $this->getID();
+        var_dump($this->isLoaded());
+
+//        echo 'Beginning ' . get_class($this) .' ('.$this->getID().')' . "\n";
         if (!is_array($skippedRelations))
         {
             $skippedRelations = array();
@@ -1854,16 +1868,21 @@ abstract class ActiveRecord implements Serializable
                 $value->setID($id, false);
             }
 
-            $serialized['data'][$key] = serialize($value);
+            $serialized['data'][$key] = $value;
         }
         
         // serialize custom variables
+        $properties[] = 'isLoaded';
         foreach ($properties as $key)
         {
-            $serialized[$key] = serialize($this->$key);                
+            $serialized[$key] = $this->$key;   
         }
+
+        $s = serialize($serialized);
+
+//        echo 'Ending '.get_class($this) . "\n"; flush();        
         
-        return serialize($serialized);
+        return $s;
     }
     
     public function unserialize($serialized)
@@ -1871,20 +1890,34 @@ abstract class ActiveRecord implements Serializable
         $this->schema = self::getSchemaInstance(get_class($this));
         
         $array = unserialize($serialized);
-        
-        $values = array();
-        foreach ($array['data'] as $key => $value)
-        {
-            $values[$key] = unserialize($value);
-        }
+                
+        $this->createDataAccessVariables($array['data']);
         unset($array['data']);
-        
-        $this->createDataAccessVariables($values);
         
         foreach ($array as $key => $value)
         {
-            $this->$key = unserialize($value);
+            $this->$key = $value;
         }        
+        
+        foreach ($this->schema->getForeignKeyList() as $field)
+        {
+            $fieldName = $field->getName();
+            $referenced = $this->data[$fieldName]->get();
+
+            // load incomplete objects from pool
+            if (is_object($referenced) && !$referenced->isLoaded() && $referenced->getID())
+            {
+                $this->data[$fieldName]->set(self::getInstanceById(get_class($referenced), $referenced->getID()));
+            }
+        }
+        
+//        echo get_class($this);
+//        var_dump($this->isLoaded());
+        
+        if ($this->isLoaded())
+        {
+            self::storeToPool($this);
+        }
     }
     
     public function __clone()

@@ -5,7 +5,7 @@
  *
  * @package activerecord
  */
-class ARSet implements IteratorAggregate
+class ARSet implements IteratorAggregate, Serializable
 {
 	/**
 	 * Record list
@@ -159,6 +159,18 @@ class ARSet implements IteratorAggregate
 	    }
 	    return false;
 	}
+	
+	public function serialize()
+	{
+        $serialized = array('data' => $this->data);        
+        return serialize($serialized);
+    }
+    
+    public function unserialize($serialized)
+    {
+        $array = unserialize($serialized);        
+        $this->data = $array['data'];
+    }	
 }
 
 ?>

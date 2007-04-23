@@ -124,10 +124,13 @@ class ARValueMapper implements Serializable
 		}
 	}
 
-	public function setNull()
+	public function setNull($markAsModified = true)
 	{
 		$this->isNull = true;
-		$this->isModified = true;
+		if ($markAsModified)
+		{
+			$this->isModified = true;
+		}
 	}
 
 	public function isNull()
