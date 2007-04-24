@@ -530,9 +530,9 @@ abstract class ActiveRecord implements Serializable
 	 * @param ActiveRecord $instance
 	 */
 	private static function storeToPool(ActiveRecord $instance)
-	{
-		$hash = self::getRecordHash($instance->getID());
-		$className = get_class($instance);
+	{		
+        $hash = self::getRecordHash($instance->getID());
+   		$className = get_class($instance);
 		self::$recordPool[$className][$hash] = $instance;
 	}
 
@@ -543,9 +543,9 @@ abstract class ActiveRecord implements Serializable
 	 * @param mixed $recordID
 	 * @return ActiveRecord Instance of requested object or null if object is not stored in a pool
 	 */
-	public static function retrieveFromPool($className, $recordID=false)
+	public static function retrieveFromPool($className, $recordID=null)
 	{
-		if($recordID)
+		if(!is_null($recordID))
 		{		    
 		    $hash = self::getRecordHash($recordID);
 			if (!empty(self::$recordPool[$className][$hash]))
@@ -1698,8 +1698,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			$instance = self::retrieveFromPool($className, $id);
 			
-			
-			if (null == $instance)
+			if (null == $instance || !$instance->isLoaded())
 			{
 				$missingInstances[] = $id;
 			}
@@ -1756,7 +1755,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function markAsLoaded()
 	{
-		$this->isLoaded = true;
+        $this->isLoaded = true;
 	}
 	
 	/**
@@ -1764,7 +1763,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function markAsNotLoaded()
 	{
-		$this->isLoaded = false;
+        $this->isLoaded = false;
 	}
 	
 	/**
@@ -1840,9 +1839,6 @@ abstract class ActiveRecord implements Serializable
 	
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
-        echo get_class($this) . '/' . $this->getID();
-        var_dump($this->isLoaded());
-
 //        echo 'Beginning ' . get_class($this) .' ('.$this->getID().')' . "\n";
         if (!is_array($skippedRelations))
         {
@@ -1857,15 +1853,13 @@ abstract class ActiveRecord implements Serializable
         {
             if (isset($skippedRelations[$key]))
             {
-                if (!$value->get())
+                $value = $value->get();
+                if (!$value || !$value->getID())
                 {
                     continue;
                 }
                 
-                $id = $value->get()->getID();
-                
-                $value = ActiveRecordModel::getNewInstance(get_class($value->get()));
-                $value->setID($id, false);
+                $value = new ARSerializedReference($value);
             }
 
             $serialized['data'][$key] = $value;
@@ -1891,6 +1885,23 @@ abstract class ActiveRecord implements Serializable
         
         $array = unserialize($serialized);
                 
+        foreach ($this->schema->getForeignKeyList() as $field)
+        {
+            $fieldName = $field->getName();
+            
+            if (!isset($array['data'][$fieldName]))
+            {
+                continue;
+            }
+            
+            $referenced = $array['data'][$fieldName];
+
+            if (is_object($referenced) && ($referenced instanceof ARSerializedReference))
+            {
+                $array['data'][$fieldName] = $referenced->restoreInstance();
+            }
+        }
+
         $this->createDataAccessVariables($array['data']);
         unset($array['data']);
         
@@ -1899,24 +1910,9 @@ abstract class ActiveRecord implements Serializable
             $this->$key = $value;
         }        
         
-        foreach ($this->schema->getForeignKeyList() as $field)
-        {
-            $fieldName = $field->getName();
-            $referenced = $this->data[$fieldName]->get();
-
-            // load incomplete objects from pool
-            if (is_object($referenced) && !$referenced->isLoaded() && $referenced->getID())
-            {
-                $this->data[$fieldName]->set(self::getInstanceById(get_class($referenced), $referenced->getID()));
-            }
-        }
-        
-//        echo get_class($this);
-//        var_dump($this->isLoaded());
-        
         if ($this->isLoaded())
         {
-            self::storeToPool($this);
+            self::storeToPool($this);            
         }
     }
     
