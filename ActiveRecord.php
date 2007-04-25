@@ -609,7 +609,7 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
-			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
+            $tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
 			self::joinReferencedTables($schema, $query, $tables);		  
 		}
 
