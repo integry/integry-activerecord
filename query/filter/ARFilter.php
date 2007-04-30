@@ -16,6 +16,14 @@ abstract class ARFilter
 	 */
 	protected $condition = null;
 
+	public function __construct(Condition $condition = null)
+	{
+		if (!is_null($condition))
+		{
+			$this->setCondition($condition);
+		}
+	}
+
 	/**
 	 * Creates a textual filter representation
 	 *

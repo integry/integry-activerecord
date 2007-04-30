@@ -108,7 +108,11 @@ class ARValueMapper implements Serializable
             if (!($value instanceof ActiveRecord))
 			{
                 throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");  
-            }           
+            }         
+			else if (!is_a($value, $this->field->getForeignClassName()))
+			{
+                throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());	
+			}  
 		}
 		
 		if ($this->field instanceof ARForeignKey && $this->value && !$this->initialID)

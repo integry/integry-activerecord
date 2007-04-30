@@ -160,6 +160,11 @@ class ARSet implements IteratorAggregate, Serializable
 	    return false;
 	}
 	
+	public function getData()
+	{
+		return $this->data;
+	}
+	
 	public function serialize()
 	{
         $serialized = array('data' => $this->data);        
