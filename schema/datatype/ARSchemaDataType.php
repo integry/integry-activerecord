@@ -225,17 +225,4 @@ class ARDateTime extends ARPeriod
 	}
 }
 
-/**
- * ...
- *
- * @package activerecord.schema.datatype
- */
-class ARTimeStamp extends ARPeriod
-{
-	public static function instance()
-	{
-		return parent::instance(__CLASS__, 0);
-	}
-}
-
 ?>

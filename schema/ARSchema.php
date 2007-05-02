@@ -20,7 +20,7 @@ class ARSchema
 
 	private $primaryKeyList = array();
 
-	private $arrayFieldList = null;
+	private $fieldsByType = array();
 
 	/**
 	 *	Cache array of referenced schema instances for faster lookups
@@ -121,24 +121,39 @@ class ARSchema
 	/**
 	 * Returns a list of ARArray schema fields
 	 *
-	 * @return ARForeignKey[]
+	 * @return ARField[]
+	 */
+	public function getFieldsByType($className)
+	{
+		// sort fields by class
+		if (!$this->fieldsByType)
+		{
+			foreach ($this->getFieldList() as $field)
+			{
+				$type = get_class($field->getDataType());
+				$this->fieldsByType[$type][] = $field;
+			}	
+		}		
+		
+		if (isset($this->fieldsByType[$className]))
+		{
+			return $this->fieldsByType[$className];
+		}
+		else
+		{
+			return array();
+		}
+	}
+	
+	/**
+	 * Returns a list of ARArray schema fields
+	 *
+	 * @return ARField[]
+	 * @todo remove
 	 */
 	public function getArrayFieldList()
 	{
-		if (!is_array($this->arrayFieldList))
-		{
-            $this->arrayFieldList = array();
-            
-            foreach ($this->getFieldList() as $field)
-            {
-                if ($field->getDataType() instanceof ARArray)
-                {
-                    $this->arrayFieldList[] = $field;
-                }
-            }    
-        }
-        
-        return $this->arrayFieldList;
+		return $this->getFieldsByType('ARArray');
 	}
 	
 	/**
