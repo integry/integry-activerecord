@@ -202,6 +202,20 @@ class NotEqualsCond extends BinaryCondition
 	protected $operatorString = "!=";
 }
 
+
+/**
+ * Is NULL condition
+ *
+ * @package activerecord.query.filter
+ */
+class IsNullCond extends UnaryCondition
+{
+	public function __construct(ARFieldHandleInterface $fieldHandle)
+	{
+	    parent::__construct($fieldHandle, "IS NULL");
+	}
+}
+
 /**
  * Less than condition
  *
