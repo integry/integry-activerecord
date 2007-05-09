@@ -309,6 +309,11 @@ class ARSelectFilter extends ARFilter
 		$this->fieldList = array();		
 	}
 
+	public function resetOrder()
+	{
+		$this->fieldListForOrder = array();		
+	}
+	
 	/**
 	 * Sets a "bulk" ordering by passing an array of field to order by
 	 *

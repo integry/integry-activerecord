@@ -202,7 +202,6 @@ class NotEqualsCond extends BinaryCondition
 	protected $operatorString = "!=";
 }
 
-
 /**
  * Is NULL condition
  *
@@ -305,7 +304,6 @@ class EqualsOrMoreCond extends BinaryCondition
 	protected $operatorString = ">=";
 }
 
-
 /**
  * Condition using "=<" operator
  *
@@ -314,6 +312,33 @@ class EqualsOrMoreCond extends BinaryCondition
 class EqualsOrLessCond extends BinaryCondition
 {
 	protected $operatorString = "<=";
+}
+
+class AndChainCondition extends Condition
+{
+	public function __construct($array = array())
+	{
+		foreach ($array as $cond)
+		{
+			$this->addAND($cond);
+		}	
+	}	
+	
+	public function toString()
+	{
+		
+	}
+
+	public function createChain()
+	{
+		$conds = array();
+		foreach ($this->ANDCondList as $cond)
+		{
+			$conds[] = '(' . $cond->createChain() . ')';
+		}
+		
+		return '(' . implode(' AND ', $conds) . ')';
+	}
 }
 
 ?>
