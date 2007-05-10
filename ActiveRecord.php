@@ -1441,6 +1441,10 @@ abstract class ActiveRecord implements Serializable
 					{
 						// no changes for numeric fields
 					}
+					else if ($value instanceof ARExpressionHandle)
+					{
+						// no changes for raw database expression
+					}
 					else
 					{
 						$value = str_replace("\\", "\\\\", $value);
@@ -1568,14 +1572,21 @@ abstract class ActiveRecord implements Serializable
 				    if(preg_match('/ID$/', $name)) 
 					{
 						$varName = ucfirst(substr($name, 0, -2));
-		    		}
-		    				    
-                    $data[$varName] =& $value->get()->toArray();   
+		    		}	    
+
+                    $data[$varName] = &$value->get()->toArray();   
 				}
 			}
 			else
 			{
-				$data[$name] = $value->get();
+			    if($value->get() instanceof DateTime)
+	    		{
+			        $data[$name] = $value->get()->format('Y-m-d H:i:s');
+	    		}
+	    		else
+	    		{
+			        $data[$name] = $value->get();
+	    		}
 			}
 		}
 	
