@@ -11,7 +11,7 @@ class ARExpressionHandle implements ARFieldHandleInterface
 	
 	public function prepareValue($value)
 	{
-		return $value;
+		return '"' . $value . '"';
 	}	
 	
 	public function toString()
