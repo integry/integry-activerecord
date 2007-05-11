@@ -63,7 +63,7 @@ class ARValueMapper implements Serializable
 		
 		if ($this->field instanceof ARField && $this->field->getDataType() instanceof ARDateTime && !($value instanceof DateTime))
 		{
-		    $this->value = new DateTime($this->value);
+            $this->value = new ARSerializableDateTime($this->value);
 		}
 		
         $this->initialValue = $value;
@@ -241,6 +241,7 @@ class ARValueMapper implements Serializable
     public function unserialize($serialized)
     {
         $this->set(unserialize($serialized), false);        
+        var_dump($serialized);
     }
 	
 	public function __clone()
