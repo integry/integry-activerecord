@@ -35,7 +35,12 @@ class ARFieldHandle implements ARFieldHandleInterface
 		$dataType = $this->field->getDataType();
 		if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
 		{
-			return "'".$value."'";
+			if (!strlen($value))
+			{
+				return "''";
+			}
+			
+			return '0x' . bin2hex($value);
 		}
 		else
 		{
