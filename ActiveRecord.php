@@ -1579,7 +1579,7 @@ abstract class ActiveRecord implements Serializable
 			}
 			else
 			{
-			    if($value->get() instanceof DateTime)
+			    if($value->get() instanceof ARSerializableDateTime)
 	    		{
 			       // var($value->get());
                     $data[$name] = $value->get()->format('Y-m-d H:i:s');

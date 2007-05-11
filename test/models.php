@@ -64,7 +64,7 @@ class BlogComment extends ActiveRecord {
 		$schema->registerField(new ARField("author", 	Varchar::instance(40)));
 		$schema->registerField(new ARField("email", 	Varchar::instance(40)));
 		$schema->registerField(new ARField("body", 		Varchar::instance(1024)));
-		$schema->registerField(new ARField("createdAt", DateTime::instance()));
+		$schema->registerField(new ARField("createdAt", ARDateTime::instance()));
 	}	
 }
 */

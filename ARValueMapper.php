@@ -61,7 +61,7 @@ class ARValueMapper implements Serializable
 		$this->field = $field;
 		$this->value = $value;
 		
-		if ($this->field instanceof ARField && $this->field->getDataType() instanceof ARDateTime && !($value instanceof DateTime))
+		if ($this->field->getDataType() instanceof ARDateTime && !($value instanceof ARSerializableDateTime))
 		{
             $this->value = new ARSerializableDateTime($this->value);
 		}
@@ -120,10 +120,6 @@ class ARValueMapper implements Serializable
 			{
                 throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());	
 			}  
-		}
-		else if ($this->field instanceof ARField && $this->field->getDataType() instanceof ARDateTime && $value instanceof DateTime)
-		{
-	        $value = $value->format('Y-m-d H:i:s');
 		}
 		
 		

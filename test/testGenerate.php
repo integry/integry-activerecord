@@ -23,7 +23,7 @@ class Lentele extends ActiveRecord {
 		$schema->registerField(new ARField("Char_tipas", Char::instance(20)));	
 		$schema->registerField(new ARField("Varchar_tipas", Varchar::instance(20)));
 		$schema->registerField(new ARField("Text_tipas", Varchar::instance(255)));
-		$schema->registerField(new ARField("DateTime_tipas", DateTime::instance()));
+		$schema->registerField(new ARField("DateTime_tipas", ARDateTime::instance()));
 		$schema->registerField(new ARField("Time_tipas", Time::instance()));
 		$schema->registerField(new ARField("Date_tipas", Date::instance()));
 		$schema->registerField(new ARField("Bool_tipas", Bool::instance()));
