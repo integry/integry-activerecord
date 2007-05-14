@@ -96,8 +96,13 @@ class ARValueMapper implements Serializable
 	 *
 	 * @param mixed $value
 	 */
-	public function set($value, $markAsModified = true)
+	public function set($value = null, $markAsModified = true)
 	{
+	    if(is_null($value))
+	    {
+	        $this->setNull();
+	    }
+	    
 	    if (!is_object($value) && ($value === $this->value))
 		{
             return false;
