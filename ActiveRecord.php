@@ -1595,10 +1595,12 @@ abstract class ActiveRecord implements Serializable
 		
 	    self::$toArrayLevel--;		
 		
-		if (0 == self::$toArrayLevel)
+		/*
+        if (0 == self::$toArrayLevel)
 		{
 			self::$toArrayData = array();	
 		}
+		*/
 		
 		return $data;
 	}
