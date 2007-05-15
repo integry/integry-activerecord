@@ -954,6 +954,11 @@ abstract class ActiveRecord implements Serializable
 		return $dataArray;
 	}
 
+	public static function executeUpdate($sql)
+	{
+		return self::getDBConnection()->executeQuery($sql);		
+	}
+
 	public static function getRecordSetByQuery($className, ARSelectQueryBuilder $query)
 	{
 		return self::createRecordSet($className, $query);
@@ -1557,9 +1562,10 @@ abstract class ActiveRecord implements Serializable
 			return self::$toArrayData[$currentIdentifier];
 		}
 
-	    //self::$toArrayLevel++;
+	    self::$toArrayLevel++;
 	    
 		$data = array(); 
+		
 		self::$toArrayData[$currentIdentifier] =& $data;
 		
 		foreach($this->data as $name => $value)
@@ -1593,14 +1599,19 @@ abstract class ActiveRecord implements Serializable
 	
 		$data = call_user_func_array(array($className, 'transformArray'), array($data, $className));
 		
-	    //self::$toArrayLevel--;		
-		
+	    self::$toArrayLevel--;			
+
 		/*
         if (0 == self::$toArrayLevel)
 		{
 			self::$toArrayData = array();	
 		}
 		*/
+		
+		if (!$this->isLoaded())
+		{
+			unset(self::$toArrayData[$currentIdentifier]);
+		}		
 		
 		return $data;
 	}
