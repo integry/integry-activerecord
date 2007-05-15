@@ -1557,7 +1557,7 @@ abstract class ActiveRecord implements Serializable
 			return self::$toArrayData[$currentIdentifier];
 		}
 
-	    self::$toArrayLevel++;
+	    //self::$toArrayLevel++;
 	    
 		$data = array(); 
 		self::$toArrayData[$currentIdentifier] =& $data;
@@ -1593,7 +1593,7 @@ abstract class ActiveRecord implements Serializable
 	
 		$data = call_user_func_array(array($className, 'transformArray'), array($data, $className));
 		
-	    self::$toArrayLevel--;		
+	    //self::$toArrayLevel--;		
 		
 		/*
         if (0 == self::$toArrayLevel)
