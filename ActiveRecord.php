@@ -1795,10 +1795,10 @@ abstract class ActiveRecord implements Serializable
 	 * Actualy unload current instance and once more  it loadfrom database
 	 *
 	 */
-	public function reload()
+	public function reload($loadReferencedRecords = false)
 	{
 	    $this->markAsNotLoaded();
-	    $this->load();
+	    $this->load($loadReferencedRecords);
 	}
 	
 	/**
