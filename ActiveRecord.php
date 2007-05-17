@@ -1792,6 +1792,16 @@ abstract class ActiveRecord implements Serializable
 	}
 	
 	/**
+	 * Actualy unload current instance and once more  it loadfrom database
+	 *
+	 */
+	public function reload()
+	{
+	    $this->markAsNotLoaded();
+	    $this->load();
+	}
+	
+	/**
 	 * Mark as deleted record
 	 */
 	public function markAsDeleted()
