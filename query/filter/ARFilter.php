@@ -47,9 +47,12 @@ abstract class ARFilter
 	 *
 	 * @param string $condition
 	 */
-	public function setCondition(Condition $condition)
+	public function setCondition(Condition $condition = null)
 	{
-		$this->condition = $condition;
+		if($condition)
+		{
+		    $this->condition = $condition;
+		}
 	}
 
 	public function getCondition()
