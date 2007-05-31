@@ -45,6 +45,9 @@ class ARSelectQueryBuilder
 		$this->filter = $filter;
 	}
 
+	/**
+	 * @return ARSelectFilter
+	 */
 	public function getFilter()
 	{
 		if ($this->filter == null)
@@ -117,7 +120,7 @@ class ARSelectQueryBuilder
 	{
 		$filterFieldList = $this->filter->getFieldList();
 		$fields = array_merge($this->fieldList, $filterFieldList);
-		
+				
 		$tableAliases = array();
 		
 		$fieldListStr = "";
@@ -156,7 +159,7 @@ class ARSelectQueryBuilder
 
 		$joinListStr = "";
 		if (!empty($joins))
-		{
+		{		    
 			$preparedJoinList = array();
 			foreach($joins as $joinItem)
 			{
@@ -190,8 +193,13 @@ class ARSelectQueryBuilder
 		{
 			$selectQueryString .= $this->filter->createString();
 		}
-//		echo $selectQueryString . '<br><br><br>';
+		
 		return $selectQueryString;
+	}
+	
+	public function __toString()
+	{
+	    return $this->createString();
 	}
 }
 

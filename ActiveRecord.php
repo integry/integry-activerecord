@@ -174,6 +174,8 @@ abstract class ActiveRecord implements Serializable
 	
 	/**
 	 * ARSelectQueryBuilder object used in the last query
+	 * 
+	 * @var ARSelectQueryBuilder
 	 */
     protected static $lastQuery = null;
 
@@ -921,7 +923,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
-
+		
 		self::$lastQuery = $query;
         return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
@@ -1759,6 +1761,9 @@ abstract class ActiveRecord implements Serializable
 		return self::$logger;
 	}
 	
+	/**
+	 * @return ARSelectQueryBuilder
+	 */
 	public static function getLastQuery()
 	{
         return self::$lastQuery;
@@ -1874,7 +1879,6 @@ abstract class ActiveRecord implements Serializable
 	
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
-//        echo 'Beginning ' . get_class($this) .' ('.$this->getID().')' . "\n";
         if (!is_array($skippedRelations))
         {
             $skippedRelations = array();

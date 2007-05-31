@@ -145,7 +145,12 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function setGrouping(ARFieldHandleInterface $fieldHandle)
 	{
-		$this->fieldListForGroup[$fieldHandle->toString()] = true;
+		$this->fieldListForGroup[$fieldHandle->toString()] = $fieldHandle;
+	}
+	
+	public function getGroupingFields()
+	{
+	    return $this->fieldListForGroup;
 	}
 	
 	/**
@@ -229,8 +234,12 @@ class ARSelectFilter extends ARFilter
 		$this->setFieldOrder($filter->getFieldOrder());
 		$this->setLimit($filter->getLimit(), $filter->getOffset());
 		
+		$groupings = $filter->getGroupingFields();
+		$this->fieldListForGroup = array_merge($this->getGroupingFields(), $groupings);
+				
 		$joins = $filter->getJoinList();
 		$this->joinList = array_merge($this->joinList, $joins);
+		
 		$fields = $filter->getFieldList();
 		$this->fieldList = array_merge($this->fieldList, $fields);
 	}
