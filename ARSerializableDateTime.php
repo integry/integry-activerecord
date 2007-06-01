@@ -17,7 +17,7 @@ class ARSerializableDateTime extends DateTime implements Serializable
         
         parent::__construct($dateString);
     }
-    
+
     
     public function isNull()
     {
@@ -28,7 +28,7 @@ class ARSerializableDateTime extends DateTime implements Serializable
     {
         if($this->isNull())
         {
-            return null;
+            return "";
         }
         else
         {
@@ -49,7 +49,7 @@ class ARSerializableDateTime extends DateTime implements Serializable
         $dateArray = unserialize($serialized);  
         if($dateArray['isNull'] == 'true')
         {
-            $dateString = null;
+            $dateString = "";
         }
         else
         {
