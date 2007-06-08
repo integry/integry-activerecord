@@ -1430,9 +1430,9 @@ abstract class ActiveRecord implements Serializable
 			{
 				if ($dataContainer->getField() instanceof ARForeignKey)
 				{
-					if (!$dataContainer->isNull())
+					if (!$dataContainer->isNull() && !is_null($dataContainer->get()))
 					{
-						$value = "'".$dataContainer->get()->getID()."'";
+                        $value = "'".$dataContainer->get()->getID()."'";
 					}
 				}
 				else

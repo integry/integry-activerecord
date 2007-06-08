@@ -248,8 +248,8 @@ class ARValueMapper implements Serializable
 		
 		if ($this->field instanceof ARPrimaryKeyField)
 		{
-			$this->set(null);
-			$this->isModified = false;
+			$this->setNull(true);
+			$this->value = null;
 		}
 	}
 }
