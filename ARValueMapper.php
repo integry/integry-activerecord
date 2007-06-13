@@ -98,9 +98,10 @@ class ARValueMapper implements Serializable
 	 */
 	public function set($value = null, $markAsModified = true)
 	{
-	    if(is_null($value))
+	    if (is_null($value))
 	    {
 	        $this->setNull();
+	        return false;
 	    }
 	    
 	    if (!is_object($value) && ($value === $this->value))
@@ -110,12 +111,6 @@ class ARValueMapper implements Serializable
         
         if ($this->field instanceof ARForeignKey)
 		{
-            if (is_null($value))
-            {
-                $this->setNull();
-                return;   
-            }            
-            
             if (!($value instanceof ActiveRecord))
 			{
                 throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");  
@@ -131,7 +126,8 @@ class ARValueMapper implements Serializable
 			$this->initialID = $value->getID();
 		}
 
-		$this->value = $value;
+		$this->isNull = false;
+        $this->value = $value;
 		
 		if ($markAsModified)
 		{

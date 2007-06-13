@@ -1458,11 +1458,13 @@ abstract class ActiveRecord implements Serializable
 						$value = "'" . str_replace("'", "\'", $value) . "'";
 					}
 				}
-				if ($dataContainer->isNull())
+				
+                if ($dataContainer->isNull())
 				{
 					$value = "NULL";
 				}
-				$fieldList[] = "`".$dataContainer->getField()->getName()."` = ".$value;
+				
+                $fieldList[] = "`".$dataContainer->getField()->getName()."` = ".$value;
 			}
 		}
 		return implode(", ", $fieldList);
