@@ -36,6 +36,27 @@ class ARSerializableDateTime extends DateTime implements Serializable
         }
     }
     
+    public function getTimeStamp()
+    {
+        return $this->format("U");
+    }
+    
+    /**
+     *  Get a time difference in days from another DateTime object
+     */
+    public function getDayDifference(DateTime $dateTime)
+    {
+        return $this->getSecDifference($dateTime) / 86400;
+    }
+    
+    /**
+     *  Get a time difference in seconds from another DateTime object
+     */
+    public function getSecDifference(DateTime $dateTime)
+    {
+        return $this->format("U") - $dateTime->format("U");
+    }
+
     public function serialize()
     {
         return serialize(array(
