@@ -1263,6 +1263,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function save($forceOperation = 0)
 	{
+		$this->setupDBConnection();
 		if ($forceOperation)		
 		{
 		  	$action = ($forceOperation == self::PERFORM_UPDATE) ? self::PERFORM_UPDATE : self::PERFORM_INSERT;
@@ -1286,7 +1287,6 @@ abstract class ActiveRecord implements Serializable
 			}				  
 		}
 
-		$this->setupDBConnection();
 				
 		if (self::PERFORM_UPDATE == $action)
 		{
