@@ -1551,9 +1551,11 @@ abstract class ActiveRecord implements Serializable
 	 * Array is created recursively: if this instance containes a reference to other
 	 * ActiveRecord instance (foreign key) than it also calls its toArray() method
 	 *
+	 * @param bool $forse Forse to recreate array
+	 * 
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray($force = false)
 	{    
 	    // create a unique identifier of the current record
 		$className = get_class($this);
@@ -1561,7 +1563,7 @@ abstract class ActiveRecord implements Serializable
 	    $currentIdentifier = $className . '-' . $recordHash;
 
 		// check if this record has been processed already
-		if (isset(self::$toArrayData[$currentIdentifier]))
+		if (!$force && isset(self::$toArrayData[$currentIdentifier]))
 	   	{
 			return self::$toArrayData[$currentIdentifier];
 		}
@@ -1584,7 +1586,7 @@ abstract class ActiveRecord implements Serializable
 						$varName = ucfirst(substr($name, 0, -2));
 		    		}	    
 
-                    $data[$varName] = &$value->get()->toArray();   
+                    $data[$varName] = &$value->get()->toArray($force);   
 				}
 			}
 			else

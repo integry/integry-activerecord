@@ -55,6 +55,11 @@ abstract class ARFilter
 		}
 	}
 
+	/**
+	 * Get filter condition
+	 *
+	 * @return Condition
+	 */
 	public function getCondition()
 	{
 		return $this->condition;
