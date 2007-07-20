@@ -1,5 +1,8 @@
 <?php
 
+include_once("schema/ARField.php");
+include_once("schema/ARSchemaDataType.php");
+
 /**
  * Class for table structure representation (also known as schema)
  *
@@ -29,17 +32,20 @@ class ARSchema
 
 	public function registerField(ARField $schemaField)
 	{
-		$this->fieldList[$schemaField->getName()] = $schemaField;
+		$name = $schemaField->getName();
+        $this->fieldList[$name] = $schemaField;
 
 		if ($schemaField instanceof ARForeignKey)
 		{
-			$this->foreignKeyList[$schemaField->getName()] = $schemaField;
+			$this->foreignKeyList[$name] = $schemaField;
 		}
 		
 		if ($schemaField instanceof ARPrimaryKey)
 		{
-			$this->primaryKeyList[$schemaField->getName()] = $schemaField;
+			$this->primaryKeyList[$name] = $schemaField;
 		}
+		
+		$this->fieldsByType[get_class($schemaField->getDataType())][$name] = $schemaField;
 	}
 
 	/**
@@ -125,24 +131,7 @@ class ARSchema
 	 */
 	public function getFieldsByType($className)
 	{
-		// sort fields by class
-		if (!$this->fieldsByType)
-		{
-			foreach ($this->getFieldList() as $field)
-			{
-				$type = get_class($field->getDataType());
-				$this->fieldsByType[$type][] = $field;
-			}	
-		}		
-		
-		if (isset($this->fieldsByType[$className]))
-		{
-			return $this->fieldsByType[$className];
-		}
-		else
-		{
-			return array();
-		}
+		return isset($this->fieldsByType[$className]) ? $this->fieldsByType[$className] : array();
 	}
 	
 	/**
