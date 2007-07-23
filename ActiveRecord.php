@@ -18,15 +18,8 @@ if (!function_exists("__autoload"))
 	}
 }
 
-require_once("schema/datatype/ARSchemaDataType.php");
+include_once("schema/ARSchema.php");
 include_once("query/filter/Condition.php");
-
-function __invokeStaticMethod($className, $methodName, $paramList = array())
-{
-	$method = new ReflectionMethod($className, $methodName);
-
-	return $method->invokeArgs(null, $paramList);
-}
 
 /**
  *
@@ -290,10 +283,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			self::$schemaMap[$className] = new ARSchema();
 
-			/* Using PHP5 reflection api to call a static method of $className class */
-			$staticDefMethod = new ReflectionMethod($className, 'defineSchema');
-			$staticDefMethod->invoke(null);
-			/* end block */
+            call_user_func(array($className, 'defineSchema'));
 
 			if (!self::$schemaMap[$className]->isValid())
 			{
@@ -598,15 +588,15 @@ abstract class ActiveRecord implements Serializable
 	public static function createSelectQuery($className, $loadReferencedRecords = false)
 	{
 		$schema = self::getSchemaInstance($className);
-		$query = new ARSelectQueryBuilder();
-
-		$query->includeTable($schema->getName());
+		$schemaName = $schema->getName();
+		
+        $query = new ARSelectQueryBuilder();
+		$query->includeTable($schemaName);
 
 		// Add main table fields to the select query
-		$fieldList = $schema->getFieldList();
-		foreach($fieldList as $field)
+        foreach($schema->getFieldList() as $fieldName => $field)
 		{
-			$query->addField($field->getName(), $schema->getName());
+			$query->addField($fieldName, $schemaName);
 		}
 
 		if ($loadReferencedRecords)
@@ -621,43 +611,40 @@ abstract class ActiveRecord implements Serializable
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
 	{
 		$referenceList = $schema->getForeignKeyList();
+		$schemaName = $schema->getName();
 
 		foreach($referenceList as $name => $field)
 		{
-			$foreignClassName = $field->getForeignClassName();
-			
+            $foreignClassName = $field->getForeignClassName();
+			$tableAlias = $field->getReferenceName();
+			$foreignSchema = self::getSchemaInstance($foreignClassName);
+			$foreignTableName = $foreignSchema->getName();
+                			
 			if (is_array($tables) && !isset($tables[$foreignClassName]))
 			{
 				continue;
 			}
 			
-			if(is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $field->getReferenceName())
+			if(is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $tableAlias)
 			{
 			    continue;
 			}
-			
-			
-			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			
 			if ($schema == $foreignSchema)
 			{
 			  	continue;
 			}
 			
-			$tableAlias = $field->getReferenceName();
-			$joined = $query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName(), $tableAlias);
-			
+			$joined = $query->joinTable($foreignTableName, $schemaName, $field->getForeignFieldName(), $name, $tableAlias);
 			
 			if ($joined)
 			{
-				$foreignFieldList = $foreignSchema->getFieldList();
-				$foreignTableName = $foreignSchema->getName();
-				foreach($foreignFieldList as $foreignField)
+				foreach($foreignSchema->getFieldList() as $foreignFieldName => $foreignField)
 				{
-					$query->addField($foreignField->getName(), $tableAlias, $tableAlias."_".$foreignField->getName());
+					$query->addField($foreignFieldName, $tableAlias, $tableAlias."_".$foreignFieldName);
 				}
 				
-				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
+				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName); 
 
 				self::joinReferencedTables($foreignSchema, $query, $tables);
 			}
@@ -776,24 +763,13 @@ abstract class ActiveRecord implements Serializable
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $name => $field)
 		{
-			if (!($field->getDataType() instanceof  ARArray))
+			if (!($field->getDataType() instanceof ARArray))
 			{
 				$recordData[$name] = $dataArray[$name];
 			}
-			else
+			else if ($dataArray[$name])
 			{
-				if (trim($dataArray[$name]) != "")
-				{
-					$restoredData = unserialize($dataArray[$name]);
-					if ($restoredData !== false)
-					{
-						$recordData[$name] = $restoredData;
-					}				  
-					else
-					{
-					  	throw new Exception($dataArray[$name]);
-					}
-				}    		    
+				$recordData[$name] = unserialize($dataArray[$name]);
 			}
 
 			unset($dataArray[$name]);
@@ -806,7 +782,6 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
-		    $schema = self::getSchemaInstance($className);
 			$schemas = $schema->getReferencedSchemas();
 			
 			// remove circular references
@@ -838,8 +813,13 @@ abstract class ActiveRecord implements Serializable
 				}
 				$schemas = $filteredSchemas;
 			}
-			else foreach ($schemas as $referenceName => $foreignSchema) $schemas[$referenceName] = $foreignSchema[0];
-			
+			else 
+            {
+                foreach ($schemas as $referenceName => $foreignSchema) 
+                {
+                    $schemas[$referenceName] = $foreignSchema[0];    
+                }
+            }
 			
 			foreach ($schemas as $referenceName => $foreignSchema)
 			{
@@ -850,18 +830,17 @@ abstract class ActiveRecord implements Serializable
 			{
 				$foreignSchemaName = $foreignSchema->getName();
 				
-				foreach($foreignSchema->getFieldList() as $field)
+				foreach($foreignSchema->getFieldList() as $fieldName => $field)
 				{
-					$fieldName = $field->getName();
 					$keyName = $referenceName . '_' . $fieldName;
 					
 					if (!($field->getDataType() instanceof ARArray))
 					{
 					    $referenceListData[$referenceName][$fieldName] = $dataArray[$keyName];
 					}
-					else if (trim($dataArray[$keyName]) != "")
+					else if ($dataArray[$keyName])
 					{
-						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);						
+						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);
 					}
 					
 					if ($field instanceof ARForeignKey)
@@ -883,17 +862,6 @@ abstract class ActiveRecord implements Serializable
 
 				$recordData[$referenceName] = $referenceListData[$referenceName];			  					
 			}
-			
-//			foreach($schema->getForeignKeyList() as $field)
-//			{
-//				$referenceName = $field->getReferenceName();				  
-//				echo "$referenceName<Br />";
-//				if (isset($referenceListData[$referenceName]))
-//				{
-//					$recordData[$referenceName] = $referenceListData[$referenceName];			  					
-//				}
-//			}
-			
 		}
 	
 		$miscData = $dataArray;
@@ -1076,8 +1044,8 @@ abstract class ActiveRecord implements Serializable
 	public function getRelatedRecordSet($foreignClassName, ARSelectFilter $filter, $loadReferencedRecords = false)
 	{
 		$this->appendRelatedRecordJoinCond($foreignClassName, $filter);
-		//return self::getRecordSet($foreignClassName, $filter, $loadReferencedRecords);
-		return __invokeStaticMethod('ActiveRecord', "getRecordSet", array($foreignClassName, $filter, $loadReferencedRecords));
+
+		return call_user_func_array(array('ActiveRecord', 'getRecordSet'), array($foreignClassName, $filter, $loadReferencedRecords));
 	}
 
 	private function appendRelatedRecordJoinCond($foreignClassName, ARSelectFilter $filter)
