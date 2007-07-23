@@ -137,6 +137,7 @@ class ARValueMapper implements Serializable
 
 	public function setNull($markAsModified = true)
 	{
+        $this->value = null;
 		$this->isNull = true;
 		if ($markAsModified)
 		{

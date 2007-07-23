@@ -18,8 +18,15 @@ if (!function_exists("__autoload"))
 	}
 }
 
-include_once("schema/ARSchema.php");
+require_once("schema/datatype/ARSchemaDataType.php");
 include_once("query/filter/Condition.php");
+
+function __invokeStaticMethod($className, $methodName, $paramList = array())
+{
+	$method = new ReflectionMethod($className, $methodName);
+
+	return $method->invokeArgs(null, $paramList);
+}
 
 /**
  *
@@ -283,7 +290,10 @@ abstract class ActiveRecord implements Serializable
 		{
 			self::$schemaMap[$className] = new ARSchema();
 
-            call_user_func(array($className, 'defineSchema'));
+			/* Using PHP5 reflection api to call a static method of $className class */
+			$staticDefMethod = new ReflectionMethod($className, 'defineSchema');
+			$staticDefMethod->invoke(null);
+			/* end block */
 
 			if (!self::$schemaMap[$className]->isValid())
 			{
@@ -588,15 +598,15 @@ abstract class ActiveRecord implements Serializable
 	public static function createSelectQuery($className, $loadReferencedRecords = false)
 	{
 		$schema = self::getSchemaInstance($className);
-		$schemaName = $schema->getName();
-		
-        $query = new ARSelectQueryBuilder();
-		$query->includeTable($schemaName);
+		$query = new ARSelectQueryBuilder();
+
+		$query->includeTable($schema->getName());
 
 		// Add main table fields to the select query
-        foreach($schema->getFieldList() as $fieldName => $field)
+		$fieldList = $schema->getFieldList();
+		foreach($fieldList as $field)
 		{
-			$query->addField($fieldName, $schemaName);
+			$query->addField($field->getName(), $schema->getName());
 		}
 
 		if ($loadReferencedRecords)
@@ -611,40 +621,43 @@ abstract class ActiveRecord implements Serializable
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
 	{
 		$referenceList = $schema->getForeignKeyList();
-		$schemaName = $schema->getName();
 
 		foreach($referenceList as $name => $field)
 		{
-            $foreignClassName = $field->getForeignClassName();
-			$tableAlias = $field->getReferenceName();
-			$foreignSchema = self::getSchemaInstance($foreignClassName);
-			$foreignTableName = $foreignSchema->getName();
-                			
+			$foreignClassName = $field->getForeignClassName();
+			
 			if (is_array($tables) && !isset($tables[$foreignClassName]))
 			{
 				continue;
 			}
 			
-			if(is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $tableAlias)
+			if(is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $field->getReferenceName())
 			{
 			    continue;
 			}
+			
+			
+			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			
 			if ($schema == $foreignSchema)
 			{
 			  	continue;
 			}
 			
-			$joined = $query->joinTable($foreignTableName, $schemaName, $field->getForeignFieldName(), $name, $tableAlias);
+			$tableAlias = $field->getReferenceName();
+			$joined = $query->joinTable($foreignSchema->getName(), $schema->getName(), $field->getForeignFieldName(), $field->getName(), $tableAlias);
+			
 			
 			if ($joined)
 			{
-				foreach($foreignSchema->getFieldList() as $foreignFieldName => $foreignField)
+				$foreignFieldList = $foreignSchema->getFieldList();
+				$foreignTableName = $foreignSchema->getName();
+				foreach($foreignFieldList as $foreignField)
 				{
-					$query->addField($foreignFieldName, $tableAlias, $tableAlias."_".$foreignFieldName);
+					$query->addField($foreignField->getName(), $tableAlias, $tableAlias."_".$foreignField->getName());
 				}
 				
-				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName); 
+				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schema->getName());			  
 
 				self::joinReferencedTables($foreignSchema, $query, $tables);
 			}
@@ -763,13 +776,24 @@ abstract class ActiveRecord implements Serializable
 		$fieldList = $schema->getFieldList();
 		foreach($fieldList as $name => $field)
 		{
-			if (!($field->getDataType() instanceof ARArray))
+			if (!($field->getDataType() instanceof  ARArray))
 			{
 				$recordData[$name] = $dataArray[$name];
 			}
-			else if ($dataArray[$name])
+			else
 			{
-				$recordData[$name] = unserialize($dataArray[$name]);
+				if (trim($dataArray[$name]) != "")
+				{
+					$restoredData = unserialize($dataArray[$name]);
+					if ($restoredData !== false)
+					{
+						$recordData[$name] = $restoredData;
+					}				  
+					else
+					{
+					  	throw new Exception($dataArray[$name]);
+					}
+				}    		    
 			}
 
 			unset($dataArray[$name]);
@@ -782,6 +806,7 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
+		    $schema = self::getSchemaInstance($className);
 			$schemas = $schema->getReferencedSchemas();
 			
 			// remove circular references
@@ -813,13 +838,8 @@ abstract class ActiveRecord implements Serializable
 				}
 				$schemas = $filteredSchemas;
 			}
-			else 
-            {
-                foreach ($schemas as $referenceName => $foreignSchema) 
-                {
-                    $schemas[$referenceName] = $foreignSchema[0];    
-                }
-            }
+			else foreach ($schemas as $referenceName => $foreignSchema) $schemas[$referenceName] = $foreignSchema[0];
+			
 			
 			foreach ($schemas as $referenceName => $foreignSchema)
 			{
@@ -830,17 +850,18 @@ abstract class ActiveRecord implements Serializable
 			{
 				$foreignSchemaName = $foreignSchema->getName();
 				
-				foreach($foreignSchema->getFieldList() as $fieldName => $field)
+				foreach($foreignSchema->getFieldList() as $field)
 				{
+					$fieldName = $field->getName();
 					$keyName = $referenceName . '_' . $fieldName;
 					
 					if (!($field->getDataType() instanceof ARArray))
 					{
 					    $referenceListData[$referenceName][$fieldName] = $dataArray[$keyName];
 					}
-					else if ($dataArray[$keyName])
+					else if (trim($dataArray[$keyName]) != "")
 					{
-						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);
+						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);						
 					}
 					
 					if ($field instanceof ARForeignKey)
@@ -862,6 +883,17 @@ abstract class ActiveRecord implements Serializable
 
 				$recordData[$referenceName] = $referenceListData[$referenceName];			  					
 			}
+			
+//			foreach($schema->getForeignKeyList() as $field)
+//			{
+//				$referenceName = $field->getReferenceName();				  
+//				echo "$referenceName<Br />";
+//				if (isset($referenceListData[$referenceName]))
+//				{
+//					$recordData[$referenceName] = $referenceListData[$referenceName];			  					
+//				}
+//			}
+			
 		}
 	
 		$miscData = $dataArray;
@@ -1044,8 +1076,8 @@ abstract class ActiveRecord implements Serializable
 	public function getRelatedRecordSet($foreignClassName, ARSelectFilter $filter, $loadReferencedRecords = false)
 	{
 		$this->appendRelatedRecordJoinCond($foreignClassName, $filter);
-
-		return call_user_func_array(array('ActiveRecord', 'getRecordSet'), array($foreignClassName, $filter, $loadReferencedRecords));
+		//return self::getRecordSet($foreignClassName, $filter, $loadReferencedRecords);
+		return __invokeStaticMethod('ActiveRecord', "getRecordSet", array($foreignClassName, $filter, $loadReferencedRecords));
 	}
 
 	private function appendRelatedRecordJoinCond($foreignClassName, ARSelectFilter $filter)
@@ -1303,6 +1335,7 @@ abstract class ActiveRecord implements Serializable
 			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
 			$filter->mergeCondition($cond);
 		}
+		
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
 		self::getLogger()->logQuery($updateQuery);
@@ -1782,7 +1815,12 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function markAsDeleted()
 	{
-		$this->isDeleted = false;
+		$this->isDeleted = true;
+	}
+	
+	public function isDeleted()
+	{
+		return $this->isDeleted;
 	}
 
 	/**
