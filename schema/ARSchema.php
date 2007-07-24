@@ -193,6 +193,9 @@ class ARSchema
 				
                 $sub = $refSchema->getReferencedSchemas($this);                    
 				$ret = array_merge($ret, $sub);
+				
+			     // remove circular references
+				unset($ret[$this->getName()]);
 			}
 			
 			$this->referencedSchemaList = $ret;

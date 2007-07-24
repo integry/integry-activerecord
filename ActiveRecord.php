@@ -204,6 +204,7 @@ abstract class ActiveRecord implements Serializable
 		{			
 		    if (isset($data[$name]))
 		    {
+/*
                 if ($data[$name] instanceof ARValueMapper)
                 {
                     $valueMapper = $data[$name];
@@ -214,6 +215,9 @@ abstract class ActiveRecord implements Serializable
                 {
                     $valueMapper = new ARValueMapper($field, $data[$name]);   
                 }
+*/
+                $valueMapper = new ARValueMapper($field, $data[$name]);   
+                    
             }
             else
             {
@@ -248,10 +252,6 @@ abstract class ActiveRecord implements Serializable
     					    $this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
     					}
     				}
-    				else
-    				{
-    				  	//echo $data[$name];
-    				}
     			}
 							
 				// Making first letter lowercase
@@ -279,7 +279,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function getSchemaInstance($className)
 	{
-	    if (empty(self::$schemaMap[$className]))
+	    if (!isset(self::$schemaMap[$className]))
 		{
 			self::$schemaMap[$className] = new ARSchema();
 
@@ -290,6 +290,7 @@ abstract class ActiveRecord implements Serializable
 				throw new ARException("Invalid schema (".$className.") definition! Make sure it has a name assigned and fields defined (record structure)");
 			}
 		}
+		
 		return self::$schemaMap[$className];
 	}
 
@@ -757,24 +758,22 @@ abstract class ActiveRecord implements Serializable
 		$referenceListData = array();
 		$recordData = array();
 		$miscData = array();
+        $recordKeys = array();
 
 		$schema = self::getSchemaInstance($className);
 
-		$fieldList = $schema->getFieldList();
-		foreach($fieldList as $name => $field)
+        foreach($schema->getArrayFieldList() as $name => $field)
 		{
-			if (!($field->getDataType() instanceof ARArray))
-			{
-				$recordData[$name] = $dataArray[$name];
-			}
-			else if ($dataArray[$name])
-			{
-				$recordData[$name] = unserialize($dataArray[$name]);
-			}
-
-			unset($dataArray[$name]);
+			$dataArray[$name] = unserialize($dataArray[$name]);
 		}
 
+		foreach ($schema->getFieldList() as $name => $field)
+		{
+			$recordData[$name] = $dataArray[$name];
+        }
+        
+        $recordKeys = array_keys($recordData);
+        
 		if ($transformArray)
 		{
 		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $className));
@@ -783,9 +782,6 @@ abstract class ActiveRecord implements Serializable
 		if ($loadReferencedRecords)
 		{
 			$schemas = $schema->getReferencedSchemas();
-			
-			// remove circular references
-			unset($schemas[$className]);
 			
 			// remove schemas that were not loaded with this query
 			if (is_array($loadReferencedRecords))
@@ -801,9 +797,9 @@ abstract class ActiveRecord implements Serializable
 				    }
 				    else
 				    {
-				        foreach($schemas[$tableAlias] as $unfilteredSchema)
+				        foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
 				        {
-				            if($unfilteredSchema->getName() == $tableName)
+                            if($unfilteredSchema->getName() == $tableName)
 				            {
 				                $filteredSchemas[$tableAlias] = array();
 				                $filteredSchemas[$tableAlias] = $unfilteredSchema;
@@ -830,41 +826,38 @@ abstract class ActiveRecord implements Serializable
 			{
 				$foreignSchemaName = $foreignSchema->getName();
 				
+				foreach ($foreignSchema->getArrayFieldList() as $fieldName => $field)
+				{
+					$keyName = $referenceName . '_' . $fieldName;
+					$dataArray[$keyName] = unserialize($dataArray[$keyName]);
+                }
+				
 				foreach($foreignSchema->getFieldList() as $fieldName => $field)
 				{
 					$keyName = $referenceName . '_' . $fieldName;
-					
-					if (!($field->getDataType() instanceof ARArray))
-					{
-					    $referenceListData[$referenceName][$fieldName] = $dataArray[$keyName];
-					}
-					else if ($dataArray[$keyName])
-					{
-						$referenceListData[$referenceName][$fieldName] = unserialize($dataArray[$keyName]);
-					}
-					
-					if ($field instanceof ARForeignKey)
-					{
-						$deeperForeignSchemaName = $field->getForeignTableName();
-						if ($foreignSchemaName != $deeperForeignSchemaName)
-						{
-							$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];						  
-						}
-					}
-					
-					unset($dataArray[$keyName]);
+					$referenceListData[$referenceName][$fieldName] = $dataArray[$keyName];
+					$recordKeys[] = $keyName;
 				}	
+				
+				foreach ($foreignSchema->getForeignKeyList() as $fieldName => $field)
+				{
+					$deeperForeignSchemaName = $field->getForeignTableName();
+					if ($foreignSchemaName != $deeperForeignSchemaName)
+					{
+						$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];						  
+					}                    
+                }
 				
 				if ($transformArray)
 				{
 				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $referenceName));
 				}		
 
-				$recordData[$referenceName] = $referenceListData[$referenceName];			  					
+				$recordData[$referenceName] = $referenceListData[$referenceName];
 			}
 		}
 	
-		$miscData = $dataArray;
+        $miscData = array_diff_key($dataArray, array_flip($recordKeys));
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => $miscData);
 	}
 
@@ -975,7 +968,6 @@ abstract class ActiveRecord implements Serializable
 			$query->addField("COUNT(*)", null, "totalCount");
 			$query->setFilter($counterFilter);
 
-			//$counterQuery = "SELECT COUNT(*) AS totalCount FROM " . $schema->getName() . " " . $counterFilter->createString();
 			$counterQuery = $query->createString();
 
 			self::getLogger()->logQuery($counterQuery);
@@ -1520,7 +1512,7 @@ abstract class ActiveRecord implements Serializable
 	 * Array is created recursively: if this instance containes a reference to other
 	 * ActiveRecord instance (foreign key) than it also calls its toArray() method
 	 *
-	 * @param bool $forse Forse to recreate array
+	 * @param bool $force Force to recreate array
 	 * 
 	 * @return array
 	 */
@@ -1536,8 +1528,6 @@ abstract class ActiveRecord implements Serializable
 	   	{
 			return self::$toArrayData[$currentIdentifier];
 		}
-
-	    self::$toArrayLevel++;
 	    
 		$data = array(); 
 		
@@ -1545,42 +1535,35 @@ abstract class ActiveRecord implements Serializable
 		
 		foreach($this->data as $name => $value)
 		{
-		    if ($value->getField() instanceof ARForeignKey)
+		    $fieldValue = $value->get();
+		    
+            if ($value->getField() instanceof ARForeignKey)
 			{
-				if ($value->get() != null)
+				if ($fieldValue != null)
 				{
 				    $varName = $value->getField()->getForeignClassName();
-				    if(preg_match('/ID$/', $name)) 
+				    if (substr($name, -2) == 'ID') 
 					{
 						$varName = ucfirst(substr($name, 0, -2));
 		    		}	    
 
-                    $data[$varName] = &$value->get()->toArray($force);   
+                    $data[$varName] = &$fieldValue->toArray($force);
 				}
 			}
 			else
 			{
-			    if($value->get() instanceof ARSerializableDateTime)
+			    if ($fieldValue instanceof ARSerializableDateTime)
 	    		{
-                    $data[$name] = $value->get()->format('Y-m-d H:i:s');
+                    $data[$name] = $fieldValue->format('Y-m-d H:i:s');
 	    		}
 	    		else
 	    		{
-			        $data[$name] = $value->get();
+			        $data[$name] = $fieldValue;
 	    		}
 			}
 		}
 	
 		$data = call_user_func_array(array($className, 'transformArray'), array($data, $className));
-		
-	    self::$toArrayLevel--;			
-
-		/*
-        if (0 == self::$toArrayLevel)
-		{
-			self::$toArrayData = array();	
-		}
-		*/
 		
 		if (!$this->isLoaded())
 		{
