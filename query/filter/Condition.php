@@ -280,6 +280,12 @@ class INCond extends BinaryCondition
 		{
 		  	$rightSide = implode(', ', $rightSide);
 		}
+		
+		if (!$rightSide)
+		{
+			$rightSide = 0;
+		}
+		
 		parent::__construct($leftSide, "(".$rightSide.")");
 	}
 }
