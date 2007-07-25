@@ -85,24 +85,6 @@ class ARLogger
 		$this->addLogItem($actionInfo, self::LOG_ACTION);
 	}
 
-	/*
-	public function output() {
-	$logData = "";
-	$logID = $this->startTime;
-
-	foreach ($this->log as $item) {
-	$logData .=  $logID . " | " . $this->createLogItemStr($item);
-	}
-	if (empty($this->logFileName)) {
-	$filePath = dirname(__FILE__) . DIRECTORY_SEPARATOR . "activerecord.log";
-	} else {
-	$filePath = $this->logFileName;
-	}
-	file_put_contents($filePath, $logData, FILE_APPEND);
-	return $logData;
-	}
-	 */
-
 	public function enable()
 	{
 		$this->isEnabled = true;
