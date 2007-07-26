@@ -61,9 +61,10 @@ interface ARForeignKey
  */
 class ARForeignKeyField extends ARField implements ARForeignKey
 {
-	protected $foreignTableName = "";
-	protected $foreignClassName = "";
-	protected $foreignFieldName = "";
+	protected $foreignTableName;
+	protected $foreignClassName;
+	protected $foreignFieldName;
+	protected $referenceName;
 
 	/**
 	 * Creates ARForeignKeyField instance
@@ -77,9 +78,10 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 	public function __construct($fieldName, $foreignTableName, $foreignFieldName, $foreignClassName = null, ARSchemaDataType $dataType)
 	{
 		parent::__construct($fieldName, $dataType);
-		$this->foreignClassName = $foreignClassName;
+		$this->foreignClassName = !empty($foreignClassName) ? $foreignClassName : $foreignTableName;
 		$this->foreignTableName = $foreignTableName;
 		$this->foreignFieldName = $foreignFieldName;
+		$this->referenceName = ucfirst(substr($this->name, 0, -2));
 	}
 
 	/**
@@ -92,14 +94,7 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 	 */
 	public function getForeignClassName()
 	{
-		if (!empty($this->foreignClassName))
-		{
-			return $this->foreignClassName;
-		}
-		else
-		{
-			return $this->foreignTableName;
-		}
+		return $this->foreignClassName;
 	}
 
 	/**
@@ -124,7 +119,7 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 
 	public function getReferenceName()
 	{
-	    return ucfirst(substr($this->name, 0, -2));
+	    return $this->referenceName;
 	}
 }
 

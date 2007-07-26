@@ -28,7 +28,7 @@ class ARSchema
 	/**
 	 *	Cache array of referenced schema instances for faster lookups
 	 */
-	private $referencedSchemaList = array();
+	private $referencedSchemaList = null;
 
 	public function registerField(ARField $schemaField)
 	{
@@ -156,10 +156,10 @@ class ARSchema
 		$fieldList = array();
 		foreach($this->fieldList as $name => $field)
 		{
-			$fieldStr = $this->getName().".".$name;
+			$fieldStr = $this->tableName . '.' . $name;
 			if (!empty($prefix))
 			{
-				$fieldStr .= " AS ".$prefix.$name;
+				$fieldStr .= ' AS ' . $prefix.$name;
 			}
 			$fieldList[] = $fieldStr;
 		}
@@ -173,29 +173,31 @@ class ARSchema
 	 */
 	public function getReferencedSchemas($circularReference = false)
 	{
-		if (!$this->referencedSchemaList)
+		if (is_null($this->referencedSchemaList))
 		{
 			$ret = array();
 			
-			$referenceList = $this->getForeignKeyList();		
-	
-			foreach($referenceList as $name => $refField)
-			{
-				$foreignClassName = $refField->getForeignClassName();
-				$refSchema = ActiveRecord::getSchemaInstance($foreignClassName);
+			foreach($this->getForeignKeyList() as $name => $refField)
+			{				
+                $refSchema = ActiveRecord::getSchemaInstance($refField->getForeignClassName());
 				if ($this === $refSchema || $refSchema === $circularReference)
 				{
 				  	continue;
 				}
 				
-				if(!isset($ret[$refField->getReferenceName()])) $ret[$refField->getReferenceName()] = array();
-				$ret[$refField->getReferenceName()][] = $refSchema;
+				$refName = $refField->getReferenceName();
+                if(!isset($ret[$refName])) 
+				{
+                    $ret[$refName] = array();
+                }
+
+				$ret[$refName][] = $refSchema;
 				
                 $sub = $refSchema->getReferencedSchemas($this);                    
 				$ret = array_merge($ret, $sub);
 				
 			     // remove circular references
-				unset($ret[$this->getName()]);
+				unset($ret[$this->tableName]);
 			}
 			
 			$this->referencedSchemaList = $ret;
@@ -210,24 +212,12 @@ class ARSchema
 	 */
 	public function isValid()
 	{
-		if (!empty($this->tableName))
-		{
-			return true;
-		}
-		else
-		{
-			false;
-		}
+		return !empty($this->tableName);
 	}
 
 	public function toArray()
 	{
-		$fieldArray = array();
-		foreach($this->fieldList as $field)
-		{
-			$fieldArray[] = $field->getName();
-		}
-		return $fieldArray;
+		return array_keys($this->fieldList);
 	}
 }
 

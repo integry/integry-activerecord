@@ -1,5 +1,7 @@
 <?php
 
+include_once(dirname(__file__) . '/ARFieldHandleInterface.php');
+
 class ARExpressionHandle implements ARFieldHandleInterface
 {
   	protected $expression;

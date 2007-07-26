@@ -1,6 +1,7 @@
 <?php
 
-require_once("schema/ARField.php");
+include_once(dirname(__file__) . '/schema/ARField.php');
+include_once(dirname(__file__) . '/ARSerializableDateTime.php');
 
 /**
  * Binds a value to a schema field
@@ -61,7 +62,7 @@ class ARValueMapper implements Serializable
 		$this->field = $field;
 		$this->value = $value;
 		
-		if ($this->field->getDataType() instanceof ARDateTime && !($value instanceof ARSerializableDateTime))
+		if (($this->field->getDataType() instanceof ARDateTime) && !($value instanceof ARSerializableDateTime))
 		{
             $this->value = new ARSerializableDateTime($this->value);
 		}

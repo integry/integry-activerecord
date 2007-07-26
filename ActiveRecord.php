@@ -18,8 +18,15 @@ if (!function_exists("__autoload"))
 	}
 }
 
-include_once(dirname(__file__) . "/schema/ARSchema.php");
-include_once(dirname(__file__) . "/query/filter/Condition.php");
+$dir = dirname(__file__) . '/';
+include_once($dir . 'ARSet.php');
+include_once($dir . 'ARValueMapper.php');
+include_once($dir . 'schema/ARSchema.php');
+include_once($dir . 'query/filter/ARFieldHandle.php');
+include_once($dir . 'query/filter/ARExpressionHandle.php');
+include_once($dir . 'query/filter/ARSelectFilter.php');
+include_once($dir . 'query/filter/Condition.php');
+include_once($dir . 'query/ARSelectQueryBuilder.php');
 
 /**
  *
@@ -152,11 +159,6 @@ abstract class ActiveRecord implements Serializable
 	public static $transactionLevel = 0;
 	
 	public static $logger = null;	
-	
-	/**
-	 *	Current level of toArray call stack
-	 */
-	protected static $toArrayLevel = 0;
 	
 	/**
 	 *	Cached object array data from the current toArray call stack
@@ -407,7 +409,6 @@ abstract class ActiveRecord implements Serializable
 	public static function getNewInstance($className, $data = array())
 	{	    
 	    return new $className($data);
-		//self::getLogger()->logObject($obj);
 	}
 
 	/**
@@ -444,7 +445,6 @@ abstract class ActiveRecord implements Serializable
 			$instance = self::getNewInstance($className, $data);
 			$instance->setID($recordID, false);
 			self::storeToPool($instance);
-			//self::getLogger()->logObject($instance, true);
 		}
 		else if(!$instance->isLoaded() && !empty($data))
 		{
@@ -497,9 +497,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	private static function storeToPool(ActiveRecord $instance)
 	{		
-        $hash = self::getRecordHash($instance->getID());
-   		$className = get_class($instance);
-		self::$recordPool[$className][$hash] = $instance;
+		self::$recordPool[get_class($instance)][self::getRecordHash($instance->getID())] = $instance;
 	}
 
 	/**
@@ -509,7 +507,7 @@ abstract class ActiveRecord implements Serializable
 	 * @param mixed $recordID
 	 * @return ActiveRecord Instance of requested object or null if object is not stored in a pool
 	 */
-	public static function retrieveFromPool($className, $recordID=null)
+	public static function retrieveFromPool($className, $recordID = null)
 	{
 		if(!is_null($recordID))
 		{		    
@@ -637,25 +635,26 @@ abstract class ActiveRecord implements Serializable
 
 	protected final function loadData($loadReferencedRecords, ARSelectQueryBuilder $query)
 	{
-		$PKList = $this->schema->getPrimaryKeyList();
+		$className = get_class($this);
 		$PKCond = null;
-		foreach($PKList as $PK)
+		foreach($this->schema->getPrimaryKeyList() as $name => $PK)
 		{
-			if ($PK instanceof ARForeignKey)
+            if ($PK instanceof ARForeignKey)
 			{
-				$PKValue = $this->data[$PK->getName()]->get()->getID();
+				$PKValue = $this->data[$name]->get()->getID();
 			}
 			else
 			{
-				$PKValue = $this->data[$PK->getName()]->get();
+				$PKValue = $this->data[$name]->get();
 			}
+			
 			if ($PKCond == null)
 			{
-				$PKCond = new EqualsCond(new ARFieldHandle(get_class($this), $PK->getName()), $PKValue);
+				$PKCond = new EqualsCond(new ARFieldHandle($className, $name), $PKValue);
 			}
 			else
 			{
-				$PKCond->addAND(new EqualsCond(new ARFieldHandle(get_class($this), $PK->getName()), $PKValue));
+				$PKCond->addAND(new EqualsCond(new ARFieldHandle($className, $name), $PKValue));
 			}
 		}
 
@@ -664,14 +663,14 @@ abstract class ActiveRecord implements Serializable
 
 		if (empty($rowDataArray))
 		{
-			throw new ARNotFoundException(get_class($this), $this->getID());
+			throw new ARNotFoundException($className, $this->getID());
 		}
 		if (count($rowDataArray) > 1)
 		{
 			throw new ARException("Unexpected behavior: got more than one record from a database while loading single instance data");
 		}
 
-		$parsedRowData = self::prepareDataArray(get_class($this), $rowDataArray[0], $loadReferencedRecords);
+        $parsedRowData = self::prepareDataArray($className, $this->schema, $rowDataArray[0], $loadReferencedRecords);
 		
 		$this->createDataAccessVariables($parsedRowData['recordData']);
 		
@@ -689,9 +688,8 @@ abstract class ActiveRecord implements Serializable
 	 * @param array $dataArray
 	 * @return mixed
 	 */
-	protected static function extractRecordID($className, $dataArray)
+	protected static function extractRecordID(ARSchema $schema, $dataArray)
 	{
-		$schema = self::getSchemaInstance($className);
 		$PKList = $schema->getPrimaryKeyList();
 
 		if (count($PKList) == 1)
@@ -720,14 +718,12 @@ abstract class ActiveRecord implements Serializable
 	 * @param string $className
 	 * @param array $dataArray
 	 */
-	public static function prepareDataArray($className, $dataArray, $loadReferencedRecords = false, $transformArray = false)
+    public static function prepareDataArray($className, ARSchema $schema, $dataArray, $loadReferencedRecords = false, $transformArray = false)
 	{
 		$referenceListData = array();
 		$recordData = array();
 		$miscData = array();
         $recordKeys = array();
-
-		$schema = self::getSchemaInstance($className);
 
         foreach($schema->getArrayFieldList() as $name => $field)
 		{
@@ -736,10 +732,10 @@ abstract class ActiveRecord implements Serializable
 
 		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
 		$dataArray = array_diff_key($dataArray, $recordData);
-        
+
 		if ($transformArray)
 		{
-		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $className));
+		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $schema));
 		}					
 
 		if ($loadReferencedRecords)
@@ -778,7 +774,7 @@ abstract class ActiveRecord implements Serializable
                 }
             }
 			
-			$referenceListData = array_fill_keys(array_keys($schemas), array());
+            $referenceListData = array_fill_keys(array_keys($schemas), array());
 						
 			foreach ($schemas as $referenceName => $foreignSchema)
 			{
@@ -811,7 +807,7 @@ abstract class ActiveRecord implements Serializable
 				
 				if ($transformArray)
 				{
-				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $referenceName));
+				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $foreignSchema));
 				}		
 
 				$recordData[$referenceName] = $referenceListData[$referenceName];
@@ -902,10 +898,11 @@ abstract class ActiveRecord implements Serializable
 
 		$queryResultData = self::fetchDataFromDB($query);
 		$recordSet = new ARSet($query->getFilter());
-		foreach($queryResultData as $rowData)
+		$schema = self::getSchemaInstance($className);
+        foreach($queryResultData as $rowData)
 		{
-			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords);
-			$recordID = self::extractRecordID($className, $rowData);
+			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords);
+			$recordID = self::extractRecordID($schema, $rowData);
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
 		    
@@ -1518,7 +1515,7 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 	
-		$data = call_user_func_array(array($className, 'transformArray'), array($data, $className));
+		$data = call_user_func_array(array($className, 'transformArray'), array($data, $this->schema));
 		
 		if (!$this->isLoaded())
 		{
@@ -1565,15 +1562,13 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 		
-		$data = call_user_func_array(array(get_class($this), 'transformArray'), array($data, get_class($this)));
-		
-		return $data;
+		return call_user_func_array(array(get_class($this), 'transformArray'), array($data, $this->schema));
 	}
 
 	/**
 	 *	Perform model specific array transformation
 	 */
-	protected static function transformArray($array)
+	protected static function transformArray($array, ARSchema $schema)
 	{
 		return $array;  	
 	}
@@ -1601,9 +1596,10 @@ abstract class ActiveRecord implements Serializable
 		$queryResultData = self::fetchDataFromDB($query);
 		$resultDataArray = array();
 
-		foreach($queryResultData as $rowData)
+		$schema = self::getSchemaInstance($className);
+        foreach($queryResultData as $rowData)
 		{
-			$parsedRowData = self::prepareDataArray($className, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
+			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
 			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
 		}
     
@@ -1674,9 +1670,10 @@ abstract class ActiveRecord implements Serializable
 
 	public static function getLogger()
 	{
-		if (empty(self::$logger))
+        if (empty(self::$logger))
 		{
-			self::$logger = new ARLogger();
+			include_once dirname(__file__) . '/ARLogger.php';
+            self::$logger = new ARLogger();
 		}
 		return self::$logger;
 	}

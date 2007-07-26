@@ -1,5 +1,7 @@
 <?php
 
+include_once(dirname(__file__) . '/ARFieldHandleInterface.php');
+
 /**
  * Table field access handle
  *
