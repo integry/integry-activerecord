@@ -497,7 +497,8 @@ abstract class ActiveRecord implements Serializable
 	 */
 	private static function storeToPool(ActiveRecord $instance)
 	{		
-		self::$recordPool[get_class($instance)][self::getRecordHash($instance->getID())] = $instance;
+//		var_dump(self::getRecordHash($instance->getID()));
+        self::$recordPool[get_class($instance)][self::getRecordHash($instance->getID())] = $instance;
 	}
 
 	/**
@@ -1863,7 +1864,13 @@ abstract class ActiveRecord implements Serializable
             }
         }
 
-        $this->createDataAccessVariables($array['data']);
+        $data = array();
+        foreach ($array['data'] as $key => $valueMapper)
+        {
+            $data[$key] = ($valueMapper instanceof ARValueMapper) ? $valueMapper->get() : $valueMapper;
+        }
+
+        $this->createDataAccessVariables($data);
         unset($array['data']);
         
         foreach ($array as $key => $value)

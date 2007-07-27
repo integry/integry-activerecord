@@ -8,13 +8,18 @@ class ARSerializableDateTime extends DateTime implements Serializable
     
     public function __construct($dateString = false)
     {
+        if (is_object($dateString))
+        {
+            throw new ApplicationException();
+        }
+
         $this->dateString = $dateString;
         
         if(is_null($dateString) || '0000-00-00 00:00:00' == $dateString)
         {
             $this->isNull = true;
         }
-        
+                
         parent::__construct($dateString);
     }
 
