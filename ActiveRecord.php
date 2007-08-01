@@ -512,7 +512,8 @@ abstract class ActiveRecord implements Serializable
 		if(!is_null($recordID))
 		{		    
 		    $hash = self::getRecordHash($recordID);
-			if (!empty(self::$recordPool[$className][$hash]))
+
+            if (!empty(self::$recordPool[$className][$hash]))
 			{
 				return self::$recordPool[$className][$hash];
 			}
@@ -1863,7 +1864,13 @@ abstract class ActiveRecord implements Serializable
             }
         }
 
-        $this->createDataAccessVariables($array['data']);
+        $variables = array();
+        foreach ($array['data'] as $key => $valueMapper)
+        {
+            $variables[$key] = $valueMapper instanceof ARValueMapper ? $valueMapper->get() : $valueMapper;
+        }
+
+        $this->createDataAccessVariables($variables);
         unset($array['data']);
         
         foreach ($array as $key => $value)

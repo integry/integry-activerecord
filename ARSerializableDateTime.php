@@ -8,9 +8,10 @@ class ARSerializableDateTime extends DateTime implements Serializable
     
     public function __construct($dateString = false)
     {
-        if (is_object($dateString))
+        if ($dateString instanceof ARValueMapper)
         {
-            throw new ApplicationException();
+            $dateString = $dateString->get();
+            //throw new ApplicationException();
         }
 
         $this->dateString = $dateString;
