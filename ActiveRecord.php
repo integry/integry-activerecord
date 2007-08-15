@@ -1169,7 +1169,12 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function save($forceOperation = 0)
 	{
-		$this->setupDBConnection();
+		if ($this->isDeleted())
+		{
+            return false;
+        }
+        
+        $this->setupDBConnection();
 		if ($forceOperation)		
 		{
 		  	$action = ($forceOperation == self::PERFORM_UPDATE) ? self::PERFORM_UPDATE : self::PERFORM_INSERT;
@@ -1196,15 +1201,17 @@ abstract class ActiveRecord implements Serializable
 				
 		if (self::PERFORM_UPDATE == $action)
 		{
-			$this->update();
+			$res = $this->update();
 		}
 		else
 		{
-			$this->insert();
+			$res = $this->insert();
 		}
 		
 		$this->resetModifiedStatus();
 		$this->markAsLoaded();
+		
+		return $res;
 	}
 
 	public function resetModifiedStatus()
@@ -1290,7 +1297,7 @@ abstract class ActiveRecord implements Serializable
 		$this->markAsNotLoaded();
 		$this->cachedId = false;
 		$this->markAsDeleted();
-				
+			           	
 		return true;
 	}
 
@@ -1729,7 +1736,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function markAsDeleted()
 	{
-		$this->isDeleted = true;
+        $this->isDeleted = true;
 	}
 	
 	public function isDeleted()
