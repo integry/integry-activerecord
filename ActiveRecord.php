@@ -1736,7 +1736,10 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function markAsDeleted()
 	{
-        $this->isDeleted = true;
+        if ($this->isExistingRecord())
+        {
+            $this->isDeleted = true;
+        }
 	}
 	
 	public function isDeleted()
