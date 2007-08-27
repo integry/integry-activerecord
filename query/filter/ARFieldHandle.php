@@ -35,7 +35,15 @@ class ARFieldHandle implements ARFieldHandleInterface
 	public function prepareValue($value)
 	{
 		$dataType = $this->field->getDataType();
-		if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
+		
+		// convert timestamps
+        if (is_numeric($value) && ($dataType instanceof ARPeriod))
+		{
+            return date("'y-m-d'", $value);
+        }
+		
+        // "escape" strings
+        if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
 		{
 			if (!strlen($value))
 			{
@@ -44,7 +52,8 @@ class ARFieldHandle implements ARFieldHandleInterface
 			
 			return '0x' . bin2hex($value);
 		}
-		else
+		
+        else
 		{
 			return $value;
 		}
