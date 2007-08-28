@@ -39,7 +39,7 @@ class ARFieldHandle implements ARFieldHandleInterface
 		// convert timestamps
         if (is_numeric($value) && ($dataType instanceof ARPeriod))
 		{
-            return date("'y-m-d'", $value);
+            return date("'Y-m-d H:i:s'", $value);
         }
 		
         // "escape" strings
