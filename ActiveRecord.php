@@ -1034,13 +1034,14 @@ abstract class ActiveRecord implements Serializable
 	 * @param string $className
 	 * @param ARDeleteFilter $filter
 	 */
-	public static function deleteRecordSet($className, ARDeleteFilter $filter)
+	public static function deleteRecordSet($className, ARDeleteFilter $filter, $cleanUp = true)
 	{
 		$schema = self::getSchemaInstance($className);
 		$db = self::getDBConnection();
 
 		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString() ."\n";
-		if(isset(self::$recordPool[$className]))
+		
+		if($cleanUp && isset(self::$recordPool[$className]))
 		{
 			foreach(self::$recordPool[$className] as $record)
 			{
@@ -1087,9 +1088,17 @@ abstract class ActiveRecord implements Serializable
 				}
 			}
 		}
-
+		
+        $hash = self::getRecordHash($recordID);
+        if(isset(self::$recordPool[$className][$hash]))
+        {
+            $record = self::$recordPool[$className][$hash];
+            $record->markAsNotLoaded();
+            $record->markAsDeleted();
+        }
+        
 		$filter->setCondition($PKValueCond);
-		self::deleteRecordSet($className, $filter);
+		self::deleteRecordSet($className, $filter, false);
 	}
 
 	/**
@@ -1105,6 +1114,7 @@ abstract class ActiveRecord implements Serializable
 		$db = self::getDBConnection();
 
 		$updateQuery = "UPDATE ".$schema->getName()." ".$filter->createString();
+		
 		self::getLogger()->logQuery($updateQuery);
 		return $db->executeUpdate($updateQuery);
 	}
@@ -1155,7 +1165,7 @@ abstract class ActiveRecord implements Serializable
 		}
 		else
 		{
-			return false;
+            return false;
 		}
 	}
 
