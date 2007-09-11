@@ -105,7 +105,8 @@ class ARValueMapper implements Serializable
 	        return false;
 	    }
 	    
-	    if (!is_object($value) && ($value === $this->value))
+	    // === also checks variable type, so we use == to compare values
+        if (!is_object($value) && ($value == $this->value))
 		{
             return false;
         }        
