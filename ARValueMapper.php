@@ -106,10 +106,10 @@ class ARValueMapper implements Serializable
 	    }
 	    
 	    // === also checks variable type, so we use == to compare values
-        if (!is_object($value) && ($value == $this->value))
+        if (!is_null($this->initialValue) && (!is_object($value) && ($value == $this->value)) )
 		{
             return false;
-        }        
+        }       
         
         if ($this->field instanceof ARForeignKey)
 		{
