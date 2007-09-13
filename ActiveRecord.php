@@ -299,6 +299,11 @@ abstract class ActiveRecord implements Serializable
 		return self::$dbConnection;
 	}
 
+    public static function resetDBConnection()
+    {
+        self::$dbConnection = null;
+    }
+
 	/**
 	 * Sets a primary key value for a record
 	 *
