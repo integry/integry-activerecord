@@ -630,10 +630,11 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function load($loadReferencedRecords = false)
 	{
-		if ($this->isLoaded)
+		if ($this->isLoaded || !$this->isExistingRecord())
 		{
 			return ;
 		}
+		
 		$query = self::createSelectQuery(get_class($this), $loadReferencedRecords);
 		$this->loadData($loadReferencedRecords, $query);
 		$this->isDeleted = false;
