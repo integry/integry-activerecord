@@ -278,7 +278,7 @@ class INCond extends BinaryCondition
 	{
 		if (is_array($rightSide))
 		{
-		  	$rightSide = implode(', ', $rightSide);
+		  	$rightSide = implode(', ', array_filter($rightSide, array($this, 'filterEmptyValues')));
 		}
 		
 		if (!$rightSide)
@@ -288,6 +288,11 @@ class INCond extends BinaryCondition
 		
 		parent::__construct($leftSide, "(".$rightSide.")");
 	}
+	
+	private function filterEmptyValues($value)
+	{
+        return trim($value);
+    }
 }
 
 /**
