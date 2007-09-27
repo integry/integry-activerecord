@@ -291,7 +291,7 @@ class INCond extends BinaryCondition
 	
 	private function filterEmptyValues($value)
 	{
-        return trim($value);
+        return is_numeric($value) || trim($value);
     }
 }
 
