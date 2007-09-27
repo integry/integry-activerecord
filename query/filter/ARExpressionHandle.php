@@ -13,7 +13,7 @@ class ARExpressionHandle implements ARFieldHandleInterface
 	
 	public function prepareValue($value)
 	{
-		return '"' . $value . '"';
+		return '0x' . bin2hex($value);
 	}	
 	
 	public function toString()
