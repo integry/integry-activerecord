@@ -51,13 +51,6 @@ class ARSelectFilter extends ARFilter
     private $fieldListForGroup = array();
 
 	/**
-	 * A list of tables to JOIN
-	 *
-	 * @var array
-	 */
-	private $joinList = array();
-
-	/**
 	 * A list of additional fields to select
 	 *
 	 * @var array
@@ -270,38 +263,6 @@ class ARSelectFilter extends ARFilter
 	{
         return ($this->havingCondition instanceof Condition);
     }
-
-	/**
-	 * Joins table by using supplied params
-	 *
-	 * @param string $tableName
-	 * @param string $mainTableName
-	 * @param string $tableJoinFieldName
-	 * @param string $mainTableJoinFieldName
-	 * @param string $tableAliasName	Necessary when joining the same table more than one time (LEFT JOIN tablename AS table_1)
-	 */
-	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
-	{
-		
-		$join = array("tableName" => $tableName, 
-					  "mainTableName" => $mainTableName, 
-					  "tableJoinFieldName" => $tableJoinFieldName, 
-					  "mainTableJoinFieldName" => $mainTableJoinFieldName,
-					  "tableAliasName" => $tableAliasName
-					  );
-
-		if (!$tableAliasName)
-		{
-            $tableAliasName = $tableName;
-        }  
-			
-		$this->joinList[$tableAliasName] = $join;
-	}	
-	
-	public function getJoinList()
-	{
-	  	return $this->joinList;
-	}
 	
 	public function addField($fieldName, $tableName = null, $fieldNameInResult = null)
 	{

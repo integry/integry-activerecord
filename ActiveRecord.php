@@ -1114,15 +1114,27 @@ abstract class ActiveRecord implements Serializable
 	 * @param ARUpdateFilter $filter
 	 * @return unknown
 	 */
-	public static function updateRecordSet($className, ARUpdateFilter $filter)
+	public static function updateRecordSet($className, ARUpdateFilter $filter, $joinReferencedTables = false)
 	{
 		$schema = self::getSchemaInstance($className);
 		$db = self::getDBConnection();
 
-		$updateQuery = "UPDATE ".$schema->getName()." ".$filter->createString();
+        $query = new ARSelectQueryBuilder();
+		$query->includeTable($className);
+
+		if ($joinReferencedTables)
+		{
+            $tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
+			self::joinReferencedTables($schema, $query, $tables);		  
+		}
 		
-		self::getLogger()->logQuery($updateQuery);
-		return $db->executeUpdate($updateQuery);
+		$query->setFilter($filter);
+		$query->removeFieldList();
+				
+		$sql = preg_replace('/^SELECT[ ]*FROM/', 'UPDATE', $query->createString());
+		
+		self::getLogger()->logQuery($sql);
+		return $db->executeUpdate($sql);
 	}
 
 	/**

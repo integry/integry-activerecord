@@ -40,7 +40,7 @@ class ARSelectQueryBuilder
 	 *
 	 * @param ARSelectFilter $filter
 	 */
-	public function setFilter(ARSelectFilter $filter)
+	public function setFilter(ARFilter $filter)
 	{
 		$this->filter = $filter;
 	}
@@ -118,19 +118,20 @@ class ARSelectQueryBuilder
 	 */
 	public function createString()
 	{
-		$filterFieldList = $this->filter->getFieldList();
+		$filterFieldList = ($this->filter instanceof ARSelectFilter) ? $this->filter->getFieldList() : array();
 		$fields = array_merge($this->fieldList, $filterFieldList);
 				
 		$tableAliases = array();
 		
 		$fieldListStr = "";
+		$preparedFieldList = array();
+		
 		if (empty($fields))
 		{
 			$fieldStr = "*";
 		}
 		else
-		{
-			$preparedFieldList = array();
+		{			
 			foreach($fields as $fieldInfo)
 			{
 				$field = "";

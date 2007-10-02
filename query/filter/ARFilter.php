@@ -16,6 +16,13 @@ abstract class ARFilter
 	 */
 	protected $condition = null;
 
+	/**
+	 * A list of tables to JOIN
+	 *
+	 * @var array
+	 */
+	protected $joinList = array();
+
 	public function __construct(Condition $condition = null)
 	{
 		if (!is_null($condition))
@@ -80,6 +87,38 @@ abstract class ARFilter
 		{
 			$this->condition = $cond;
 		}
+	}
+
+	/**
+	 * Joins table by using supplied params
+	 *
+	 * @param string $tableName
+	 * @param string $mainTableName
+	 * @param string $tableJoinFieldName
+	 * @param string $mainTableJoinFieldName
+	 * @param string $tableAliasName	Necessary when joining the same table more than one time (LEFT JOIN tablename AS table_1)
+	 */
+	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
+	{
+		
+		$join = array("tableName" => $tableName, 
+					  "mainTableName" => $mainTableName, 
+					  "tableJoinFieldName" => $tableJoinFieldName, 
+					  "mainTableJoinFieldName" => $mainTableJoinFieldName,
+					  "tableAliasName" => $tableAliasName
+					  );
+
+		if (!$tableAliasName)
+		{
+            $tableAliasName = $tableName;
+        }  
+			
+		$this->joinList[$tableAliasName] = $join;
+	}	
+	
+	public function getJoinList()
+	{
+	  	return $this->joinList;
 	}
 
 	public function __toString()
