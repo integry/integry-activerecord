@@ -2,6 +2,11 @@
 
 include_once(dirname(__file__) . '/ARFieldHandleInterface.php');
 
+/**
+ * 
+ * @package activerecord.query.filter
+ * @author Integry Systems
+ */
 class ARExpressionHandle implements ARFieldHandleInterface
 {
   	protected $expression;

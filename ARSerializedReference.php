@@ -1,5 +1,10 @@
 <?php
 
+/**
+ *
+ * @package activerecord
+ * @author Integry Systems 
+ */
 class ARSerializedReference implements Serializable
 {
     protected $instanceClassName;

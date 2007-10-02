@@ -4,6 +4,7 @@
  * ActiveRecord set container/manager
  *
  * @package activerecord
+ * @author Integry Systems  
  */
 class ARSet implements IteratorAggregate, Serializable
 {

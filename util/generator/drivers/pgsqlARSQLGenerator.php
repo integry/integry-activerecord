@@ -4,7 +4,7 @@
  * ...
  * 
  * @package activerecord.util.generator.drivers
- * @author Denis Slaveckij
+ * @author Integry Systems
  */
 class pgsqlARSQLGenerator extends ARSQLGenerator {
 		

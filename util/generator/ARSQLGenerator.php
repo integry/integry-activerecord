@@ -5,7 +5,7 @@ require_once(dirname(dirname(dirname(__FILE__)))."/ActiveRecord.php");
 /**
  *
  * @package activerecord.util.generator 
- * @author Denis Slaveckij
+ * @author Integry Systems
  */
 class ARSQLGenerator {
     

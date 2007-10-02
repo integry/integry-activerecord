@@ -7,6 +7,7 @@ include_once("schema/ARSchemaDataType.php");
  * Class for table structure representation (also known as schema)
  *
  * @package activerecord.schema
+ * @author Integry Systems 
  */
 class ARSchema
 {

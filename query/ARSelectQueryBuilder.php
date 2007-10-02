@@ -4,6 +4,7 @@
  * Select Query builder class
  *
  * @package activerecord.query
+ * @author Integry Systems 
  */
 class ARSelectQueryBuilder
 {

@@ -8,6 +8,7 @@
  * select or etc.)
  *
  * @package activerecord.query.filter
+ * @author Integry Systems 
  */
 abstract class Condition
 {

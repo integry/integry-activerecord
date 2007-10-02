@@ -6,6 +6,7 @@ require_once("ARException.php");
  * Exception for signaling that a requested record (persisted object) was not found
  *
  * @package activerecord
+ * @author Integry Systems 
  */
 class ARNotFoundException extends ARException
 {

@@ -3,6 +3,8 @@
 /**
  * ActiveRecord query / action logger
  *
+ * @package activerecord
+ * @author Integry Systems
  */
 class ARLogger
 {

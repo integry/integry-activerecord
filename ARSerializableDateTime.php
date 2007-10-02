@@ -1,5 +1,10 @@
 <?php
 
+/**
+ *
+ * @package activerecord
+ * @author Integry Systems 
+ */
 class ARSerializableDateTime extends DateTime implements Serializable
 {
     private $dateString; 

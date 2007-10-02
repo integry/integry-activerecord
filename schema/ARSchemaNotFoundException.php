@@ -6,6 +6,7 @@ require_once("schema/ARSchemaException.php");
  * Exception for signaling that a requested schema is not found
  *
  * @package activerecord.schema
+ * @author Integry Systems 
  */
 class ARSchemaNotFoundException extends ARSchemaException
 {

@@ -8,7 +8,7 @@ include_once(dirname(__file__) . '/ARSerializableDateTime.php');
  * (it is just an ordinary row field value container)
  *
  * @package activerecord
- * @author Saulius Rupainis <saulius@integry.net>
+ * @author Integry Systems
  */
 class ARValueMapper implements Serializable
 {

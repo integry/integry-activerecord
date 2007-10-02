@@ -4,6 +4,7 @@
  * Abstract schema data type representing type of a table column
  *
  * @package activerecord.schema.datatype
+ * @author Integry Systems 
  */
 abstract class ARSchemaDataType
 {

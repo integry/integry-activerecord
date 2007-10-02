@@ -4,6 +4,7 @@
  * Schema field
  *
  * @package activerecord.schema
+ * @author Integry Systems 
  */
 class ARField
 {

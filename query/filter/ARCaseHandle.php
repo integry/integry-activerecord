@@ -3,6 +3,9 @@
 /**
  *	Abstracts SQLs CASE statement
  *	http://dev.mysql.com/doc/refman/5.0/en/control-flow-functions.html
+ *
+ *  @package activerecord.query.filter
+ *  @author Integry Systems 
  */
 class ARCaseHandle implements ARFieldHandleInterface
 {

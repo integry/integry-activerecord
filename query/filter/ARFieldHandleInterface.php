@@ -1,5 +1,10 @@
 <?php
 
+/**
+ *
+ * @package activerecord.query.filter
+ * @author Integry Systems
+ */
 interface ARFieldHandleInterface
 {
 	public function toString();	

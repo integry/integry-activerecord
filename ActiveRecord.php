@@ -53,6 +53,7 @@ include_once($dir . 'query/ARSelectQueryBuilder.php');
  * @see ARForeignKeyField
  *
  * @package activerecord
+ * @author Integry Systems
  *
  * @todo methods for setting self::$creolePath
  *

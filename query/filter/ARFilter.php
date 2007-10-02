@@ -6,6 +6,7 @@ require_once("filter/Condition.php");
  * Abstract ActiveRecord filter
  *
  * @package activerecord.query.filter
+ * @author Integry Systems 
  */
 abstract class ARFilter
 {

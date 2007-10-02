@@ -6,7 +6,7 @@ require_once("filter/ARFilter.php");
  * Filter for selecting a record set
  *
  * @package activerecord.query.filter
- * @author Saulius Rupainis <saulius@integry.net>
+ * @author Integry Systems
  */
 class ARSelectFilter extends ARFilter
 {
