@@ -90,6 +90,11 @@ abstract class ARFilter
 		}
 	}
 
+	public function removeCondition(Condition $condition)
+	{
+		$this->condition->removeCondition($condition);
+	}
+
 	/**
 	 * Joins table by using supplied params
 	 *

@@ -89,6 +89,26 @@ abstract class Condition
 	{
 		return new ARExpressionHandle($this->createChain());	
 	}
+
+	public function removeCondition(BinaryCondition $condition)
+	{
+		$str = $condition->toString();
+
+		if ($this->toString() == $str)
+		{
+			$this->leftSide = new ARExpressionHandle(1);
+			$this->rightSide = 1;
+			$this->operatorString = '=';
+		}
+		
+		foreach (($this->ANDCondList + $this->ORCondList) as $cond)
+		{
+			if ($cond instanceof BinaryCondition)
+			{
+				$cond->removeCondition($condition);
+			}
+		}
+	}
 	
 	/**
 	 * Merges an array of conditions into one condition
