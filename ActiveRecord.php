@@ -1368,7 +1368,9 @@ abstract class ActiveRecord implements Serializable
 		$fieldList = array();
 		foreach($this->data as $fieldName => $dataContainer)
 		{
-			//if (!($dataContainer->getField() instanceof ARPrimaryKeyField) && $dataContainer->isModified()) {
+			$value = "NULL";
+			
+            //if (!($dataContainer->getField() instanceof ARPrimaryKeyField) && $dataContainer->isModified()) {
 			if ($dataContainer->isModified())
 			{
 				if ($dataContainer->getField() instanceof ARForeignKey)

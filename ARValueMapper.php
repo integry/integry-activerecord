@@ -200,6 +200,14 @@ class ARValueMapper implements Serializable
 	}
 
 	/**
+	 * Marks field as modified
+	 */
+	public function setAsModified()
+	{
+		$this->isModified = true;
+	}
+
+	/**
 	 * Marks the field as not modified (after saving, etc.)
 	 */
 	public function resetModifiedStatus()
