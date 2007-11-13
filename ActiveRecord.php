@@ -883,7 +883,15 @@ abstract class ActiveRecord implements Serializable
 
 	public static function executeUpdate($sql)
 	{
-		return self::getDBConnection()->executeQuery($sql);		
+		try
+		{
+            return self::getDBConnection()->executeQuery($sql);
+        }
+        catch (Exception $e)
+        {
+            self::getLogger()->logQuery(get_class($e) . ': ' . $e->getMessage());
+            throw $e;
+        }
 	}
 
 	public static function getRecordSetByQuery($className, ARSelectQueryBuilder $query)
@@ -1294,7 +1302,7 @@ abstract class ActiveRecord implements Serializable
 		$insertQuery = "INSERT INTO ".$this->schema->getName()." SET ".$this->enumerateModifiedFields();
 
 		self::getLogger()->logQuery($insertQuery);
-		$result = $this->db->executeUpdate($insertQuery);
+		$result = $this->executeUpdate($insertQuery);
 		
 		// get inserted record ID
 		if (count($this->schema->getPrimaryKeyList()) == 1)
