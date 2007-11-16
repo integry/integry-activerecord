@@ -25,8 +25,8 @@ class pgsqlARSQLGenerator extends ARSQLGenerator {
 		if ($autoincrement) {
 		  
 		  	if ($field instanceof ARPrimaryKeyField) {
-			    
-			    return $sql."serial NOT NULL ";
+				
+				return $sql."serial NOT NULL ";
 			}
 		}
 						
@@ -73,8 +73,8 @@ class pgsqlARSQLGenerator extends ARSQLGenerator {
 	protected function _sqlFromColumn(ColumnInfo $column, $auto_increment = true) {
 	  
 	  	if ($column->nativeType == 'float8') {
-		    
-		    return 'float not null ';
+			
+			return 'float not null ';
 		} else {
 		  
 		  	return parent::_sqlFromColumn($column, $auto_increment);

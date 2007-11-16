@@ -47,9 +47,9 @@ class Paginator {
 				$intervalEnd = ($i+1) * $this->getPageSize();
 			}
 			$pageList[] = array("number" => $i+1,  
-			                    "from" => $i * $this->getPageSize() + 1, 
-			                    "to" => $intervalEnd
-			                    );
+								"from" => $i * $this->getPageSize() + 1, 
+								"to" => $intervalEnd
+								);
 		}
 		return $pageList;
 	}
@@ -69,20 +69,20 @@ class Paginator {
 	 * currentPage
 	 * pageSize - page size in records
 	 * list - list of generated pages (page info) with folowing structure
-	 *     number - page number
-	 *     from - record lower range that page starts from
-	 *     to - record upper range
+	 *	 number - page number
+	 *	 from - record lower range that page starts from
+	 *	 to - record upper range
 	 * 
 	 * 
 	 * @return array
 	 */
 	public function toArray() {
 		$result = array("pageCount" => $this->getPageCount(), 
-		                "recordCount" => $this->getRecordCount(), 
-		                "currentPage" => $this->getCurrentPage(),
-		                "pageSize" => $this->getPageSize(),
-		                "list" => $this->createPageList()
-		                );
+						"recordCount" => $this->getRecordCount(), 
+						"currentPage" => $this->getCurrentPage(),
+						"pageSize" => $this->getPageSize(),
+						"list" => $this->createPageList()
+						);
 		
 		return $result;
 	}

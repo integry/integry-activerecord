@@ -232,7 +232,7 @@ class IsNullCond extends UnaryCondition
 {
 	public function __construct(ARFieldHandleInterface $fieldHandle)
 	{
-	    parent::__construct($fieldHandle, "IS NULL");
+		parent::__construct($fieldHandle, "IS NULL");
 	}
 }
 
@@ -312,8 +312,8 @@ class INCond extends BinaryCondition
 	
 	private function filterEmptyValues($value)
 	{
-        return is_numeric($value) || trim($value);
-    }
+		return is_numeric($value) || trim($value);
+	}
 }
 
 /**

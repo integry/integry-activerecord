@@ -89,8 +89,8 @@ class TestGenerate extends UnitTestCase {
   	public $gen;
   	
   	function TestGenerate() {
-	    
-	    parent::__construct();			    
+		
+		parent::__construct();				
 		if ($this->type == "mysql") {
 		
 			$this->dsn = "mysql://root@localhost/demoproject";
@@ -138,7 +138,7 @@ class TestGenerate extends UnitTestCase {
 	  	$test->save();	  	
 	  	$test2 = ActiveRecord::getNewInstance("Lentele");
 		$test2->Integer_tipas->Set(5);
-	  	$test2->save();    	
+	  	$test2->save();		
 
 	  	$test3 = ActiveRecord::getInstanceById("Lentele", $test->getId(), true);	
 	  	//echo $test3->Bool_tipas->Get();	  	

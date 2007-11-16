@@ -59,7 +59,7 @@ abstract class ARFilter
 	{
 		if($condition)
 		{
-		    $this->condition = $condition;
+			$this->condition = $condition;
 		}
 	}
 
@@ -75,7 +75,7 @@ abstract class ARFilter
 
 	public function isConditionSet()
 	{
-        return ($this->condition instanceof Condition);
+		return ($this->condition instanceof Condition);
 	}
 
 	public function mergeCondition(Condition $cond)
@@ -116,8 +116,8 @@ abstract class ARFilter
 
 		if (!$tableAliasName)
 		{
-            $tableAliasName = $tableName;
-        }  
+			$tableAliasName = $tableName;
+		}  
 			
 		$this->joinList[$tableAliasName] = $join;
 	}	

@@ -46,7 +46,7 @@ class ARSet implements IteratorAggregate, Serializable
 	
 	public function unshift(ActiveRecord $record)
 	{
-	    array_unshift($this->data, $record);
+		array_unshift($this->data, $record);
 	}
 
 	/**
@@ -148,17 +148,17 @@ class ARSet implements IteratorAggregate, Serializable
 
 	public function removeRecord(ActiveRecord $removeRecord)
 	{
-	    $i = 0;
-	    foreach($this as $record)
-	    {
-	        if($record === $removeRecord)
-	        {
-	            $this->remove($i);
-	            return true;
-	        }
-	        $i++;
-	    }
-	    return false;
+		$i = 0;
+		foreach($this as $record)
+		{
+			if($record === $removeRecord)
+			{
+				$this->remove($i);
+				return true;
+			}
+			$i++;
+		}
+		return false;
 	}
 	
 	public function getData()
@@ -168,15 +168,15 @@ class ARSet implements IteratorAggregate, Serializable
 	
 	public function serialize()
 	{
-        $serialized = array('data' => $this->data);        
-        return serialize($serialized);
-    }
-    
-    public function unserialize($serialized)
-    {
-        $array = unserialize($serialized);        
-        $this->data = $array['data'];
-    }	
+		$serialized = array('data' => $this->data);		
+		return serialize($serialized);
+	}
+	
+	public function unserialize($serialized)
+	{
+		$array = unserialize($serialized);		
+		$this->data = $array['data'];
+	}	
 }
 
 ?>

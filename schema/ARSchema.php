@@ -34,7 +34,7 @@ class ARSchema
 	public function registerField(ARField $schemaField)
 	{
 		$name = $schemaField->getName();
-        $this->fieldList[$name] = $schemaField;
+		$this->fieldList[$name] = $schemaField;
 
 		if ($schemaField instanceof ARForeignKey)
 		{
@@ -180,24 +180,24 @@ class ARSchema
 			
 			foreach($this->getForeignKeyList() as $name => $refField)
 			{				
-                $refSchema = ActiveRecord::getSchemaInstance($refField->getForeignClassName());
+				$refSchema = ActiveRecord::getSchemaInstance($refField->getForeignClassName());
 				if ($this === $refSchema || $refSchema === $circularReference)
 				{
 				  	continue;
 				}
 				
 				$refName = $refField->getReferenceName();
-                if(!isset($ret[$refName])) 
+				if(!isset($ret[$refName])) 
 				{
-                    $ret[$refName] = array();
-                }
+					$ret[$refName] = array();
+				}
 
 				$ret[$refName][] = $refSchema;
 				
-                $sub = $refSchema->getReferencedSchemas($this);                    
+				$sub = $refSchema->getReferencedSchemas($this);					
 				$ret = array_merge($ret, $sub);
 				
-			     // remove circular references
+				 // remove circular references
 				unset($ret[$this->tableName]);
 			}
 			

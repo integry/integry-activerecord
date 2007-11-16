@@ -41,8 +41,8 @@ class ARValueMapper implements Serializable
 	 * Necessary to know when value changes change (other) objects state
 	 *
 	 * For example, changing products stock count from 0 to 5 would increase the count of the available 
-     * products by 1, but changing the stock count from 5 to 10 wouldn't affect affect this count, so it's
-     * sometimes not enough just to be able to check that the value has been changed.
+	 * products by 1, but changing the stock count from 5 to 10 wouldn't affect affect this count, so it's
+	 * sometimes not enough just to be able to check that the value has been changed.
 	 *
 	 * @var mixed
 	 */
@@ -64,10 +64,10 @@ class ARValueMapper implements Serializable
 		
 		if (($this->field->getDataType() instanceof ARDateTime) && !($value instanceof ARSerializableDateTime))
 		{
-            $this->value = new ARSerializableDateTime($this->value);
+			$this->value = new ARSerializableDateTime($this->value);
 		}
 		
-        $this->initialValue = $value;
+		$this->initialValue = $value;
 	}
 
 	/**
@@ -99,27 +99,27 @@ class ARValueMapper implements Serializable
 	 */
 	public function set($value = null, $markAsModified = true)
 	{
-	    if (is_null($value))
-	    {
-	        $this->setNull();
-	        return false;
-	    }
-	    
-	    // === also checks variable type, so we use == to compare values
-        if (!is_null($this->initialValue) && (!is_object($value) && ($value == $this->value)) )
+		if (is_null($value))
 		{
-            return false;
-        }       
-        
-        if ($this->field instanceof ARForeignKey)
+			$this->setNull();
+			return false;
+		}
+		
+		// === also checks variable type, so we use == to compare values
+		if (!is_null($this->initialValue) && (!is_object($value) && ($value == $this->value)) )
 		{
-            if (!($value instanceof ActiveRecord))
+			return false;
+		}	   
+		
+		if ($this->field instanceof ARForeignKey)
+		{
+			if (!($value instanceof ActiveRecord))
 			{
-                throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");  
-            }         
+				throw new ARException("Invalid value parameter: must be an instance of ActiveRecord");  
+			}		 
 			else if (!is_a($value, $this->field->getForeignClassName()))
 			{
-                throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());	
+				throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());	
 			}  
 		}		
 		
@@ -129,7 +129,7 @@ class ARValueMapper implements Serializable
 		}
 
 		$this->isNull = false;
-        $this->value = $value;
+		$this->value = $value;
 		
 		if ($markAsModified)
 		{
@@ -139,7 +139,7 @@ class ARValueMapper implements Serializable
 
 	public function setNull($markAsModified = true)
 	{
-        $this->value = null;
+		$this->value = null;
 		$this->isNull = true;
 		if ($markAsModified)
 		{
@@ -241,13 +241,13 @@ class ARValueMapper implements Serializable
 	
 	public function serialize()
 	{
-        return serialize($this->value);
-    }
-    
-    public function unserialize($serialized)
-    {
-        $this->set(unserialize($serialized), false);        
-    }
+		return serialize($this->value);
+	}
+	
+	public function unserialize($serialized)
+	{
+		$this->set(unserialize($serialized), false);		
+	}
 	
 	public function __clone()
 	{

@@ -55,10 +55,10 @@ class ARUpdateFilter extends ARFilter
 		$this->modifierList[$fieldName] = $fieldValue;
 	}
 
-    public function isModifierSet()
-    {
-        return count($this->modifierList) > 0;
-    }
+	public function isModifierSet()
+	{
+		return count($this->modifierList) > 0;
+	}
 }
 
 ?>

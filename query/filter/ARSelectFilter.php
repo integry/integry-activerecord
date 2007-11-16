@@ -48,7 +48,7 @@ class ARSelectFilter extends ARFilter
 	 *
 	 * @var array
 	 */
-    private $fieldListForGroup = array();
+	private $fieldListForGroup = array();
 
 	/**
 	 * A list of additional fields to select
@@ -62,7 +62,7 @@ class ARSelectFilter extends ARFilter
 	 *
 	 * @var array
 	 */
-    private $havingCondition;
+	private $havingCondition;
 
 	/**
 	 * Creates a string by using filter data
@@ -73,18 +73,18 @@ class ARSelectFilter extends ARFilter
 	{
 		$result = parent::createString();
 
-        $params = array();
-        $params[] = $this->createGroupString();
-        $params[] = $this->createHavingString();
-        $params[] = $this->createOrderString();
+		$params = array();
+		$params[] = $this->createGroupString();
+		$params[] = $this->createHavingString();
+		$params[] = $this->createOrderString();
 
 		if ($this->recordLimit != 0)
 		{
 			$params[] = " LIMIT ".$this->recordOffset.", ".$this->recordLimit;
 		}
 
-        $result .= implode(' ', $params);
-        			
+		$result .= implode(' ', $params);
+					
 		return $result;
 	}
 
@@ -143,7 +143,7 @@ class ARSelectFilter extends ARFilter
 	
 	public function getGroupingFields()
 	{
-	    return $this->fieldListForGroup;
+		return $this->fieldListForGroup;
 	}
 	
 	/**
@@ -153,14 +153,14 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function createOrderString()
 	{
-    	if (!empty($this->fieldListForOrder))
+		if (!empty($this->fieldListForOrder))
 		{
-    		$orderList = array();
-    		foreach($this->fieldListForOrder as $fieldName => $order)
-    		{
-    			$orderList[] = $fieldName." ".$order;
-    		}
-    		return " ORDER BY " . implode(", ", $orderList);
+			$orderList = array();
+			foreach($this->fieldListForOrder as $fieldName => $order)
+			{
+				$orderList[] = $fieldName." ".$order;
+			}
+			return " ORDER BY " . implode(", ", $orderList);
 		}
 	}
 
@@ -171,10 +171,10 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function createGroupString()
 	{
-        if ($this->fieldListForGroup)
-        {
-    		return " GROUP BY " . implode(", ", array_keys($this->fieldListForGroup)); 
-        }
+		if ($this->fieldListForGroup)
+		{
+			return " GROUP BY " . implode(", ", array_keys($this->fieldListForGroup)); 
+		}
 	}
 
 	/**
@@ -261,8 +261,8 @@ class ARSelectFilter extends ARFilter
 	
 	public function isHavingConditionSet()
 	{
-        return ($this->havingCondition instanceof Condition);
-    }
+		return ($this->havingCondition instanceof Condition);
+	}
 	
 	public function addField($fieldName, $tableName = null, $fieldNameInResult = null)
 	{

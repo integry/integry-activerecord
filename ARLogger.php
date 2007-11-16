@@ -77,7 +77,7 @@ class ARLogger
 
 	private function createLogItemStr($itemArray)
 	{
-		$str = str_repeat('    ', ActiveRecord::$transactionLevel);
+		$str = str_repeat('	', ActiveRecord::$transactionLevel);
 		$str .= $itemArray['msg']."\n";
 		return $str;
 	}

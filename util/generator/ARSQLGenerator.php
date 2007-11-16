@@ -8,16 +8,16 @@ require_once(dirname(dirname(dirname(__FILE__)))."/ActiveRecord.php");
  * @author Integry Systems
  */
 class ARSQLGenerator {
-    
-    private static $sql_generator;
-     
-    private $conn;
-    
-    public function __construct($conn) {
+	
+	private static $sql_generator;
+	 
+	private $conn;
+	
+	public function __construct($conn) {
 	  
 	  	$this->conn = $conn;
 	}
-    
+	
 	/**
 	* Decides which generator class return and returns ist Singleton instance.
 	* @param Connection $conn
@@ -107,13 +107,13 @@ class ARSQLGenerator {
 		foreach ($fields_list as $field) {
 		  
 		  	if (empty($cols[strtolower($field->getName())])) {
-			    
-			    $sql .= " ADD ".$field->getName()." ".$this->_defineField($field, false).$comma;	
-			    
-			    //foreign key
-		      	if ($field instanceof ARForeignKeyField) {
-				    
-				    $sql .= " ADD FOREIGN KEY ( ".$field->getName()." ) REFERENCES ".$field->getForeignTableName()."( ".$field->getForeignFieldName()." ) ".$comma;
+				
+				$sql .= " ADD ".$field->getName()." ".$this->_defineField($field, false).$comma;	
+				
+				//foreign key
+			  	if ($field instanceof ARForeignKeyField) {
+					
+					$sql .= " ADD FOREIGN KEY ( ".$field->getName()." ) REFERENCES ".$field->getForeignTableName()."( ".$field->getForeignFieldName()." ) ".$comma;
 				}
 			} else {
 			  			  	
@@ -142,8 +142,8 @@ class ARSQLGenerator {
 		if ($drop) {
 		  
 		  	foreach ($table_info->getColumns() as $column) {
-			    
-			    if (empty($exist[strtolower($column->name)])) {
+				
+				if (empty($exist[strtolower($column->name)])) {
 				  
 					$sql .= " DROP ".$column->name.$comma;	  
 				}
@@ -187,22 +187,22 @@ class ARSQLGenerator {
 		}
 		
 		$sql = "CREATE TABLE ".$table_name." ( ".$intent;
-	    
-	    // fields
-	    foreach ($field_list as $field) {
-	      
-	      	$sql .= $field->getName()." ".$this->_defineField($field, $auto_increment).$comma;	  	
-	      	
-	      	//foreign key
-	      	if ($field instanceof ARForeignKeyField) {
-			    
-			    $sql .= " FOREIGN KEY ( ".$field->getName()." ) REFERENCES ".$field->getForeignTableName()."( ".$field->getForeignFieldName()." ) ".$comma;
+		
+		// fields
+		foreach ($field_list as $field) {
+		  
+		  	$sql .= $field->getName()." ".$this->_defineField($field, $auto_increment).$comma;	  	
+		  	
+		  	//foreign key
+		  	if ($field instanceof ARForeignKeyField) {
+				
+				$sql .= " FOREIGN KEY ( ".$field->getName()." ) REFERENCES ".$field->getForeignTableName()."( ".$field->getForeignFieldName()." ) ".$comma;
 			}
 		}
-	    
-	    //primary keys
+		
+		//primary keys
 	   	if (count($primary_list) > 0) {
-		     
+			 
 			$sql .= " PRIMARY KEY ( ";
 			
 			foreach ($primary_list as $primary) {
@@ -211,11 +211,11 @@ class ARSQLGenerator {
 			}
 			
 			$sql = substr($sql, 0, -strlen($comma));	 				
-			$sql .= " )".$comma;     
-		}	    		
-	    
-	    $sql = substr($sql, 0, -strlen($comma));	 
-	    
+			$sql .= " )".$comma;	 
+		}				
+		
+		$sql = substr($sql, 0, -strlen($comma));	 
+		
 		return $sql." )";  
 	}
 	
@@ -283,32 +283,32 @@ class ARSQLGenerator {
   		$length = $column->size;
   		if (!empty($length)) {
 		   
-		    $length = "(".$length.") " ;
+			$length = "(".$length.") " ;
 		} else {
 		  
 		  	$length = " ";
 		}
 
   		switch ($column->nativeType) {
-		    
-		    case 'int':
-		    	
-		    	$sql .= "integer".$length;
-		    break;
-		    
-		    case 'char':
-		    
-		    	$sql .= "char".$length;
-		    break;
-		    
-		    case 'bool':
-		    
-		    break;
-		    
-		    default:
-		    
+			
+			case 'int':
+				
+				$sql .= "integer".$length;
+			break;
+			
+			case 'char':
+			
+				$sql .= "char".$length;
+			break;
+			
+			case 'bool':
+			
+			break;
+			
+			default:
+			
 				$sql .=	$column->nativeType.$length;
-		    break;
+			break;
 		}
 		
 		$sql .= "NOT NULL ";

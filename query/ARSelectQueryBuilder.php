@@ -76,17 +76,17 @@ class ARSelectQueryBuilder
 		  	$tableAliasName = $tableName;
 		}
 		
-	    if(!(isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName])))
+		if(!(isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName])))
 		{
-		    $this->joinList[$tableAliasName] = array(
+			$this->joinList[$tableAliasName] = array(
 				"tableName" => $tableName, 
-			    "mainTableName" => $mainTableName, 
-			    "tableJoinFieldName" => $tableJoinFieldName, 
-			    "mainTableJoinFieldName" => $mainTableJoinFieldName,
-			    "tableAliasName" => $tableAliasName
-		    );
-		    
-		    return true;
+				"mainTableName" => $mainTableName, 
+				"tableJoinFieldName" => $tableJoinFieldName, 
+				"mainTableJoinFieldName" => $mainTableJoinFieldName,
+				"tableAliasName" => $tableAliasName
+			);
+			
+			return true;
 		}
 								  
 		return false;
@@ -161,7 +161,7 @@ class ARSelectQueryBuilder
 
 		$joinListStr = "";
 		if (!empty($joins))
-		{		    
+		{			
 			$preparedJoinList = array();
 			foreach($joins as $joinItem)
 			{
@@ -178,11 +178,11 @@ class ARSelectQueryBuilder
 				
 				if(empty($joinItem['tableAliasName'])) 
 				{
-				    $tableAliases[$joinItem['tableName']] = $joinItem['tableName'];
+					$tableAliases[$joinItem['tableName']] = $joinItem['tableName'];
 				}
 				else if(!isset($tableAliases[$joinItem['tableName']])) 
 				{
-				    $tableAliases[$joinItem['tableName']] = $joinItem['tableAliasName'];
+					$tableAliases[$joinItem['tableName']] = $joinItem['tableAliasName'];
 				}
 				
 				$preparedJoinList[] = "LEFT JOIN `".$joinItem['tableName'].'`'.$alias." ON ".(isset($tableAliases[$joinItem['mainTableName']]) ? $tableAliases[$joinItem['mainTableName']] : $joinItem['mainTableName']).".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'].'';
@@ -201,7 +201,7 @@ class ARSelectQueryBuilder
 	
 	public function __toString()
 	{
-	    return $this->createString();
+		return $this->createString();
 	}
 }
 

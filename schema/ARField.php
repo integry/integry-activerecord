@@ -120,7 +120,7 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 
 	public function getReferenceName()
 	{
-	    return $this->referenceName;
+		return $this->referenceName;
 	}
 }
 

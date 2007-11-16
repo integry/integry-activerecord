@@ -13,7 +13,7 @@ class ARExpressionHandle implements ARFieldHandleInterface
   	
 	public function __construct($expression)
   	{
-	    $this->expression = $expression;
+		$this->expression = $expression;
 	}
 	
 	public function prepareValue($value)
