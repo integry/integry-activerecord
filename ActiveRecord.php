@@ -1617,7 +1617,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	protected static function transformArray($array, ARSchema $schema)
 	{
-		return $array;  	
+		return $array;
 	}
 
 	/**
@@ -1637,7 +1637,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
-
+		
 		self::$lastQuery = $query;
 
 		$queryResultData = self::fetchDataFromDB($query);
@@ -1649,7 +1649,7 @@ abstract class ActiveRecord implements Serializable
 			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
 			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
 		}
-	
+
 		if (!is_null($getRecordCount))
 		{
 			$getRecordCount = self::getRecordCountByQuery($query);	
