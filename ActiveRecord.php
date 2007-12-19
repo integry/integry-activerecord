@@ -60,7 +60,6 @@ include_once($dir . 'query/ARSelectQueryBuilder.php');
  */
 abstract class ActiveRecord implements Serializable
 {
-
 	/**
 	 * Database connection object
 	 *
@@ -98,7 +97,7 @@ abstract class ActiveRecord implements Serializable
 	 * @var boolean
 	 */
 	private $isDeleted = false;
-	
+
 	/**
 	 * Database connection instance (refererences to self::$dbConnection)
 	 *
@@ -144,7 +143,6 @@ abstract class ActiveRecord implements Serializable
 
 	const TRANSFORM_ARRAY = true;
 
-
 	/**
 	 * Is record data loaded from a database?
 	 *
@@ -158,28 +156,16 @@ abstract class ActiveRecord implements Serializable
 	 * @var bool
 	 */
 	public static $transactionLevel = 0;
-	
-	public static $logger = null;	
-	
+
+	public static $logger = null;
+
 	/**
 	 *	Cached object array data from the current toArray call stack
 	 */
 	protected static $toArrayData = array();
-	
-	protected $cachedId = null;
-	
-	/**
-	 * ARSelectQueryBuilder object used in the last query
-	 * 
-	 * @var ARSelectQueryBuilder
-	 */
-	protected static $lastQuery = null;
 
-	/**
-	 * ARSelectFilter object used in the last query
-	 */
-	protected static $lastFilter = null;
-	
+	protected $cachedId = null;
+
 	/**
 	 * ActiveRecord constructor. Never use it directly
 	 *
@@ -189,7 +175,7 @@ abstract class ActiveRecord implements Serializable
 	protected function __construct($data = array())
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
-		$this->createDataAccessVariables($data);		
+		$this->createDataAccessVariables($data);
 	}
 
 	/**
@@ -202,44 +188,44 @@ abstract class ActiveRecord implements Serializable
 	private function createDataAccessVariables($data = array())
 	{
 		foreach($this->schema->getFieldList() as $name => $field)
-		{			
-			$this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);   
+		{
+			$this->data[$name] = new ARValueMapper($field, isset($data[$name]) ? $data[$name] : null);
 			if (!($field instanceof ARPrimaryKey))
 			{
 				$this->$name = $this->data[$name];
 			}
 		}
-		
+
 		foreach ($this->schema->getForeignKeyList() as $name => $field)
 		{
 			$referenceName = $field->getReferenceName();
 			$foreignClassName = $field->getForeignClassName();
-	
+
 			if (!($this->data[$name]->get() instanceof ActiveRecord) && isset($data[$name]))
 			{
 				if (isset($data[$referenceName]))
 				{
 					foreach($data as $referecedTableName => $referencedData)
 					{
-						if (($referenceName != $referecedTableName) && $referencedData && !isset($data[$referenceName][$referecedTableName])) 
+						if (($referenceName != $referecedTableName) && $referencedData && !isset($data[$referenceName][$referecedTableName]))
 						{
 							$data[$referenceName][$referecedTableName] = $referencedData;
 						}
 					}
 
-					$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);  			
+					$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);
 				}
 				else
 				{
-					$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false); 
+					$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null), false);
 				}
 			}
-						
+
 			// Making first letter lowercase
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
-			$this->$referenceName = $this->data[$name];				
+			$this->$referenceName = $this->data[$name];
 		}
-		
+
 		if ($data)
 		{
 		  	$this->isLoaded = true;
@@ -250,7 +236,7 @@ abstract class ActiveRecord implements Serializable
 	 * Creates or gets an already created Schema object for a given class $className
 	 *
 	 * @param string $className
-	 * 
+	 *
 	 * @return ARSchema
 	 */
 	public static function getSchemaInstance($className)
@@ -266,7 +252,7 @@ abstract class ActiveRecord implements Serializable
 				throw new ARException("Invalid schema (".$className.") definition! Make sure it has a name assigned and fields defined (record structure)");
 			}
 		}
-		
+
 		return self::$schemaMap[$className];
 	}
 
@@ -359,7 +345,7 @@ abstract class ActiveRecord implements Serializable
 				throw new ARException("Unknown situation (not implemented?)");
 			}
 		}
-		
+
 		$this->cachedId = null;
 	}
 
@@ -400,7 +386,7 @@ abstract class ActiveRecord implements Serializable
 
 		return $this->cachedId;
 	}
-	
+
 	/**
 	 * Creates a new instance of record
 	 *
@@ -413,7 +399,7 @@ abstract class ActiveRecord implements Serializable
 	 * @return ActiveRecord
 	 */
 	public static function getNewInstance($className, $data = array())
-	{		
+	{
 		return new $className($data);
 	}
 
@@ -443,7 +429,7 @@ abstract class ActiveRecord implements Serializable
 	 * @return ActiveRecord
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
-	{			
+	{
 		$instance = self::retrieveFromPool($className, $recordID);
 
 		if ($instance == null)
@@ -477,7 +463,7 @@ abstract class ActiveRecord implements Serializable
 		$instance->markAsNotLoaded();
 		unset(self::$recordPool[$className][$hash]);
 	}
-	
+
 	/**
 	 * This method should only be used for unit testing in tearDown method
 	 *
@@ -486,7 +472,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		unset(self::$recordPool[$className]);
 	}
-	
+
 	/**
 	 * This method should only be used for unit testing
 	 *
@@ -495,14 +481,14 @@ abstract class ActiveRecord implements Serializable
 	{
 		self::$recordPool = array();
 	}
-	
+
 	/**
 	 * Stores ActiveRecord subclass instance in a record pool
 	 *
 	 * @param ActiveRecord $instance
 	 */
 	private static function storeToPool(ActiveRecord $instance)
-	{		
+	{
 		self::$recordPool[get_class($instance)][self::getRecordHash($instance->getID())] = $instance;
 	}
 
@@ -516,7 +502,7 @@ abstract class ActiveRecord implements Serializable
 	public static function retrieveFromPool($className, $recordID = null)
 	{
 		if(!is_null($recordID))
-		{			
+		{
 			$hash = self::getRecordHash($recordID);
 
 			if (!empty(self::$recordPool[$className][$hash]))
@@ -528,9 +514,9 @@ abstract class ActiveRecord implements Serializable
 		{
 			return self::$recordPool[$className];
 		}
-		
+
 		return null;
-		
+
 	}
 
 	/**
@@ -568,7 +554,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$schema = self::getSchemaInstance($className);
 		$schemaName = $schema->getName();
-		
+
 		$query = new ARSelectQueryBuilder();
 		$query->includeTable($schemaName);
 
@@ -581,12 +567,12 @@ abstract class ActiveRecord implements Serializable
 		if ($loadReferencedRecords)
 		{
 			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
-			self::joinReferencedTables($schema, $query, $tables);		  
+			self::joinReferencedTables($schema, $query, $tables);
 		}
 
 		return $query;
 	}
-	
+
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
 	{
 		$referenceList = $schema->getForeignKeyList();
@@ -598,26 +584,26 @@ abstract class ActiveRecord implements Serializable
 			$tableAlias = $field->getReferenceName();
 			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			$foreignTableName = $foreignSchema->getName();
-							
-			if (($schema === $foreignSchema) || 
-				(is_array($tables) && 
-					(!isset($tables[$foreignClassName])) || 
+
+			if (($schema === $foreignSchema) ||
+				(is_array($tables) &&
+					(!isset($tables[$foreignClassName])) ||
 					(isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $tableAlias)
 				))
 			{
 				continue;
 			}
-			
+
 			$joined = $query->joinTable($foreignTableName, $schemaName, $field->getForeignFieldName(), $name, $tableAlias);
-			
+
 			if ($joined)
 			{
 				foreach($foreignSchema->getFieldList() as $foreignFieldName => $foreignField)
 				{
 					$query->addField($foreignFieldName, $tableAlias, $tableAlias."_".$foreignFieldName);
 				}
-				
-				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName); 
+
+				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName);
 
 				self::joinReferencedTables($foreignSchema, $query, $tables);
 			}
@@ -635,7 +621,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			return ;
 		}
-		
+
 		$query = self::createSelectQuery(get_class($this), $loadReferencedRecords);
 		$this->loadData($loadReferencedRecords, $query);
 		$this->isDeleted = false;
@@ -655,7 +641,7 @@ abstract class ActiveRecord implements Serializable
 			{
 				$PKValue = $this->data[$name]->get();
 			}
-			
+
 			if ($PKCond == null)
 			{
 				$PKCond = new EqualsCond(new ARFieldHandle($className, $name), $PKValue);
@@ -679,9 +665,9 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		$parsedRowData = self::prepareDataArray($className, $this->schema, $rowDataArray[0], $loadReferencedRecords);
-		
+
 		$this->createDataAccessVariables($parsedRowData['recordData']);
-		
+
 		if (!empty($parsedRowData['miscData']))
 		{
 			$this->miscRecordDataHandler($parsedRowData['miscData']);
@@ -702,18 +688,18 @@ abstract class ActiveRecord implements Serializable
 
 		if (count($PKList) == 1)
 		{
-			return $dataArray[key($PKList)];	
+			return $dataArray[key($PKList)];
 		}
 		else
 		{
 			$recordID = array();
-			
+
 			foreach($PKList as $name => $field)
 			{
 				$recordID[$name] = $dataArray[$name];
 			}
-			
-			return $recordID;			
+
+			return $recordID;
 		}
 	}
 
@@ -744,19 +730,19 @@ abstract class ActiveRecord implements Serializable
 		if ($transformArray)
 		{
 		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $schema));
-		}					
+		}
 
 		if ($loadReferencedRecords)
 		{
 			$schemas = $schema->getReferencedSchemas();
-			
+
 			// remove schemas that were not loaded with this query
 			if (is_array($loadReferencedRecords))
 			{
 				$loadReferencedRecords = array_flip($loadReferencedRecords);
 				$filteredSchemas = array();
 				foreach($loadReferencedRecords as $tableName => $tableAlias)
-				{   
+				{
 					if (is_numeric($tableAlias))
 					{
 						$filteredSchemas[$tableName] = $schemas[$tableName][0];
@@ -774,16 +760,16 @@ abstract class ActiveRecord implements Serializable
 				}
 				$schemas = $filteredSchemas;
 			}
-			else 
+			else
 			{
-				foreach ($schemas as $referenceName => $foreignSchema) 
+				foreach ($schemas as $referenceName => $foreignSchema)
 				{
-					$schemas[$referenceName] = $foreignSchema[0];	
+					$schemas[$referenceName] = $foreignSchema[0];
 				}
 			}
-			
+
 			$referenceListData = array_fill_keys(array_keys($schemas), array());
-						
+
 			foreach ($schemas as $referenceName => $foreignSchema)
 			{
 				$foreignSchemaName = $foreignSchema->getName();
@@ -791,7 +777,7 @@ abstract class ActiveRecord implements Serializable
 				$fieldNames = array_keys($foreignSchema->getFieldList());
 				$referenceKeys = array();
 				foreach($fieldNames as $fieldName)
-				{					
+				{
 					$referenceKeys[$fieldName] = $referenceName . '_' . $fieldName;
 				}
 
@@ -799,29 +785,29 @@ abstract class ActiveRecord implements Serializable
 				{
 					$dataArray[$referenceKeys[$fieldName]] = unserialize($dataArray[$referenceKeys[$fieldName]]);
 				}
-				
+
 				$referenceListData[$referenceName] = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
-								
+
 				$recordKeys = array_merge($recordKeys, array_values($referenceKeys));
-				
+
 				foreach ($foreignSchema->getForeignKeyList() as $fieldName => $field)
 				{
 					$deeperForeignSchemaName = $field->getForeignTableName();
 					if ($foreignSchemaName != $deeperForeignSchemaName)
 					{
-						$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];						  
-					}					
+						$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];
+					}
 				}
-				
+
 				if ($transformArray)
 				{
 				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $foreignSchema));
-				}		
+				}
 
 				$recordData[$referenceName] = $referenceListData[$referenceName];
 			}
 		}
-		
+
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => array_diff_key($dataArray, array_flip($recordKeys)));
 	}
 
@@ -848,8 +834,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
-		
-		self::$lastQuery = $query;
+
 		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
@@ -859,7 +844,7 @@ abstract class ActiveRecord implements Serializable
 		$queryStr = $query->createString();
 		self::getLogger()->logQuery($queryStr);
 		$resultSet = $db->executeQuery($queryStr);
-		self::getLogger()->logQueryExecutionTime();		
+		self::getLogger()->logQueryExecutionTime();
 		$dataArray = array();
 		while ($resultSet->next())
 		{
@@ -921,7 +906,7 @@ abstract class ActiveRecord implements Serializable
 			$recordID = self::extractRecordID($schema, $rowData);
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
 			$recordSet->add($instance);
-			
+
 			if (!empty($parsedRowData['miscData']))
 			{
 				$instance->miscRecordDataHandler($parsedRowData['miscData']);
@@ -950,7 +935,7 @@ abstract class ActiveRecord implements Serializable
 			$resultData = $counterResult->getRow();
 			$recordSet->setTotalRecordCount($resultData['totalCount']);
 		}
-		
+
 		return $recordSet;
 	}
 
@@ -974,7 +959,7 @@ abstract class ActiveRecord implements Serializable
 		$counterResult->next();
 
 		$resultData = $counterResult->getRow();
-		return $resultData['totalCount'];		
+		return $resultData['totalCount'];
 	}
 
 	public static function getRecordCountByQuery(ARSelectQueryBuilder $query)
@@ -992,7 +977,7 @@ abstract class ActiveRecord implements Serializable
 		$counterResult->next();
 
 		$resultData = $counterResult->getRow();
-		return $resultData['totalCount'];		
+		return $resultData['totalCount'];
 	}
 
 	/**
@@ -1033,7 +1018,7 @@ abstract class ActiveRecord implements Serializable
 				return;
 			}
 		}
-		
+
 		throw new ARSchemaException("Reference from ".$foreignClassName." to ".$callerClassName." is not defined in schema");
 	}
 
@@ -1055,7 +1040,7 @@ abstract class ActiveRecord implements Serializable
 		$db = self::getDBConnection();
 
 		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString() ."\n";
-		
+
 		if($cleanUp && isset(self::$recordPool[$className]))
 		{
 			foreach(self::$recordPool[$className] as $record)
@@ -1064,7 +1049,7 @@ abstract class ActiveRecord implements Serializable
 				$record->markAsDeleted();
 			}
 		}
-		
+
 		self::getLogger()->logQuery($deleteQuery);
 		return $db->executeUpdate($deleteQuery);
 	}
@@ -1103,7 +1088,7 @@ abstract class ActiveRecord implements Serializable
 				}
 			}
 		}
-		
+
 		$hash = self::getRecordHash($recordID);
 		if(isset(self::$recordPool[$className][$hash]))
 		{
@@ -1111,7 +1096,7 @@ abstract class ActiveRecord implements Serializable
 			$record->markAsNotLoaded();
 			$record->markAsDeleted();
 		}
-		
+
 		$filter->setCondition($PKValueCond);
 		self::deleteRecordSet($className, $filter, false);
 	}
@@ -1134,14 +1119,14 @@ abstract class ActiveRecord implements Serializable
 		if ($joinReferencedTables)
 		{
 			$tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
-			self::joinReferencedTables($schema, $query, $tables);		  
+			self::joinReferencedTables($schema, $query, $tables);
 		}
-		
+
 		$query->setFilter($filter);
 		$query->removeFieldList();
-				
+
 		$sql = preg_replace('/^SELECT[ ]*FROM/', 'UPDATE', $query->createString());
-		
+
 		self::getLogger()->logQuery($sql);
 		return $db->executeUpdate($sql);
 	}
@@ -1210,9 +1195,9 @@ abstract class ActiveRecord implements Serializable
 		{
 			return false;
 		}
-		
+
 		$this->setupDBConnection();
-		if ($forceOperation)		
+		if ($forceOperation)
 		{
 		  	$action = ($forceOperation == self::PERFORM_UPDATE) ? self::PERFORM_UPDATE : self::PERFORM_INSERT;
 		}
@@ -1222,20 +1207,20 @@ abstract class ActiveRecord implements Serializable
 			{
 				if ($this->isModified())
 				{
-					$action = self::PERFORM_UPDATE;	  
-				}	
+					$action = self::PERFORM_UPDATE;
+				}
 				else
 				{
 				  	return false;
-				}			  	
+				}
 			}
 			else
 			{
-				$action = self::PERFORM_INSERT;	  			  
-			}				  
+				$action = self::PERFORM_INSERT;
+			}
 		}
 
-				
+
 		if (self::PERFORM_UPDATE == $action)
 		{
 			$res = $this->update();
@@ -1244,10 +1229,10 @@ abstract class ActiveRecord implements Serializable
 		{
 			$res = $this->insert();
 		}
-		
+
 		$this->resetModifiedStatus();
 		$this->markAsLoaded();
-		
+
 		return $res;
 	}
 
@@ -1256,7 +1241,7 @@ abstract class ActiveRecord implements Serializable
 		foreach($this->data as $dataContainer)
 		{
 			$dataContainer->resetModifiedStatus();
-		} 	
+		}
 	}
 
 	/**
@@ -1285,7 +1270,7 @@ abstract class ActiveRecord implements Serializable
 			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
 			$filter->mergeCondition($cond);
 		}
-		
+
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
 		self::getLogger()->logQuery($updateQuery);
@@ -1303,7 +1288,7 @@ abstract class ActiveRecord implements Serializable
 
 		self::getLogger()->logQuery($insertQuery);
 		$result = $this->executeUpdate($insertQuery);
-		
+
 		// get inserted record ID
 		if (count($this->schema->getPrimaryKeyList()) == 1)
 		{
@@ -1314,11 +1299,11 @@ abstract class ActiveRecord implements Serializable
 				$IDG = $this->db->getIdGenerator();
 				$this->setID($IDG->getId(), false);
 			}
-		}	
+		}
 
 		self::storeToPool($this);
-		
-		return $result;		
+
+		return $result;
 	}
 
 	/**
@@ -1328,13 +1313,13 @@ abstract class ActiveRecord implements Serializable
 	{
 		if ($this->getID())
 		{
-			self::deleteByID(get_class($this), $this->getID());			
+			self::deleteByID(get_class($this), $this->getID());
 		}
 
 		$this->markAsNotLoaded();
 		$this->cachedId = false;
 		$this->markAsDeleted();
-					   	
+
 		return true;
 	}
 
@@ -1345,13 +1330,13 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function hasID()
 	{
-		if ($this->isDeleted) 
+		if ($this->isDeleted)
 		{
-			return false;	
+			return false;
 		}
 
 		$PKFieldList = $this->schema->getPrimaryKeyList();
-				
+
 		foreach($PKFieldList as $field)
 		{
 			if (!$this->data[$field->getName()]->hasValue())
@@ -1359,7 +1344,7 @@ abstract class ActiveRecord implements Serializable
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 
@@ -1377,7 +1362,7 @@ abstract class ActiveRecord implements Serializable
 		foreach($this->data as $fieldName => $dataContainer)
 		{
 			$value = "NULL";
-			
+
 			//if (!($dataContainer->getField() instanceof ARPrimaryKeyField) && $dataContainer->isModified()) {
 			if ($dataContainer->isModified())
 			{
@@ -1411,12 +1396,12 @@ abstract class ActiveRecord implements Serializable
 						$value = "'" . str_replace("'", "\'", $value) . "'";
 					}
 				}
-				
+
 				if ($dataContainer->isNull())
 				{
 					$value = "NULL";
 				}
-				
+
 				$fieldList[] = "`".$dataContainer->getField()->getName()."` = ".$value;
 			}
 		}
@@ -1471,9 +1456,9 @@ abstract class ActiveRecord implements Serializable
 
 		$selectString = "SELECT COUNT(*) AS `count` FROM ".$schema->getName()." WHERE ".self::enumerateID($className, $recordID);
 		self::getLogger()->logQuery($selectString);
-		
+
 		$result = self::getDataBySQL($selectString);
-		
+
 		return $result[0]['count'] > 0;
 	}
 
@@ -1505,11 +1490,11 @@ abstract class ActiveRecord implements Serializable
 	 * ActiveRecord instance (foreign key) than it also calls its toArray() method
 	 *
 	 * @param bool $force Force to recreate array
-	 * 
+	 *
 	 * @return array
 	 */
 	public function toArray($force = false)
-	{	
+	{
 		// create a unique identifier of the current record
 		$className = get_class($this);
 		$currentIdentifier = $this->getRecordIdentifier($this);
@@ -1519,24 +1504,24 @@ abstract class ActiveRecord implements Serializable
 	   	{
 			return self::$toArrayData[$currentIdentifier];
 		}
-		
-		$data = array(); 
-		
+
+		$data = array();
+
 		self::$toArrayData[$currentIdentifier] =& $data;
-		
+
 		foreach($this->data as $name => $value)
 		{
 			$fieldValue = $value->get();
-			
+
 			if ($value->getField() instanceof ARForeignKey)
 			{
 				if ($fieldValue != null)
 				{
 					$varName = $value->getField()->getForeignClassName();
-					if (substr($name, -2) == 'ID') 
+					if (substr($name, -2) == 'ID')
 					{
 						$varName = ucfirst(substr($name, 0, -2));
-					}		
+					}
 
 					$foreignIdentifier = $this->getRecordIdentifier($fieldValue);
 					if (!$force && isset(self::$toArrayData[$foreignIdentifier]))
@@ -1561,27 +1546,27 @@ abstract class ActiveRecord implements Serializable
 				}
 			}
 		}
-	
+
 		$data = call_user_func_array(array($className, 'transformArray'), array($data, $this->schema));
-		
+
 		if (!$this->isLoaded())
 		{
 			unset(self::$toArrayData[$currentIdentifier]);
-		}		
-		
+		}
+
 		return $data;
 	}
-	
+
 	private function getRecordIdentifier(ActiveRecord $record)
 	{
 		return get_class($record) . '-' . self::getRecordHash($record->getID());
 	}
-	
+
 	protected function setArrayData($array)
 	{
 		self::$toArrayData[$this->getRecordIdentifier($this)] = $array;
 	}
-	
+
 	/**
 	 * Creates an array representing record data (without referenced records)
 	 *
@@ -1592,8 +1577,8 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function toFlatArray()
 	{
-		$data = array(); 
-		
+		$data = array();
+
 		foreach($this->data as $name => $value)
 		{
 			if ($value->getField() instanceof ARForeignKey)
@@ -1608,7 +1593,7 @@ abstract class ActiveRecord implements Serializable
 				$data[$name] = $value->get();
 			}
 		}
-		
+
 		return call_user_func_array(array(get_class($this), 'transformArray'), array($data, $this->schema));
 	}
 
@@ -1637,8 +1622,6 @@ abstract class ActiveRecord implements Serializable
 	{
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
-		
-		self::$lastQuery = $query;
 
 		$queryResultData = self::fetchDataFromDB($query);
 		$resultDataArray = array();
@@ -1652,9 +1635,9 @@ abstract class ActiveRecord implements Serializable
 
 		if (!is_null($getRecordCount))
 		{
-			$getRecordCount = self::getRecordCountByQuery($query);	
+			$getRecordCount = self::getRecordCountByQuery($query);
 		}
-		
+
 		return $resultDataArray;
 	}
 
@@ -1675,7 +1658,7 @@ abstract class ActiveRecord implements Serializable
 		{
 		  	throw new Exception('ActiveRecord::getInstanceArray expects an array of record IDs!');
 		}
-		
+
 		if (count($recordIDs) == 0)
 		{
 			return array();
@@ -1683,11 +1666,11 @@ abstract class ActiveRecord implements Serializable
 
 		$missingInstances = array();
 		$ret = array();
-		
+
 		foreach ($recordIDs as $id)
 		{
 			$instance = self::retrieveFromPool($className, $id);
-			
+
 			if (null == $instance || !$instance->isLoaded())
 			{
 				$missingInstances[] = $id;
@@ -1695,9 +1678,9 @@ abstract class ActiveRecord implements Serializable
 			else
 			{
 				$ret[$id] = $instance;
-			}		  
+			}
 		}
-		
+
 		// get missing instances
 		if ($missingInstances)
 		{
@@ -1705,13 +1688,13 @@ abstract class ActiveRecord implements Serializable
 			$cond = new INCond(new ARFieldHandle($className, 'ID'), $missingInstances);
 			$filter->setCondition($cond);
 			$set = self::getRecordSet($className, $filter, $loadReferencedData);
-			
+
 			foreach ($set as $instance)
 			{
 			  	$ret[$instance->getID()] = $instance;
-			}		  
+			}
 		}
-		
+
 		return $ret;
 	}
 
@@ -1723,14 +1706,6 @@ abstract class ActiveRecord implements Serializable
 			self::$logger = new ARLogger();
 		}
 		return self::$logger;
-	}
-	
-	/**
-	 * @return ARSelectQueryBuilder
-	 */
-	public static function getLastQuery()
-	{
-		return self::$lastQuery;
 	}
 
 	/**
@@ -1751,7 +1726,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$this->isLoaded = true;
 	}
-	
+
 	/**
 	 * Change record status to not loaded
 	 */
@@ -1759,7 +1734,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$this->isLoaded = false;
 	}
-	
+
 	/**
 	 * Actualy unload current instance and once more  it loadfrom database
 	 *
@@ -1769,7 +1744,7 @@ abstract class ActiveRecord implements Serializable
 		$this->markAsNotLoaded();
 		$this->load($loadReferencedRecords);
 	}
-	
+
 	/**
 	 * Mark as deleted record
 	 */
@@ -1780,7 +1755,7 @@ abstract class ActiveRecord implements Serializable
 			$this->isDeleted = true;
 		}
 	}
-	
+
 	public function isDeleted()
 	{
 		return $this->isDeleted;
@@ -1791,7 +1766,7 @@ abstract class ActiveRecord implements Serializable
 	 *
 	 */
 	public static function beginTransaction()
-	{		
+	{
 		// only begin the transaction once
 		self::getLogger()->logAction("BEGIN transaction " . ((int)self::$transactionLevel + 1));
 		self::$transactionLevel++;
@@ -1841,14 +1816,14 @@ abstract class ActiveRecord implements Serializable
 	 */
 	protected static function defineSchema($className = __CLASS__)
 	{
-		throw new Exception('ActiveRecord::defineSchema must be implemented');  	
+		throw new Exception('ActiveRecord::defineSchema must be implemented');
 	}
-	
+
 	private function getVars()
 	{
 		return get_object_vars($this);
 	}
-	
+
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
 		if (!is_array($skippedRelations))
@@ -1856,9 +1831,9 @@ abstract class ActiveRecord implements Serializable
 			$skippedRelations = array();
 		}
 		$skippedRelations = array_flip($skippedRelations);
-		
+
 		$serialized = array('data' => array());
-		
+
 		// serialize data variables
 		foreach ($this->data as $key => $value)
 		{
@@ -1869,42 +1844,42 @@ abstract class ActiveRecord implements Serializable
 				{
 					continue;
 				}
-				
+
 				$value = new ARSerializedReference($value);
 			}
 
 			$serialized['data'][$key] = $value;
 		}
-		
+
 		// serialize custom variables
 		$properties[] = 'isLoaded';
 		foreach ($properties as $key)
 		{
-			$serialized[$key] = $this->$key;   
+			$serialized[$key] = $this->$key;
 		}
 
 		$s = serialize($serialized);
 
-//		echo 'Ending '.get_class($this) . "\n"; flush();		
-		
+//		echo 'Ending '.get_class($this) . "\n"; flush();
+
 		return $s;
 	}
-	
+
 	public function unserialize($serialized)
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
-		
+
 		$array = unserialize($serialized);
-				
+
 		foreach ($this->schema->getForeignKeyList() as $field)
 		{
 			$fieldName = $field->getName();
-			
+
 			if (!isset($array['data'][$fieldName]))
 			{
 				continue;
 			}
-			
+
 			$referenced = $array['data'][$fieldName];
 
 			if (is_object($referenced) && ($referenced instanceof ARSerializedReference))
@@ -1921,18 +1896,29 @@ abstract class ActiveRecord implements Serializable
 
 		$this->createDataAccessVariables($variables);
 		unset($array['data']);
-		
+
 		foreach ($array as $key => $value)
 		{
 			$this->$key = $value;
-		}		
-		
+		}
+
 		if ($this->isLoaded())
 		{
-			self::storeToPool($this);			
+			self::storeToPool($this);
 		}
 	}
-	
+
+	public function __destruct()
+	{
+		self::removeFromPool($this);
+/*
+		if (defined('SHUTDOWN'))
+		{
+			echo get_class($this) . "\n";
+		}
+*/
+	}
+
 	public function __clone()
 	{
 		foreach ($this->data as $key => $valueMapper)
@@ -1940,7 +1926,7 @@ abstract class ActiveRecord implements Serializable
 			$this->data[$key] = clone $valueMapper;
 		}
 	}
-	
+
 	private function __get($name)
 	{
 		switch ($name)
@@ -1953,6 +1939,9 @@ abstract class ActiveRecord implements Serializable
 			default:
 			break;
 		}
-	}	
+	}
 }
+
+register_shutdown_function(array('ActiveRecord', 'clearPool'));
+
 ?>

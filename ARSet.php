@@ -4,7 +4,7 @@
  * ActiveRecord set container/manager
  *
  * @package activerecord
- * @author Integry Systems  
+ * @author Integry Systems
  */
 class ARSet implements IteratorAggregate, Serializable
 {
@@ -43,7 +43,17 @@ class ARSet implements IteratorAggregate, Serializable
 	{
 		$this->data[] = $record;
 	}
-	
+
+	/**
+	 * Shift a record from the record set
+	 *
+	 * @return ActiveRecord $record
+	 */
+	public function shift()
+	{
+		return array_shift($this->data);
+	}
+
 	public function unshift(ActiveRecord $record)
 	{
 		array_unshift($this->data, $record);
@@ -160,23 +170,29 @@ class ARSet implements IteratorAggregate, Serializable
 		}
 		return false;
 	}
-	
+
 	public function getData()
 	{
 		return $this->data;
 	}
-	
+
 	public function serialize()
 	{
-		$serialized = array('data' => $this->data);		
+		$serialized = array('data' => $this->data);
 		return serialize($serialized);
 	}
-	
+
 	public function unserialize($serialized)
 	{
-		$array = unserialize($serialized);		
+		$array = unserialize($serialized);
 		$this->data = $array['data'];
-	}	
+	}
+
+	public function __destruct()
+	{
+		$this->filter = null;
+		//logDestruct($this);
+	}
 }
 
 ?>

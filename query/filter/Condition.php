@@ -8,7 +8,7 @@
  * select or etc.)
  *
  * @package activerecord.query.filter
- * @author Integry Systems 
+ * @author Integry Systems
  */
 abstract class Condition
 {
@@ -72,7 +72,7 @@ abstract class Condition
 	{
 		$this->ORCondList[] = $cond;
 	}
-	
+
 	/**
 	 * Creates an expression handle, which can be used in query field list for advanced calculations
 	 *
@@ -87,7 +87,7 @@ abstract class Condition
 	 */
 	public function getExpressionHandle()
 	{
-		return new ARExpressionHandle($this->createChain());	
+		return new ARExpressionHandle($this->createChain());
 	}
 
 	public function removeCondition(BinaryCondition $condition)
@@ -100,7 +100,7 @@ abstract class Condition
 			$this->rightSide = 1;
 			$this->operatorString = '=';
 		}
-		
+
 		foreach (($this->ANDCondList + $this->ORCondList) as $cond)
 		{
 			if ($cond instanceof BinaryCondition)
@@ -109,7 +109,7 @@ abstract class Condition
 			}
 		}
 	}
-	
+
 	/**
 	 * Merges an array of conditions into one condition
 	 *
@@ -123,8 +123,27 @@ abstract class Condition
 		{
 			$baseCond->addAND($cond);
 		}
-		
+
 		return $baseCond;
+	}
+
+	public function __destruct()
+	{
+/*
+		foreach ($this->ORCondList as $cond)
+		{
+			$cond->__destruct();
+		}
+
+		foreach ($this->ANDCondList as $cond)
+		{
+			$cond->__destruct();
+		}
+
+		$this->ORCondList = array();
+		$this->ANDCondList = array();
+*/
+		logDestruct($this, $this->createChain());
 	}
 }
 
@@ -301,15 +320,15 @@ class INCond extends BinaryCondition
 		{
 		  	$rightSide = implode(', ', array_filter($rightSide, array($this, 'filterEmptyValues')));
 		}
-		
+
 		if (!$rightSide)
 		{
 			$rightSide = 0;
 		}
-		
+
 		parent::__construct($leftSide, "(".$rightSide.")");
 	}
-	
+
 	private function filterEmptyValues($value)
 	{
 		return is_numeric($value) || trim($value);
@@ -353,12 +372,12 @@ class AndChainCondition extends Condition
 		foreach ($array as $cond)
 		{
 			$this->addAND($cond);
-		}	
-	}	
-	
+		}
+	}
+
 	public function toString()
 	{
-		
+
 	}
 
 	public function createChain()
@@ -368,7 +387,7 @@ class AndChainCondition extends Condition
 		{
 			$conds[] = '(' . $cond->createChain() . ')';
 		}
-		
+
 		return '(' . implode(' AND ', $conds) . ')';
 	}
 }

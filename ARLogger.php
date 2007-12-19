@@ -10,7 +10,6 @@ class ARLogger
 {
 	private $isEnabled = true;
 	private $startTime = null;
-	private $log = array();
 	private $outputType = 1;
 	private $logFileName = "";
 
@@ -61,14 +60,13 @@ class ARLogger
 
 	public function logQueryExecutionTime()
 	{
-		file_put_contents($this->logFileName, '( ' . (microtime(true) - $this->lastQueryTime) . ' sec)' . "\n\n", FILE_APPEND);	
+		file_put_contents($this->logFileName, '( ' . (microtime(true) - $this->lastQueryTime) . ' sec)' . "\n\n", FILE_APPEND);
 	}
 
 	private function addLogItem($msg, $logType)
 	{
 //		return false;
 		$logItem = array("type" => $logType, "msg" => $msg);
-		$this->log[] = $logItem;
 
 		$logData = /*$this->startTime.*/ microtime(true) . " | " . $this->createLogItemStr($logItem);
 
@@ -96,7 +94,7 @@ class ARLogger
 	{
 		$this->isEnabled = false;
 	}
-	
+
 	public function setLogFileName($path)
 	{
 		$this->logFileName = $path;

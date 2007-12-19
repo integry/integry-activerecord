@@ -6,7 +6,7 @@ require_once("filter/Condition.php");
  * Abstract ActiveRecord filter
  *
  * @package activerecord.query.filter
- * @author Integry Systems 
+ * @author Integry Systems
  */
 abstract class ARFilter
 {
@@ -106,10 +106,10 @@ abstract class ARFilter
 	 */
 	public function joinTable($tableName, $mainTableName, $tableJoinFieldName, $mainTableJoinFieldName, $tableAliasName = '')
 	{
-		
-		$join = array("tableName" => $tableName, 
-					  "mainTableName" => $mainTableName, 
-					  "tableJoinFieldName" => $tableJoinFieldName, 
+
+		$join = array("tableName" => $tableName,
+					  "mainTableName" => $mainTableName,
+					  "tableJoinFieldName" => $tableJoinFieldName,
 					  "mainTableJoinFieldName" => $mainTableJoinFieldName,
 					  "tableAliasName" => $tableAliasName
 					  );
@@ -117,11 +117,11 @@ abstract class ARFilter
 		if (!$tableAliasName)
 		{
 			$tableAliasName = $tableName;
-		}  
-			
+		}
+
 		$this->joinList[$tableAliasName] = $join;
-	}	
-	
+	}
+
 	public function getJoinList()
 	{
 	  	return $this->joinList;
@@ -132,6 +132,12 @@ abstract class ARFilter
 		return $this->createString()."\n<br/>";
 	}
 
+	/*
+	public function __destruct()
+	{
+		logDestruct($this);
+	}
+	*/
 }
 
 ?>
