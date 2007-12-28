@@ -129,21 +129,7 @@ abstract class Condition
 
 	public function __destruct()
 	{
-/*
-		foreach ($this->ORCondList as $cond)
-		{
-			$cond->__destruct();
-		}
-
-		foreach ($this->ANDCondList as $cond)
-		{
-			$cond->__destruct();
-		}
-
-		$this->ORCondList = array();
-		$this->ANDCondList = array();
-*/
-		logDestruct($this, $this->createChain());
+//		logDestruct($this, $this->createChain());
 	}
 }
 

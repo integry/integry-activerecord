@@ -263,7 +263,7 @@ class ARValueMapper implements Serializable
 
 	public function __destruct()
 	{
-		logDestruct($this);
+		//logDestruct($this);
 	}
 
 	public function __clone()

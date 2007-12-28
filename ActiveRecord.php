@@ -866,6 +866,25 @@ abstract class ActiveRecord implements Serializable
 		return $dataArray;
 	}
 
+	/**
+	 *	Return values only of particular columns
+	 *
+	 *	@return array
+	 */
+	public static function getFieldValues($className, ARSelectFilter $filter, $fields, $loadReferencedRecords = array())
+	{
+		$query = self::createSelectQuery($className, $loadReferencedRecords);
+		$query->getFilter()->merge($filter);
+		$query->removeFieldList();
+
+		foreach ($fields as $tableName => $fieldName)
+		{
+			$query->addField($fieldName, is_numeric($tableName) ? $className : $tableName);
+		}
+
+		return self::getDataBySQL($query->createString());
+	}
+
 	public static function executeUpdate($sql)
 	{
 		try
@@ -1908,15 +1927,20 @@ abstract class ActiveRecord implements Serializable
 		}
 	}
 
+	public function destruct($references = array())
+	{
+		foreach ($references as $field)
+		{
+			$this->data[$field]->destructValue();
+		}
+
+		self::__destruct();
+	}
+
 	public function __destruct()
 	{
 		self::removeFromPool($this);
-/*
-		if (defined('SHUTDOWN'))
-		{
-			echo get_class($this) . "\n";
-		}
-*/
+		//logDestruct($this, $this->getID());
 	}
 
 	public function __clone()
