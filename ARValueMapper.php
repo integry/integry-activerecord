@@ -253,7 +253,7 @@ class ARValueMapper implements Serializable
 	{
 		$this->initialValue = null;
 
-		if ($this->value instanceof ActiveRecord)
+		if ($this->value instanceof ActiveRecord && !$this->value->isDestructing())
 		{
 			$this->value->__destruct();
 		}

@@ -166,6 +166,8 @@ abstract class ActiveRecord implements Serializable
 
 	protected $cachedId = null;
 
+	private $isDestructing = false;
+
 	/**
 	 * ActiveRecord constructor. Never use it directly
 	 *
@@ -1803,7 +1805,7 @@ abstract class ActiveRecord implements Serializable
 	public static function commit()
 	{
 		self::$transactionLevel--;
-		self::getLogger()->logAction("COMMIT transaction");
+		self::getLogger()->logAction("COMMIT transaction" . ((int)self::$transactionLevel + 1));
 		if (0 == self::$transactionLevel)
 		{
 			$db = self::getDBConnection();
@@ -1929,6 +1931,7 @@ abstract class ActiveRecord implements Serializable
 
 	public function destruct($references = array())
 	{
+		$this->isDestructing = true;
 		foreach ($references as $field)
 		{
 			$this->data[$field]->destructValue();
@@ -1937,8 +1940,14 @@ abstract class ActiveRecord implements Serializable
 		self::__destruct();
 	}
 
+	public function isDestructing()
+	{
+		return $this->isDestructing;
+	}
+
 	public function __destruct()
 	{
+		$this->isDestructing = true;
 		self::removeFromPool($this);
 		//logDestruct($this, $this->getID());
 	}
