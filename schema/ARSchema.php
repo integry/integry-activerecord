@@ -7,7 +7,7 @@ include_once("schema/ARSchemaDataType.php");
  * Class for table structure representation (also known as schema)
  *
  * @package activerecord.schema
- * @author Integry Systems 
+ * @author Integry Systems
  */
 class ARSchema
 {
@@ -31,6 +31,8 @@ class ARSchema
 	 */
 	private $referencedSchemaList = null;
 
+	private $circularReferences = array();
+
 	public function registerField(ARField $schemaField)
 	{
 		$name = $schemaField->getName();
@@ -40,12 +42,12 @@ class ARSchema
 		{
 			$this->foreignKeyList[$name] = $schemaField;
 		}
-		
+
 		if ($schemaField instanceof ARPrimaryKey)
 		{
 			$this->primaryKeyList[$name] = $schemaField;
 		}
-		
+
 		$this->fieldsByType[get_class($schemaField->getDataType())][$name] = $schemaField;
 	}
 
@@ -90,7 +92,7 @@ class ARSchema
 	{
 		if (isset($this->fieldList[$name]))
 		{
-			return $this->fieldList[$name];		  
+			return $this->fieldList[$name];
 		}
 	}
 
@@ -134,7 +136,7 @@ class ARSchema
 	{
 		return isset($this->fieldsByType[$className]) ? $this->fieldsByType[$className] : array();
 	}
-	
+
 	/**
 	 * Returns a list of ARArray schema fields
 	 *
@@ -145,7 +147,7 @@ class ARSchema
 	{
 		return $this->getFieldsByType('ARArray');
 	}
-	
+
 	/**
 	 * Creatres a sting of enumerated fields
 	 *
@@ -177,34 +179,56 @@ class ARSchema
 		if (is_null($this->referencedSchemaList))
 		{
 			$ret = array();
-			
+
 			foreach($this->getForeignKeyList() as $name => $refField)
-			{				
+			{
 				$refSchema = ActiveRecord::getSchemaInstance($refField->getForeignClassName());
-				if ($this === $refSchema || $refSchema === $circularReference)
+
+				if (($this === $refSchema || $refSchema === $circularReference))
 				{
-				  	continue;
+					continue;
 				}
-				
+
 				$refName = $refField->getReferenceName();
-				if(!isset($ret[$refName])) 
+				if(!isset($ret[$refName]))
 				{
 					$ret[$refName] = array();
 				}
 
 				$ret[$refName][] = $refSchema;
-				
-				$sub = $refSchema->getReferencedSchemas($this);					
+
+				$sub = $refSchema->getReferencedSchemas($this);
 				$ret = array_merge($ret, $sub);
-				
-				 // remove circular references
+
+				// remove circular references
 				unset($ret[$this->tableName]);
 			}
-			
+
 			$this->referencedSchemaList = $ret;
 		}
-		
+
+		if ($this->circularReferences)
+		{
+			$ret = $this->referencedSchemaList;
+			foreach ($this->circularReferences as $refName => $refSchema)
+			{
+				$ret[$refName][] = $refSchema;
+				$sub = $refSchema->getReferencedSchemas();
+				$ret = array_merge($ret, $sub);
+			}
+
+			$this->referencedSchemaList = $ret;
+			$this->circularReferences = array();
+		}
+
 		return $this->referencedSchemaList;
+	}
+
+	public function registerCircularReference($refName, $refSchema)
+	{
+		$refSchema = ActiveRecord::getSchemaInstance($refSchema);
+		$refSchema->getReferencedSchemas($this);
+		$this->circularReferences[$refName] = $refSchema;
 	}
 
 	/**

@@ -24,6 +24,10 @@ class ARSet implements IteratorAggregate, Serializable
 
 	private $totalRecordCount = null;
 
+	private $counterQuery;
+
+	private $db;
+
 	/**
 	 * Creates an empty record set (record container)
 	 *
@@ -34,6 +38,17 @@ class ARSet implements IteratorAggregate, Serializable
 		$this->filter = $recordSetFilter;
 	}
 
+	public static function buildFromArray($array)
+	{
+		$set = new ARSet();
+		foreach ($array as $record)
+		{
+			$set->add($record);
+		}
+
+		return $set;
+	}
+
 	/**
 	 * Adds a record to a record set
 	 *
@@ -42,6 +57,16 @@ class ARSet implements IteratorAggregate, Serializable
 	public function add(ActiveRecord $record)
 	{
 		$this->data[] = $record;
+	}
+
+	/**
+	 * Merge two record sets
+	 *
+	 * @param ActiveRecord $record
+	 */
+	public function merge(ARSet $set)
+	{
+		$this->data = array_merge($this->data, $set->getData());
 	}
 
 	/**
@@ -87,7 +112,7 @@ class ARSet implements IteratorAggregate, Serializable
 	 * @see ActiveRecord::toArray()
 	 * @return array
 	 */
-	public function toArray($force = true)
+	public function toArray($force = false)
 	{
 		$recordSetArray = array();
 		foreach($this->data as $record)
@@ -134,8 +159,24 @@ class ARSet implements IteratorAggregate, Serializable
 		$this->totalRecordCount = $count;
 	}
 
+	public function setCounterQuery($query, $db)
+	{
+		$this->counterQuery = $query;
+		$this->db = $db;
+	}
+
 	public function getTotalRecordCount()
 	{
+		if ($this->counterQuery)
+		{
+			$result = $this->db->executeQuery($this->counterQuery);
+			$result->next();
+
+			$resultData = $result->getRow();
+			$this->setTotalRecordCount($resultData['totalCount']);
+			$this->counterQuery = null;
+		}
+
 		if (!empty($this->totalRecordCount))
 		{
 			return $this->totalRecordCount;

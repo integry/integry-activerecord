@@ -935,9 +935,8 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		$filter = $query->getFilter();
-		if ($filter->getLimit() >= $recordSet->size() || $filter->getOffset() > 0)
+		if ((($filter->getLimit() > 0) && ($filter->getLimit() >= $recordSet->size())) || $filter->getOffset() > 0)
 		{
-
 			$db = self::getDBConnection();
 			$counterFilter = clone $filter;
 			$counterFilter->removeFieldList();
@@ -947,14 +946,7 @@ abstract class ActiveRecord implements Serializable
 			$query->addField("COUNT(*)", null, "totalCount");
 			$query->setFilter($counterFilter);
 
-			$counterQuery = $query->createString();
-
-			self::getLogger()->logQuery($counterQuery);
-			$counterResult = $db->executeQuery($counterQuery);
-			$counterResult->next();
-
-			$resultData = $counterResult->getRow();
-			$recordSet->setTotalRecordCount($resultData['totalCount']);
+			$recordSet->setCounterQuery($query->createString(), $db);
 		}
 
 		return $recordSet;
