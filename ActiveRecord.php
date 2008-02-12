@@ -568,11 +568,29 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
-			$tables = is_array($loadReferencedRecords) ? array_flip($loadReferencedRecords) : $loadReferencedRecords;
+			$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
 			self::joinReferencedTables($schema, $query, $tables);
 		}
 
 		return $query;
+	}
+
+	private function array_invert($arr)
+	{
+		$flipped = array();
+		foreach(array_keys($arr) as $key)
+		{
+			if(array_key_exists($arr[$key],$flipped))
+			{
+				$flipped[$arr[$key]] = array_merge((array)$flipped[$arr[$key]], (array)$key);
+			}
+			else
+			{
+				$flipped[$arr[$key]] = $key;
+			}
+		}
+
+		return $flipped;
 	}
 
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
@@ -590,7 +608,7 @@ abstract class ActiveRecord implements Serializable
 			if (($schema === $foreignSchema) ||
 				(is_array($tables) &&
 					(!isset($tables[$foreignClassName])) ||
-					(isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && $tables[$foreignClassName] != $tableAlias)
+					(isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && ($tables[$foreignClassName] != $tableAlias && (!is_array($tables[$foreignClassName]) || (is_array($tables[$foreignClassName]) && !in_array($tableAlias, $tables[$foreignClassName])))))
 				))
 			{
 				continue;
@@ -741,7 +759,7 @@ abstract class ActiveRecord implements Serializable
 			// remove schemas that were not loaded with this query
 			if (is_array($loadReferencedRecords))
 			{
-				$loadReferencedRecords = array_flip($loadReferencedRecords);
+				$loadReferencedRecords = self::array_invert($loadReferencedRecords);
 				$filteredSchemas = array();
 				foreach($loadReferencedRecords as $tableName => $tableAlias)
 				{
@@ -751,11 +769,16 @@ abstract class ActiveRecord implements Serializable
 					}
 					else
 					{
-						foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
+						$aliases = !is_array($tableAlias) ? array($tableAlias) : $tableAlias;
+
+						foreach ($aliases as $tableAlias)
 						{
-							if ($unfilteredSchema->getName() == $tableName)
+							foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
 							{
-								$filteredSchemas[$tableAlias] = $unfilteredSchema;
+								if ($unfilteredSchema->getName() == $tableName)
+								{
+									$filteredSchemas[$tableAlias] = $unfilteredSchema;
+								}
 							}
 						}
 					}
