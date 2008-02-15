@@ -174,10 +174,10 @@ abstract class ActiveRecord implements Serializable
 	 * @see self::getNewInstance()
 	 * @see self::getInstanceByID()
 	 */
-	protected function __construct($data = array())
+	protected function __construct($data = array(), $recordID = null)
 	{
 		$this->schema = self::getSchemaInstance(get_class($this));
-		$this->createDataAccessVariables($data);
+		$this->createDataAccessVariables($data, $recordID);
 	}
 
 	/**
@@ -187,7 +187,7 @@ abstract class ActiveRecord implements Serializable
 	 * Record fields type of PKField has no direct access (instance variables are not created)
 	 *
 	 */
-	private function createDataAccessVariables($data = array())
+	private function createDataAccessVariables($data = array(), $recordID = null)
 	{
 		foreach($this->schema->getFieldList() as $name => $field)
 		{
@@ -198,12 +198,23 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 
+		if ($recordID)
+		{
+			$this->setID($recordID, false);
+			self::storeToPool($this);
+		}
+
+		if ($data)
+		{
+			$this->isLoaded = true;
+		}
+
 		foreach ($this->schema->getForeignKeyList() as $name => $field)
 		{
 			$referenceName = $field->getReferenceName();
 			$foreignClassName = $field->getForeignClassName();
 
-			if (!($this->data[$name]->get() instanceof ActiveRecord) && isset($data[$name]))
+			if ((!($this->data[$name]->get() instanceof ActiveRecord) || !$this->data[$name]->get()->isLoaded()) && isset($data[$name]))
 			{
 				if (isset($data[$referenceName]))
 				{
@@ -226,11 +237,6 @@ abstract class ActiveRecord implements Serializable
 			// Making first letter lowercase
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
 			$this->$referenceName = $this->data[$name];
-		}
-
-		if ($data)
-		{
-		  	$this->isLoaded = true;
 		}
 	}
 
@@ -400,9 +406,9 @@ abstract class ActiveRecord implements Serializable
 	 * @param array $data Field values (associative array)
 	 * @return ActiveRecord
 	 */
-	public static function getNewInstance($className, $data = array())
+	public static function getNewInstance($className, $data = array(), $recordID = null)
 	{
-		return new $className($data);
+		return new $className($data, $recordID);
 	}
 
 	/**
@@ -436,13 +442,13 @@ abstract class ActiveRecord implements Serializable
 
 		if ($instance == null)
 		{
-			$instance = self::getNewInstance($className, $data);
+			$instance = self::getNewInstance($className, $data, $recordID);
 			$instance->setID($recordID, false);
 			self::storeToPool($instance);
 		}
 		else if(!$instance->isLoaded() && !empty($data))
 		{
-			$instance->createDataAccessVariables($data);
+			$instance->createDataAccessVariables($data, $recordID);
 		}
 
 		if ($loadRecordData)
@@ -686,7 +692,7 @@ abstract class ActiveRecord implements Serializable
 
 		$parsedRowData = self::prepareDataArray($className, $this->schema, $rowDataArray[0], $loadReferencedRecords);
 
-		$this->createDataAccessVariables($parsedRowData['recordData']);
+		$this->createDataAccessVariables($parsedRowData['recordData'], $this->getID());
 
 		if (!empty($parsedRowData['miscData']))
 		{
@@ -1545,6 +1551,8 @@ abstract class ActiveRecord implements Serializable
 
 		self::$toArrayData[$currentIdentifier] =& $data;
 
+		$foreignKeys = array();
+
 		foreach($this->data as $name => $value)
 		{
 			$fieldValue = $value->get();
@@ -1553,21 +1561,7 @@ abstract class ActiveRecord implements Serializable
 			{
 				if ($fieldValue != null)
 				{
-					$varName = $value->getField()->getForeignClassName();
-					if (substr($name, -2) == 'ID')
-					{
-						$varName = ucfirst(substr($name, 0, -2));
-					}
-
-					$foreignIdentifier = $this->getRecordIdentifier($fieldValue);
-					if (!$force && isset(self::$toArrayData[$foreignIdentifier]))
-					{
-						$data[$varName] =& self::$toArrayData[$foreignIdentifier];
-					}
-					else
-					{
-						$data[$varName] = &$fieldValue->toArray($force);
-					}
+					$foreignKeys[$name] = $value;
 				}
 			}
 			else
@@ -1580,6 +1574,28 @@ abstract class ActiveRecord implements Serializable
 				{
 					$data[$name] = $fieldValue;
 				}
+			}
+		}
+
+		// process referenced records
+		foreach ($foreignKeys as $name => $value)
+		{
+			$fieldValue = $value->get();
+
+			$varName = $value->getField()->getForeignClassName();
+			if (substr($name, -2) == 'ID')
+			{
+				$varName = ucfirst(substr($name, 0, -2));
+			}
+
+			$foreignIdentifier = $this->getRecordIdentifier($fieldValue);
+			if (!$force && isset(self::$toArrayData[$foreignIdentifier]))
+			{
+				$data[$varName] =& self::$toArrayData[$foreignIdentifier];
+			}
+			else
+			{
+				$data[$varName] = &$fieldValue->toArray($force);
 			}
 		}
 
