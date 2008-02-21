@@ -1076,12 +1076,24 @@ abstract class ActiveRecord implements Serializable
 	 * @param string $className
 	 * @param ARDeleteFilter $filter
 	 */
-	public static function deleteRecordSet($className, ARDeleteFilter $filter, $cleanUp = true)
+	public static function deleteRecordSet($className, ARDeleteFilter $filter, $cleanUp = true, $joinReferencedTables = false)
 	{
 		$schema = self::getSchemaInstance($className);
 		$db = self::getDBConnection();
 
-		$deleteQuery = "DELETE FROM ".$schema->getName()." ".$filter->createString() ."\n";
+		$query = new ARSelectQueryBuilder();
+		$query->includeTable($className);
+
+		if ($joinReferencedTables)
+		{
+			$tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
+			self::joinReferencedTables($schema, $query, $tables);
+		}
+
+		$query->setFilter($filter);
+		$query->removeFieldList();
+
+		$deleteQuery = preg_replace('/^SELECT[ ]*FROM/', 'DELETE ' . $className . '.* FROM', $query->createString());
 
 		if($cleanUp && isset(self::$recordPool[$className]))
 		{
