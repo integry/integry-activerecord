@@ -313,7 +313,8 @@ abstract class ActiveRecord implements Serializable
 			if (count($PKList) == 1)
 			{
 				$PKFieldName = key($PKList);
-				if ($this->data[$PKFieldName]->get()instanceof ARForeignKey)
+				//if ($this->data[$PKFieldName]->get() instanceof ARForeignKey)
+				if ($PKList[$PKFieldName] instanceof ARForeignKey)
 				{
 					$instance = self::getInstanceByID($this->schema->getField($PKFieldName)->getForeignClassName(), $recordID);
 					$this->data[$PKFieldName]->set($instance, $markAsModified);
@@ -322,7 +323,6 @@ abstract class ActiveRecord implements Serializable
 				{
 					$this->data[$PKFieldName]->set($recordID, $markAsModified);
 				}
-
 			}
 			else
 			{
@@ -384,7 +384,7 @@ abstract class ActiveRecord implements Serializable
 
 			if (count($PK) == 1)
 			{
-				$this->cachedId = $PK[key($PK)];
+				$this->cachedId = array_shift($PK);
 			}
 			else
 			{
@@ -1233,7 +1233,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function save($forceOperation = 0)
 	{
-		if ($this->isDeleted())
+		if (!$this->isModified() || $this->isDeleted())
 		{
 			return false;
 		}
@@ -1245,23 +1245,8 @@ abstract class ActiveRecord implements Serializable
 		}
 		else
 		{
-			if ($this->isExistingRecord())
-			{
-				if ($this->isModified())
-				{
-					$action = self::PERFORM_UPDATE;
-				}
-				else
-				{
-				  	return false;
-				}
-			}
-			else
-			{
-				$action = self::PERFORM_INSERT;
-			}
+			$action = $this->isExistingRecord() ? self::PERFORM_UPDATE : self::PERFORM_INSERT;
 		}
-
 
 		if (self::PERFORM_UPDATE == $action)
 		{

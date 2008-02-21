@@ -4,7 +4,7 @@
  * Schema field
  *
  * @package activerecord.schema
- * @author Integry Systems 
+ * @author Integry Systems
  */
 class ARField
 {
@@ -47,7 +47,7 @@ class ARField
 
 /**
  * Foreign key interface
- * 
+ *
  * @package activerecord.schema
  *
  */
@@ -83,6 +83,11 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 		$this->foreignTableName = $foreignTableName;
 		$this->foreignFieldName = $foreignFieldName;
 		$this->referenceName = ucfirst(substr($this->name, 0, -2));
+
+		if (!$this->referenceName)
+		{
+			$this->referenceName = $this->foreignClassName;
+		}
 	}
 
 	/**
@@ -126,16 +131,16 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 
 /**
  * Primary-foreign key field (PF) class that is mainly used in many-to-many relationships
- * 
+ *
  * @package activerecord.schema
  */
-class ARPrimaryForeignKeyField extends ARForeignKeyField implements ARPrimaryKey 
+class ARPrimaryForeignKeyField extends ARForeignKeyField implements ARPrimaryKey
 {
 }
 
 /**
  * Primary key interface
- * 
+ *
  * @package activerecord.schema
  *
  */
