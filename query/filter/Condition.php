@@ -240,6 +240,18 @@ class IsNullCond extends UnaryCondition
 		parent::__construct($fieldHandle, "IS NULL");
 	}
 }
+/**
+ * IS NOT NULL condition
+ *
+ * @package activerecord.query.filter
+ */
+class IsNotNullCond extends UnaryCondition
+{
+	public function __construct(ARFieldHandleInterface $fieldHandle)
+	{
+		parent::__construct($fieldHandle, "IS NOT NULL");
+	}
+}
 
 /**
  * Less than condition

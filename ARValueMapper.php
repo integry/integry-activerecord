@@ -269,6 +269,8 @@ class ARValueMapper implements Serializable
 	public function __clone()
 	{
 		$this->isModified = true;
+		$this->initialID = null;
+		$this->initialValue = null;
 
 		if ($this->field instanceof ARPrimaryKeyField)
 		{

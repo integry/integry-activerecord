@@ -1444,6 +1444,7 @@ abstract class ActiveRecord implements Serializable
 				$fieldList[] = "`".$dataContainer->getField()->getName()."` = ".$value;
 			}
 		}
+
 		return implode(", ", $fieldList);
 	}
 
@@ -1985,7 +1986,17 @@ abstract class ActiveRecord implements Serializable
 		foreach ($this->data as $key => $valueMapper)
 		{
 			$this->data[$key] = clone $valueMapper;
+			$this->$key = $this->data[$key];
 		}
+
+		foreach ($this->schema->getForeignKeyList() as $name => $field)
+		{
+			$referenceName = $field->getReferenceName();
+			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
+			$this->$referenceName = $this->data[$name];
+		}
+
+		$this->cachedId = null;
 	}
 
 	private function __get($name)
