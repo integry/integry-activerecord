@@ -440,7 +440,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		$instance = self::retrieveFromPool($className, $recordID);
 
-		if ($instance == null)
+		if ($instance == null || !is_object($instance))
 		{
 			$instance = self::getNewInstance($className, $data, $recordID);
 			$instance->setID($recordID, false);
