@@ -261,11 +261,6 @@ class ARValueMapper implements Serializable
 		$this->value = null;
 	}
 
-	public function __destruct()
-	{
-		//logDestruct($this);
-	}
-
 	public function __clone()
 	{
 		$this->isModified = true;

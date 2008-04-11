@@ -289,6 +289,8 @@ abstract class ActiveRecord implements Serializable
 			include_once("creole".DIRECTORY_SEPARATOR."Creole.php");
 
 			self::$dbConnection = Creole::getConnection(self::$dsn);
+			self::$dbConnection->executeUpdate("SET NAMES 'utf8'");
+
 			self::getLogger()->logAction("Creating a database connection");
 		}
 		return self::$dbConnection;
@@ -374,6 +376,11 @@ abstract class ActiveRecord implements Serializable
 			{
 				if ($field instanceof ARPrimaryForeignKeyField)
 				{
+					if (!$this->data[$name]->get())
+					{
+						return false;
+					}
+
 					$PK[$name] = $this->data[$name]->get()->getID();
 				}
 				else
@@ -460,6 +467,29 @@ abstract class ActiveRecord implements Serializable
 	}
 
 	/**
+	 * Returns an existing record instance if it exists - otherwise a new instance will be returned
+	 *
+	 * @param string $className Class representing record
+	 * @param mixed $recordID
+	 *
+	 * @return ActiveRecord
+	 */
+	public static function getInstanceByIdIfExists($className, $recordID)
+	{
+		if (self::objectExists($className, $recordID))
+		{
+			$instance = self::getInstanceByID($className, $recordID, self::LOAD_DATA);
+		}
+		else
+		{
+			$instance = self::getNewInstance($className);
+			$instance->setID($recordID);
+		}
+
+		return $instance;
+	}
+
+	/**
 	 * Removes a ActiveRecord subclass instance from a record pool (needed for unit testing only)
 	 *
 	 * @param ActiveRecord $instance
@@ -511,6 +541,11 @@ abstract class ActiveRecord implements Serializable
 	{
 		if(!is_null($recordID))
 		{
+			if ($recordID instanceof ActiveRecord)
+			{
+				$recordID = $recordID->getID();
+			}
+
 			$hash = self::getRecordHash($recordID);
 
 			if (!empty(self::$recordPool[$className][$hash]))
@@ -643,7 +678,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function load($loadReferencedRecords = false)
 	{
-		if ($this->isLoaded || !$this->isExistingRecord())
+		if ($this->isLoaded || !$this->isExistingRecord() || $this->isDeleted())
 		{
 			return ;
 		}
@@ -920,6 +955,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		try
 		{
+			self::getLogger()->logQuery($sql);
 			return self::getDBConnection()->executeQuery($sql);
 		}
 		catch (Exception $e)
@@ -1226,7 +1262,17 @@ abstract class ActiveRecord implements Serializable
 			}
 			else
 			{
-				return true;
+
+				// at least one primary key field must be unmodified
+				foreach($PKList as $field)
+				{
+					if (!$this->data[$field->getName()]->isModified())
+					{
+						return true;
+					}
+				}
+
+				return false;
 			}
 		}
 		else
@@ -1312,8 +1358,7 @@ abstract class ActiveRecord implements Serializable
 
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
-		self::getLogger()->logQuery($updateQuery);
-		return $this->db->executeUpdate($updateQuery);
+		return $this->executeUpdate($updateQuery);
 	}
 
 	/**
@@ -1325,7 +1370,6 @@ abstract class ActiveRecord implements Serializable
 	{
 		$insertQuery = "INSERT INTO ".$this->schema->getName()." SET ".$this->enumerateModifiedFields();
 
-		self::getLogger()->logQuery($insertQuery);
 		$result = $this->executeUpdate($insertQuery);
 
 		// get inserted record ID
