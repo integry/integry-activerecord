@@ -1076,6 +1076,20 @@ abstract class ActiveRecord implements Serializable
 		return self::getRecordSet($foreignClassName, $filter, $loadReferencedRecords);
 	}
 
+	public function getRelatedRecordCount($foreignClassName, ARSelectFilter $filter = null, $loadReferencedRecords = false)
+	{
+		if (is_null($filter))
+		{
+			$filter = new ARSelectFilter();
+		}
+
+		$this->appendRelatedRecordJoinCond($foreignClassName, $filter);
+		$query = self::createSelectQuery($foreignClassName, $loadReferencedRecords);
+		$query->getFilter()->merge($filter);
+
+		return $this->getRecordCountByQuery($query);
+	}
+
 	private function appendRelatedRecordJoinCond($foreignClassName, ARSelectFilter $filter)
 	{
 		$foreignSchema = self::getSchemaInstance($foreignClassName);
@@ -1467,7 +1481,7 @@ abstract class ActiveRecord implements Serializable
 					}
 					else if ($dataContainer->getField()->getDataType() instanceof ARNumeric && $value)
 					{
-						// no changes for numeric fields
+						$value = (float)$value;
 					}
 					else if ($value instanceof ARExpressionHandle)
 					{
@@ -1513,6 +1527,12 @@ abstract class ActiveRecord implements Serializable
 				throw new ARException("Primary key consists of multiple fields. Single value supplied!");
 			}
 			$fieldName = key($PKList);
+
+			if ($schema->getField($fieldName)->getDataType() instanceof ARNumeric)
+			{
+				$recordID = (float)$recordID;
+			}
+
 			return $schema->getName().".".$fieldName." = '".$recordID."'";
 		}
 		else
