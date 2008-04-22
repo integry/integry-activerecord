@@ -1,16 +1,39 @@
 <?php
 
+// pre-PHP 5.2
+if (!class_exists('DateTime', false))
+{
+	class DateTime
+	{
+		public function __construct($dateString)
+		{
+			$this->modify($dateString);
+		}
+
+		public function format($format)
+		{
+			return date($format, $this->dateString);
+		}
+
+		public function modify($dateString)
+		{
+			$this->dateString = $dateString;
+			$this->timeStamp = strtotime($dateString);
+		}
+	}
+}
+
 /**
  *
  * @package activerecord
- * @author Integry Systems 
+ * @author Integry Systems
  */
 class ARSerializableDateTime extends DateTime implements Serializable
 {
-	private $dateString; 
-	
+	private $dateString;
+
 	private $isNull = false;
-	
+
 	public function __construct($dateString = false)
 	{
 		if ($dateString instanceof ARValueMapper)
@@ -20,21 +43,21 @@ class ARSerializableDateTime extends DateTime implements Serializable
 		}
 
 		$this->dateString = $dateString;
-		
+
 		if(is_null($dateString) || '0000-00-00 00:00:00' == $dateString)
 		{
 			$this->isNull = true;
 		}
-				
+
 		parent::__construct($dateString);
 	}
 
-	
+
 	public function isNull()
 	{
 		return $this->isNull;
 	}
-	
+
 	public function format($format)
 	{
 		if($this->isNull())
@@ -46,12 +69,12 @@ class ARSerializableDateTime extends DateTime implements Serializable
 			return parent::format($format);
 		}
 	}
-	
+
 	public function getTimeStamp()
 	{
 		return $this->format("U");
 	}
-	
+
 	/**
 	 *  Get a time difference in days from another DateTime object
 	 */
@@ -59,7 +82,7 @@ class ARSerializableDateTime extends DateTime implements Serializable
 	{
 		return $this->getSecDifference($dateTime) / 86400;
 	}
-	
+
 	/**
 	 *  Get a time difference in seconds from another DateTime object
 	 */
@@ -71,14 +94,14 @@ class ARSerializableDateTime extends DateTime implements Serializable
 	public function serialize()
 	{
 		return serialize(array(
-			'dateString' => $this->dateString, 
+			'dateString' => $this->dateString,
 			'isNull' => ($this->isNull() ? 'true' : 'false')
 		));
 	}
-	
+
 	public function unserialize($serialized)
 	{
-		$dateArray = unserialize($serialized);  
+		$dateArray = unserialize($serialized);
 		if($dateArray['isNull'] == 'true')
 		{
 			$dateString = "";
@@ -87,10 +110,10 @@ class ARSerializableDateTime extends DateTime implements Serializable
 		{
 			$dateString = $dateArray['dateString'];
 		}
-		
+
 		self::__construct($dateString);
 	}
-	
+
 	public function __toString()
 	{
 		return $this->format('Y-m-d H:i:s');
