@@ -515,7 +515,7 @@ abstract class ActiveRecord implements Serializable
 		$hash = self::getRecordHash($instance->getID());
 		$className = get_class($instance);
 		$instance->markAsNotLoaded();
-		unset(self::$recordPool[$className][$hash]);
+		self::$recordPool[$className][$hash] = null;
 	}
 
 	/**
@@ -798,6 +798,11 @@ abstract class ActiveRecord implements Serializable
 
 		foreach($schema->getArrayFieldList() as $name => $field)
 		{
+			if (!@unserialize($dataArray[$name]))
+			{
+				//var_dump(strlen($dataArray[$name])); print_R($dataArray[$name]); exit;
+				$dataArray[$name] = ''; continue;
+			}
 			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
 		}
 
@@ -2057,7 +2062,7 @@ abstract class ActiveRecord implements Serializable
 	public function __destruct()
 	{
 		$this->isDestructing = true;
-		self::removeFromPool($this);
+		//self::removeFromPool($this);
 		//logDestruct($this, $this->getID());
 	}
 
