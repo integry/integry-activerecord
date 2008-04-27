@@ -12,7 +12,7 @@ if (!class_exists('DateTime', false))
 
 		public function format($format)
 		{
-			return date($format, $this->dateString);
+			return date($format, $this->timeStamp);
 		}
 
 		public function modify($dateString)
@@ -30,7 +30,7 @@ if (!class_exists('DateTime', false))
  */
 class ARSerializableDateTime extends DateTime implements Serializable
 {
-	private $dateString;
+	protected $dateString;
 
 	private $isNull = false;
 

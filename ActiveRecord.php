@@ -18,6 +18,22 @@ if (!function_exists("__autoload"))
 	}
 }
 
+if (!function_exists('array_fill_keys'))
+{
+	function array_fill_keys($array, $values)
+	{
+		if (is_array($array))
+		{
+			foreach($array as $key => $value)
+			{
+				$arraydisplay[$array[$key]] = $values;
+			}
+		}
+
+		return $arraydisplay;
+	}
+}
+
 $dir = dirname(__file__) . '/';
 include_once($dir . 'ARSet.php');
 include_once($dir . 'ARValueMapper.php');
@@ -782,7 +798,7 @@ abstract class ActiveRecord implements Serializable
 
 		foreach($schema->getArrayFieldList() as $name => $field)
 		{
-			$dataArray[$name] = unserialize($dataArray[$name]);
+			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
 		}
 
 		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
@@ -849,7 +865,7 @@ abstract class ActiveRecord implements Serializable
 
 				foreach ($foreignSchema->getArrayFieldList() as $fieldName => $field)
 				{
-					$dataArray[$referenceKeys[$fieldName]] = unserialize($dataArray[$referenceKeys[$fieldName]]);
+					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
 				}
 
 				$referenceListData[$referenceName] = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
