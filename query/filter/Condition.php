@@ -228,8 +228,9 @@ abstract class BinaryCondition extends Condition
 				$type = 'string';
 			}
 
-			$id = uniqid();
-			$values[$id] = array('value' => $this->leftSide->prepareValue($this->rightSide),
+			$value = $this->leftSide->prepareValue($this->rightSide);
+			$id = md5($value);
+			$values[$id] = array('value' => $value,
 								 'type' => $type);
 
 			$condStr .= '???' . $id . '@@@';
