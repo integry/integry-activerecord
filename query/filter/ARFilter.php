@@ -50,6 +50,20 @@ abstract class ARFilter
 		}
 	}
 
+	public function createPreparedStatement()
+	{
+		if ($this->condition != null)
+		{
+			$sql = $this->condition->createPreparedChain();
+			$sql['sql'] = ' WHERE ' . $sql['sql'];
+			return $sql;
+		}
+		else
+		{
+			return array('sql' => '', 'values' => array());
+		}
+	}
+
 	/**
 	 * Adds a constraint which will be used in SQL query
 	 *

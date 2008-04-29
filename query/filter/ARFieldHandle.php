@@ -31,7 +31,7 @@ class ARFieldHandle implements ARFieldHandleInterface
 
 	public function toString()
 	{
-		return $this->tableName.".".$this->field->getName();
+		return $this->tableName . "." . $this->field->getName();
 	}
 
 	public function prepareValue($value)
@@ -44,6 +44,15 @@ class ARFieldHandle implements ARFieldHandleInterface
 			return date("'Y-m-d H:i:s'", $value);
 		}
 
+		return $value;
+	}
+
+	public function escapeValue($value)
+	{
+		$value = $this->prepareValue($value);
+
+		$dataType = $this->field->getDataType();
+
 		// "escape" strings
 		if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
 		{
@@ -52,13 +61,15 @@ class ARFieldHandle implements ARFieldHandleInterface
 				return "''";
 			}
 
-			return '0x' . bin2hex($value);
+			$value = '0x' . bin2hex($value);
 		}
 
-		else
-		{
-			return $value;
-		}
+		return $value;
+	}
+
+	public function getField()
+	{
+		return $this->field;
 	}
 
 	/*

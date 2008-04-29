@@ -71,8 +71,18 @@ class ARSelectFilter extends ARFilter
 	 */
 	public function createString()
 	{
-		$result = parent::createString();
+		return parent::createString() . $this->getParamsSQL();
+	}
 
+	public function createPreparedStatement()
+	{
+		$sql = parent::createPreparedStatement();
+		$sql['sql'] .= $this->getParamsSQL();
+		return $sql;
+	}
+
+	private function getParamsSQL()
+	{
 		$params = array();
 		$params[] = $this->createGroupString();
 		$params[] = $this->createHavingString();
@@ -83,9 +93,7 @@ class ARSelectFilter extends ARFilter
 			$params[] = " LIMIT ".$this->recordOffset.", ".$this->recordLimit;
 		}
 
-		$result .= implode(' ', $params);
-					
-		return $result;
+		return implode(' ', $params);
 	}
 
 	/**
@@ -140,12 +148,12 @@ class ARSelectFilter extends ARFilter
 	{
 		$this->fieldListForGroup[$fieldHandle->toString()] = $fieldHandle;
 	}
-	
+
 	public function getGroupingFields()
 	{
 		return $this->fieldListForGroup;
 	}
-	
+
 	/**
 	 * Creates an "ORDER BY" statement string
 	 *
@@ -173,7 +181,7 @@ class ARSelectFilter extends ARFilter
 	{
 		if ($this->fieldListForGroup)
 		{
-			return " GROUP BY " . implode(", ", array_keys($this->fieldListForGroup)); 
+			return " GROUP BY " . implode(", ", array_keys($this->fieldListForGroup));
 		}
 	}
 
@@ -226,17 +234,17 @@ class ARSelectFilter extends ARFilter
 
 		$this->setFieldOrder($filter->getFieldOrder());
 		$this->setLimit($filter->getLimit(), $filter->getOffset());
-		
+
 		$groupings = $filter->getGroupingFields();
 		$this->fieldListForGroup = array_merge($this->getGroupingFields(), $groupings);
-				
+
 		$joins = $filter->getJoinList();
 		$this->joinList = array_merge($this->joinList, $joins);
-		
+
 		$fields = $filter->getFieldList();
 		$this->fieldList = array_merge($this->fieldList, $fields);
 	}
-	
+
 	public function mergeHavingCondition(Condition $cond)
 	{
 		if ($this->havingCondition != null)
@@ -247,28 +255,28 @@ class ARSelectFilter extends ARFilter
 		{
 			$this->havingCondition = $cond;
 		}
-	}	
-	
+	}
+
 	public function setHavingCondition(Condition $cond)
 	{
 		$this->havingCondition = $cond;
-	}	
+	}
 
 	public function getHavingCondition(Condition $cond)
 	{
 		return $this->havingCondition;
-	}	
-	
+	}
+
 	public function isHavingConditionSet()
 	{
 		return ($this->havingCondition instanceof Condition);
 	}
-	
+
 	public function addField($fieldName, $tableName = null, $fieldNameInResult = null)
 	{
 		$this->fieldList[] = array("fieldName" => $fieldName, "tableName" => $tableName, "fieldNameInResult" => $fieldNameInResult);
 	}
-		
+
 	public function getFieldList()
 	{
 	  	return $this->fieldList;
@@ -276,14 +284,14 @@ class ARSelectFilter extends ARFilter
 
 	public function removeFieldList()
 	{
-		$this->fieldList = array();		
+		$this->fieldList = array();
 	}
 
 	public function resetOrder()
 	{
-		$this->fieldListForOrder = array();		
+		$this->fieldListForOrder = array();
 	}
-	
+
 	/**
 	 * Sets a "bulk" ordering by passing an array of field to order by
 	 *
@@ -292,7 +300,7 @@ class ARSelectFilter extends ARFilter
 	{
 		$this->fieldListForOrder = $fieldList;
 	}
-	
+
 }
 
 ?>

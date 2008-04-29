@@ -930,13 +930,16 @@ abstract class ActiveRecord implements Serializable
 		$db = self::getDBConnection();
 		$queryStr = $query->createString();
 		self::getLogger()->logQuery($queryStr);
-		$resultSet = $db->executeQuery($queryStr);
+
+		$resultSet = $query->getPreparedStatement($db)->executeQuery();
+
 		self::getLogger()->logQueryExecutionTime();
 		$dataArray = array();
 		while ($resultSet->next())
 		{
 			$dataArray[] = $resultSet->getRow();
 		}
+
 		return $dataArray;
 	}
 

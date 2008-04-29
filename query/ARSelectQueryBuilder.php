@@ -4,7 +4,7 @@
  * Select Query builder class
  *
  * @package activerecord.query
- * @author Integry Systems 
+ * @author Integry Systems
  */
 class ARSelectQueryBuilder
 {
@@ -75,20 +75,20 @@ class ARSelectQueryBuilder
 		{
 		  	$tableAliasName = $tableName;
 		}
-		
+
 		if(!(isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName])))
 		{
 			$this->joinList[$tableAliasName] = array(
-				"tableName" => $tableName, 
-				"mainTableName" => $mainTableName, 
-				"tableJoinFieldName" => $tableJoinFieldName, 
+				"tableName" => $tableName,
+				"mainTableName" => $mainTableName,
+				"tableJoinFieldName" => $tableJoinFieldName,
 				"mainTableJoinFieldName" => $mainTableJoinFieldName,
 				"tableAliasName" => $tableAliasName
 			);
-			
+
 			return true;
 		}
-								  
+
 		return false;
 	}
 
@@ -117,22 +117,22 @@ class ARSelectQueryBuilder
 	 *
 	 * @return string
 	 */
-	public function createString()
+	private function createStatementBody()
 	{
 		$filterFieldList = ($this->filter instanceof ARSelectFilter) ? $this->filter->getFieldList() : array();
 		$fields = array_merge($this->fieldList, $filterFieldList);
-				
+
 		$tableAliases = array();
-		
+
 		$fieldListStr = "";
 		$preparedFieldList = array();
-		
+
 		if (empty($fields))
 		{
 			$fieldStr = "*";
 		}
 		else
-		{			
+		{
 			foreach($fields as $fieldInfo)
 			{
 				$field = "";
@@ -154,14 +154,14 @@ class ARSelectQueryBuilder
 		$fieldListStr = implode(", ", $preparedFieldList);
 
 		$tableListStr = implode(", ", array_keys($this->tableList));
-	
+
 		// add joins from select filter
 		$filterJoins = $this->filter->getJoinList();
 		$joins = array_merge($this->joinList, $filterJoins);
 
 		$joinListStr = "";
 		if (!empty($joins))
-		{			
+		{
 			$preparedJoinList = array();
 			foreach($joins as $joinItem)
 			{
@@ -175,30 +175,75 @@ class ARSelectQueryBuilder
 				  	$alias = '';
 				  	$tableName = $joinItem['tableName'];
 				}
-				
-				if(empty($joinItem['tableAliasName'])) 
+
+				if(empty($joinItem['tableAliasName']))
 				{
 					$tableAliases[$joinItem['tableName']] = $joinItem['tableName'];
 				}
-				else if(!isset($tableAliases[$joinItem['tableName']])) 
+				else if(!isset($tableAliases[$joinItem['tableName']]))
 				{
 					$tableAliases[$joinItem['tableName']] = $joinItem['tableAliasName'];
 				}
-				
+
 				$preparedJoinList[] = "LEFT JOIN `".$joinItem['tableName'].'`'.$alias." ON ".(isset($tableAliases[$joinItem['mainTableName']]) ? $tableAliases[$joinItem['mainTableName']] : $joinItem['mainTableName']).".".$joinItem['mainTableJoinFieldName']." = ".$tableName.".".$joinItem['tableJoinFieldName'].'';
 			}
 			$joinListStr = implode(" ", $preparedJoinList);
 		}
 
-		$selectQueryString = "SELECT ".$fieldListStr." FROM ".$tableListStr." ".$joinListStr;
+		return "SELECT ".$fieldListStr." FROM ".$tableListStr." ".$joinListStr;
+	}
+
+	public function createString()
+	{
+		$sql = $this->createStatementBody();
+
 		if ($this->filter != null)
 		{
-			$selectQueryString .= $this->filter->createString();
+			$sql .= $this->filter->createString();
 		}
-		
-		return $selectQueryString;
+
+		return $sql;
 	}
-	
+
+	public function getPreparedStatement(ConnectionCommon $conn)
+	{
+		$body = $this->createStatementBody();
+		$values = array();
+
+		if (is_null($this->filter))
+		{
+			return $conn->prepareStatement($body);
+		}
+
+		$prepared = $this->filter->createPreparedStatement();
+
+		preg_match_all('/\?\?\?([a-z0-9]*)@@@/', $prepared['sql'], $matches);
+		$values = $matches[1];
+
+		$statement = $conn->prepareStatement($body . preg_replace('/\?\?\?([a-z0-9]*)@@@/', '?', $prepared['sql']));
+
+		foreach ($values as $key => $id)
+		{
+			$key++;
+			$value = $prepared['values'][$id];
+
+			if ('int' == $value['type'])
+			{
+				$statement->setInt($key, $value['value']);
+			}
+			else if ('timestamp' == $value['type'])
+			{
+				$statement->setTimestamp($key, $value['value']);
+			}
+			else
+			{
+				$statement->setString($key, $value['value']);
+			}
+		}
+
+		return $statement;
+	}
+
 	public function __toString()
 	{
 		return $this->createString();

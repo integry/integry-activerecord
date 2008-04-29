@@ -22,11 +22,8 @@ abstract class Condition
 	protected $ORCondList = array();
 	protected $ANDCondList = array();
 
-	/**
-	 * Abstract class for representing condition as a string
-	 *
-	 */
 	abstract public function toString();
+	abstract public function toPreparedStatement();
 
 	public function createChain()
 	{
@@ -41,6 +38,34 @@ abstract class Condition
 		}
 		$condStr .= ")";
 		return $condStr;
+	}
+
+	public function createPreparedChain()
+	{
+		$values = array();
+
+		$sql = $this->toPreparedStatement();
+		$condStr = "(" . $sql['sql'];
+		$values = array_merge($values, $sql['values']);
+
+		foreach($this->ANDCondList as $andCond)
+		{
+			$sql = $andCond->createPreparedChain();
+			$values = array_merge($values, $sql['values']);
+			$condStr .= " AND " . $sql['sql'];
+		}
+
+		foreach($this->ORCondList as $orCond)
+		{
+			$sql = $orCond->createPreparedChain();
+			$values = array_merge($values, $sql['values']);
+			$condStr .= " OR " . $sql['sql'];
+		}
+
+		$condStr .= ")";
+
+
+		return array('sql' => $condStr, 'values' => $values);
 	}
 
 	public function setOperatorString($str)
@@ -152,6 +177,11 @@ class UnaryCondition extends Condition
 	{
 		return $this->fieldHandle->toString().' '.$this->operatorString;
 	}
+
+	public function toPreparedStatement()
+	{
+		return array('sql' => $this->toString(), 'values' => array());
+	}
 }
 
 /**
@@ -173,17 +203,51 @@ abstract class BinaryCondition extends Condition
 		$this->rightSide = $rightSide;
 	}
 
-	public function toString()
+	public function toPreparedStatement()
 	{
-		$condStr = "";
-		$condStr = $this->leftSide->toString().$this->operatorString;
+		$condStr = $this->leftSide->toString() . $this->operatorString;
+		$values = array();
+
 		if ($this->rightSide instanceof ARFieldHandleInterface)
 		{
 			$condStr .= $this->rightSide->toString();
 		}
 		else
 		{
-			$condStr .= $this->leftSide->prepareValue($this->rightSide);
+			$field = $this->leftSide->getField()->getDataType();
+			if ($field instanceof ARNumeric)
+			{
+				$type = 'int';
+			}
+			else if ($field instanceof ARPeriod)
+			{
+				$type = 'timestamp';
+			}
+			else
+			{
+				$type = 'string';
+			}
+
+			$id = uniqid();
+			$values[$id] = array('value' => $this->leftSide->prepareValue($this->rightSide),
+								 'type' => $type);
+
+			$condStr .= '???' . $id . '@@@';
+		}
+
+		return array('sql' => $condStr, 'values' => $values);
+	}
+
+	public function toString()
+	{
+		$condStr = $this->leftSide->toString() . $this->operatorString;
+		if ($this->rightSide instanceof ARFieldHandleInterface)
+		{
+			$condStr .= $this->rightSide->toString();
+		}
+		else
+		{
+			$condStr .= $this->leftSide->escapeValue($this->rightSide);
 		}
 		return $condStr;
 	}
@@ -327,6 +391,11 @@ class INCond extends BinaryCondition
 		parent::__construct($leftSide, "(".$rightSide.")");
 	}
 
+	public function toPreparedStatement()
+	{
+		return array('sql' => $this->toString(), 'values' => array());
+	}
+
 	private function filterEmptyValues($value)
 	{
 		return is_numeric($value) || trim($value);
@@ -376,6 +445,11 @@ class AndChainCondition extends Condition
 	public function toString()
 	{
 
+	}
+
+	public function toPreparedStatement()
+	{
+		return array('sql' => '', 'values' => array());
 	}
 
 	public function createChain()
