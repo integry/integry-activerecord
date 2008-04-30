@@ -31,6 +31,11 @@ class ARExpressionHandle implements ARFieldHandleInterface
 	  	return $this->expression;
 	}
 
+	public function getField()
+	{
+		return null;
+	}
+
 	public function __toString()
 	{
 	  	return $this->toString();
