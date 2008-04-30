@@ -217,7 +217,7 @@ abstract class BinaryCondition extends Condition
 			$field = $this->leftSide->getField();
 			if ($field)
 			{
-				$field = $field->getDataType()
+				$field = $field->getDataType();
 			}
 
 			if ($field instanceof ARNumeric)
