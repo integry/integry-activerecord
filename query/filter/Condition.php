@@ -468,6 +468,21 @@ class AndChainCondition extends Condition
 
 		return '(' . implode(' AND ', $conds) . ')';
 	}
+
+	public function createPreparedChain()
+	{
+		$values = array();
+
+		$conds = array();
+		foreach($this->ANDCondList as $andCond)
+		{
+			$sql = $andCond->createPreparedChain();
+			$values = array_merge($values, $sql['values']);
+			$conds[] = '(' . $sql['sql'] . ')';
+		}
+
+		return array('sql' => '(' . implode(' AND ', $conds) . ')', 'values' => $values);
+	}
 }
 
 ?>
