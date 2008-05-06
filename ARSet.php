@@ -169,7 +169,7 @@ class ARSet implements IteratorAggregate, Serializable
 	{
 		if ($this->counterQuery)
 		{
-			$result = $this->db->executeQuery($this->counterQuery);
+			$result = $this->counterQuery->executeQuery();
 			$result->next();
 
 			$resultData = $result->getRow();

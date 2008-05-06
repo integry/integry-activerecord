@@ -121,11 +121,18 @@ class ARValueMapper implements Serializable
 			{
 				throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());
 			}
-		}
 
-		if ($this->field instanceof ARForeignKey && $this->value && !$this->initialID)
+			if ($this->value && !$this->initialID)
+			{
+				$this->initialID = $value->getID();
+			}
+		}
+		else if ($this->field)
 		{
-			$this->initialID = $value->getID();
+			if ($this->field->getDataType() instanceof ARNumeric)
+			{
+				$value = (float)$value;
+			}
 		}
 
 		$this->isNull = false;

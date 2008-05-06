@@ -214,7 +214,7 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 
-		if ($recordID)
+		if ($recordID && !$this->getID())
 		{
 			$this->setID($recordID, false);
 			self::storeToPool($this);
@@ -945,9 +945,17 @@ abstract class ActiveRecord implements Serializable
 
 	public static function getDataBySQL($sqlSelectQuery)
 	{
-		$db = self::getDBConnection();
-		self::getLogger()->logQuery($sqlSelectQuery);
-		$resultSet = $db->executeQuery($sqlSelectQuery);
+		if ($sqlSelectQuery instanceof PreparedStatementCommon)
+		{
+			$resultSet = $sqlSelectQuery->executeQuery();
+		}
+		else
+		{
+			$db = self::getDBConnection();
+			self::getLogger()->logQuery($sqlSelectQuery);
+			$resultSet = $db->executeQuery($sqlSelectQuery);
+		}
+
 		$dataArray = array();
 		while ($resultSet->next())
 		{
@@ -1035,7 +1043,7 @@ abstract class ActiveRecord implements Serializable
 			$query->addField("COUNT(*)", null, "totalCount");
 			$query->setFilter($counterFilter);
 
-			$recordSet->setCounterQuery($query->createString(), $db);
+			$recordSet->setCounterQuery($query->getPreparedStatement($db), $db);
 		}
 
 		return $recordSet;
@@ -1057,7 +1065,7 @@ abstract class ActiveRecord implements Serializable
 		$counterQuery = $query->createString();
 
 		self::getLogger()->logQuery($counterQuery);
-		$counterResult = $db->executeQuery($counterQuery);
+		$counterResult = $query->getPreparedStatement($db)->executeQuery();
 		$counterResult->next();
 
 		$resultData = $counterResult->getRow();
