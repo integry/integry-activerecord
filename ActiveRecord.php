@@ -798,11 +798,6 @@ abstract class ActiveRecord implements Serializable
 
 		foreach($schema->getArrayFieldList() as $name => $field)
 		{
-			if (!@unserialize($dataArray[$name]))
-			{
-				//var_dump(strlen($dataArray[$name])); print_R($dataArray[$name]); exit;
-				$dataArray[$name] = ''; continue;
-			}
 			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
 		}
 
@@ -1065,6 +1060,7 @@ abstract class ActiveRecord implements Serializable
 		$counterQuery = $query->createString();
 
 		self::getLogger()->logQuery($counterQuery);
+
 		$counterResult = $query->getPreparedStatement($db)->executeQuery();
 		$counterResult->next();
 

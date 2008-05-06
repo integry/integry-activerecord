@@ -41,7 +41,7 @@ class ARFieldHandle implements ARFieldHandleInterface
 		// convert timestamps
 		if (is_numeric($value) && ($dataType instanceof ARPeriod))
 		{
-			return date("'Y-m-d H:i:s'", $value);
+			return date("Y-m-d H:i:s", $value);
 		}
 
 		return $value;
@@ -54,7 +54,7 @@ class ARFieldHandle implements ARFieldHandleInterface
 		$dataType = $this->field->getDataType();
 
 		// "escape" strings
-		if (($dataType instanceof ARLiteral) || ($dataType instanceof ARPeriod))
+		if (($dataType instanceof ARLiteral))
 		{
 			if (!strlen($value))
 			{
