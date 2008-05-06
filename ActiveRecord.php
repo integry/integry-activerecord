@@ -214,7 +214,7 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 
-		if ($recordID && !$this->getID())
+		if ($recordID)
 		{
 			$this->setID($recordID, false);
 			self::storeToPool($this);
@@ -798,6 +798,10 @@ abstract class ActiveRecord implements Serializable
 
 		foreach($schema->getArrayFieldList() as $name => $field)
 		{
+			if (!@unserialize($dataArray[$name]))
+			{
+				$dataArray[$name] = '';
+			}
 			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
 		}
 
