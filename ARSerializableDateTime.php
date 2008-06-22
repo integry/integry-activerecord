@@ -20,6 +20,11 @@ if (!class_exists('DateTime', false))
 			$this->dateString = $dateString;
 			$this->timeStamp = strtotime($dateString);
 		}
+
+		public function __toString()
+		{
+			return $this->format('Y-m-d H:i:s');
+		}
 	}
 }
 

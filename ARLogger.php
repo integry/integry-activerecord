@@ -29,6 +29,16 @@ class ARLogger
 
 	public function logQuery($queryStr)
 	{
+		if (!$this->logFileName)
+		{
+			return null;
+		}
+
+		if ($queryStr instanceof PreparedStatementCommon)
+		{
+			$queryStr = $queryStr->getSQL() . "\n" . var_export($queryStr->getValues(), true);
+		}
+
 		$this->lastQueryTime = microtime(true);
 		$this->addLogItem($queryStr, self::LOG_QUERY);
 	}

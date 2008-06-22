@@ -533,6 +533,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function clearPool()
 	{
+		self::$recordPool = null;
 		self::$recordPool = array();
 	}
 
@@ -568,14 +569,15 @@ abstract class ActiveRecord implements Serializable
 			{
 				return self::$recordPool[$className][$hash];
 			}
+
+			return null;
 		}
 		else if (isset(self::$recordPool[$className]))
 		{
 			return self::$recordPool[$className];
 		}
 
-		return null;
-
+		return array();
 	}
 
 	/**
@@ -696,12 +698,14 @@ abstract class ActiveRecord implements Serializable
 	{
 		if ($this->isLoaded || !$this->isExistingRecord() || $this->isDeleted())
 		{
-			return ;
+			return false;
 		}
 
 		$query = self::createSelectQuery(get_class($this), $loadReferencedRecords);
 		$this->loadData($loadReferencedRecords, $query);
 		$this->isDeleted = false;
+
+		return true;
 	}
 
 	protected final function loadData($loadReferencedRecords, ARSelectQueryBuilder $query)
@@ -947,6 +951,7 @@ abstract class ActiveRecord implements Serializable
 		if ($sqlSelectQuery instanceof PreparedStatementCommon)
 		{
 			$resultSet = $sqlSelectQuery->executeQuery();
+			self::getLogger()->logQuery($sqlSelectQuery);
 		}
 		else
 		{
@@ -1452,6 +1457,46 @@ abstract class ActiveRecord implements Serializable
 		return true;
 	}
 
+	public function updateRecord(ARUpdateFilter $filter)
+	{
+		$filter->mergeCondition($this->getRecordIDCondition());
+		$updateQuery = "UPDATE " . $this->schema->getName() . $filter->createString();
+		$res = $this->executeUpdate($updateQuery);
+		$this->reload();
+		return $res;
+	}
+
+	protected function getRecordIDCondition()
+	{
+		$PKList = $this->schema->getPrimaryKeyList();
+		$className = get_class($this);
+
+		foreach($PKList as $PKField)
+		{
+			$recordID = "";
+			if ($PKField instanceof ARForeignKey)
+			{
+				$recordID = $this->data[$PKField->getName()]->getInitialID();
+			}
+			else
+			{
+				$recordID = $this->data[$PKField->getName()]->get();
+			}
+
+			$fieldCond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
+			if (isset($cond))
+			{
+				$cond->addAND($fieldCond);
+			}
+			else
+			{
+				$cond = $fieldCond;
+			}
+		}
+
+		return $cond;
+	}
+
 	/**
 	 * Checks if record primary key value is set
 	 *
@@ -1529,6 +1574,11 @@ abstract class ActiveRecord implements Serializable
 				if ($dataContainer->isNull())
 				{
 					$value = "NULL";
+				}
+
+				if (is_object($value))
+				{
+					$value = $value->__toString();
 				}
 
 				$fieldList[] = "`".$dataContainer->getField()->getName()."` = ".$value;
@@ -1888,7 +1938,7 @@ abstract class ActiveRecord implements Serializable
 	public function reload($loadReferencedRecords = false)
 	{
 		$this->markAsNotLoaded();
-		$this->load($loadReferencedRecords);
+		return $this->load($loadReferencedRecords);
 	}
 
 	/**
@@ -2057,12 +2107,21 @@ abstract class ActiveRecord implements Serializable
 	public function destruct($references = array())
 	{
 		$this->isDestructing = true;
-		foreach ($references as $field)
-		{
-			$this->data[$field]->destructValue();
-		}
 
-		self::__destruct();
+		if (is_array($references))
+		{
+			foreach ($references as $field)
+			{
+				$this->data[$field]->destructValue();
+			}
+		}
+		else
+		{
+			foreach (array_keys($this->data) as $field)
+			{
+				$this->data[$field]->destructValue();
+			}
+		}
 	}
 
 	public function isDestructing()

@@ -146,7 +146,7 @@ class ARSet implements IteratorAggregate, Serializable
 	 */
 	public function get($recordIndex)
 	{
-		return $this->data[$recordIndex];
+		return isset($this->data[$recordIndex]) ? $this->data[$recordIndex] : null;
 	}
 
 	public function size()
