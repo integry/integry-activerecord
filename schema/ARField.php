@@ -66,6 +66,7 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 	protected $foreignClassName;
 	protected $foreignFieldName;
 	protected $referenceName;
+	protected $referenceFieldName;
 
 	/**
 	 * Creates ARForeignKeyField instance
@@ -82,11 +83,16 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 		$this->foreignClassName = !empty($foreignClassName) ? $foreignClassName : $foreignTableName;
 		$this->foreignTableName = $foreignTableName;
 		$this->foreignFieldName = $foreignFieldName;
-		$this->referenceName = ucfirst(substr($this->name, 0, -2));
+		$this->referenceFieldName = $this->referenceName = ucfirst(substr($this->name, 0, -2));
 
 		if (!$this->referenceName)
 		{
 			$this->referenceName = $this->foreignClassName;
+		}
+
+		if ($this->foreignClassName != $this->referenceName)
+		{
+			$this->referenceName = $this->foreignClassName . '_' . $this->referenceName;
 		}
 	}
 
@@ -126,6 +132,11 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 	public function getReferenceName()
 	{
 		return $this->referenceName;
+	}
+
+	public function getReferenceFieldName()
+	{
+		return $this->referenceFieldName;
 	}
 }
 

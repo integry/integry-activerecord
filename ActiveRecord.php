@@ -232,6 +232,17 @@ abstract class ActiveRecord implements Serializable
 
 			if ((!($this->data[$name]->get() instanceof ActiveRecord) || !$this->data[$name]->get()->isLoaded()) && isset($data[$name]))
 			{
+				if (!isset($data[$referenceName]))
+				{
+					foreach (array($referenceName, array_pop(explode('_', $referenceName))) as $referenceName)
+					{
+						if (isset($data[$referenceName]))
+						{
+							break;
+						}
+					}
+				}
+
 				if (isset($data[$referenceName]))
 				{
 					foreach($data as $referecedTableName => $referencedData)
@@ -251,6 +262,7 @@ abstract class ActiveRecord implements Serializable
 			}
 
 			// Making first letter lowercase
+			$referenceName = $field->getReferenceFieldName();
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
 			$this->$referenceName = $this->data[$name];
 		}
@@ -661,16 +673,34 @@ abstract class ActiveRecord implements Serializable
 		{
 			$foreignClassName = $field->getForeignClassName();
 			$tableAlias = $field->getReferenceName();
+
 			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			$foreignTableName = $foreignSchema->getName();
 
-			if (($schema === $foreignSchema) ||
-				(is_array($tables) &&
-					(!isset($tables[$foreignClassName])) ||
-					(isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]) && ($tables[$foreignClassName] != $tableAlias && (!is_array($tables[$foreignClassName]) || (is_array($tables[$foreignClassName]) && !in_array($tableAlias, $tables[$foreignClassName])))))
-				))
+			$aliasParts = explode('_', $tableAlias);
+			$aliasName = isset($aliasParts[1]) ? $aliasParts[1] : '';
+
+			$isSameSchema = $schema === $foreignSchema;
+			$notRequiredForInclusion = is_array($tables) && !isset($tables[$foreignClassName]);
+			$isAliasSpecified = isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]);
+
+			if ($isAliasSpecified)
+			{
+				$classNamesDoNotMatch = $tables[$foreignClassName] != $aliasName;
+				$notReferencedAsArray = !is_array($tables[$foreignClassName]);
+				$notInReferencedArray = is_array($tables[$foreignClassName]) && !in_array($aliasName, $tables[$foreignClassName]);
+			}
+
+			if ($isSameSchema || $notRequiredForInclusion ||
+					($isAliasSpecified && $classNamesDoNotMatch && ($notReferencedAsArray || $notInReferencedArray))
+				)
 			{
 				continue;
+			}
+
+			if (!$query->getJoinsByClassName($foreignTableName))
+			{
+				$tableAlias = $foreignTableName;
 			}
 
 			$joined = $query->joinTable($foreignTableName, $schemaName, $field->getForeignFieldName(), $name, $tableAlias);
@@ -826,15 +856,45 @@ abstract class ActiveRecord implements Serializable
 			{
 				$loadReferencedRecords = self::array_invert($loadReferencedRecords);
 				$filteredSchemas = array();
+
 				foreach($loadReferencedRecords as $tableName => $tableAlias)
 				{
 					if (is_numeric($tableAlias))
 					{
+						if (!isset($schemas[$tableName]))
+						{
+							if (isset($schemas[$tableName . '_' . $tableName]))
+							{
+								$tableName .= '_' . $tableName;
+							}
+							else
+							{
+								$break = false;
+								foreach ($schemas as $name => $collection)
+								{
+									foreach ($collection as $schema)
+									{
+										if ($schema->getName() == $tableName)
+										{
+											$tableName = $name;
+											$break = true;
+											break;
+										}
+									}
+
+									if ($break)
+									{
+										break;
+									}
+								}
+							}
+						}
+
 						$filteredSchemas[$tableName] = $schemas[$tableName][0];
 					}
 					else
 					{
-						$aliases = !is_array($tableAlias) ? array($tableAlias) : $tableAlias;
+						$aliases = !is_array($tableAlias) ? array($tableName . '_' . $tableAlias) : $tableAlias;
 
 						foreach ($aliases as $tableAlias)
 						{
@@ -859,10 +919,21 @@ abstract class ActiveRecord implements Serializable
 			}
 
 			$referenceListData = array_fill_keys(array_keys($schemas), array());
+			$usedSchemas = array();
 
 			foreach ($schemas as $referenceName => $foreignSchema)
 			{
 				$foreignSchemaName = $foreignSchema->getName();
+
+				if (!isset($usedSchemas[$foreignSchemaName]))
+				{
+					// if we have defaultImageID column linked to ProductImage table we need to have this data
+					// identified by DefaultImage (column) rather than ProductImage (referenced class name)
+					// as there could be multiple columns referencing different records in the same foreign table
+					$fieldReferenceName = array_pop(explode('_', $referenceName));
+
+					$referenceName = $foreignSchemaName;
+				}
 
 				$fieldNames = array_keys($foreignSchema->getFieldList());
 				$referenceKeys = array();
@@ -875,6 +946,8 @@ abstract class ActiveRecord implements Serializable
 				{
 					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
 				}
+
+				$referenceName = $fieldReferenceName;
 
 				$referenceListData[$referenceName] = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
 
@@ -895,6 +968,8 @@ abstract class ActiveRecord implements Serializable
 				}
 
 				$recordData[$referenceName] = $referenceListData[$referenceName];
+
+				$usedSchemas[$foreignSchemaName] = true;
 			}
 		}
 
@@ -1053,7 +1128,7 @@ abstract class ActiveRecord implements Serializable
 		return $recordSet;
 	}
 
-	public static function getRecordCount($className, ARSelectFilter $filter)
+	public static function getRecordCount($className, ARSelectFilter $filter, $referencedTables = array())
 	{
 		$db = self::getDBConnection();
 		$counterFilter = clone $filter;
@@ -1061,6 +1136,7 @@ abstract class ActiveRecord implements Serializable
 		$counterFilter->setLimit(0, 0);
 
 		$query = new ARSelectQueryBuilder();
+		self::joinReferencedTables(self::getSchemaInstance($className), $query, array_flip($referencedTables));
 		$query->removeFieldList();
 		$query->addField("COUNT(*)", null, "totalCount");
 		$query->includeTable($className);
@@ -1106,8 +1182,13 @@ abstract class ActiveRecord implements Serializable
 	 * @throws ARException
 	 * @return ARSet
 	 */
-	public function getRelatedRecordSet($foreignClassName, ARSelectFilter $filter, $loadReferencedRecords = false)
+	public function getRelatedRecordSet($foreignClassName, ARSelectFilter $filter = null, $loadReferencedRecords = false)
 	{
+		if (is_null($filter))
+		{
+			$filter = new ARSelectFilter();
+		}
+
 		$this->appendRelatedRecordJoinCond($foreignClassName, $filter);
 
 		return self::getRecordSet($foreignClassName, $filter, $loadReferencedRecords);
@@ -1366,7 +1447,6 @@ abstract class ActiveRecord implements Serializable
 			$res = $this->insert();
 		}
 
-		$this->resetModifiedStatus();
 		$this->markAsLoaded();
 
 		return $res;
@@ -1409,6 +1489,8 @@ abstract class ActiveRecord implements Serializable
 
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
+		$this->resetModifiedStatus();
+
 		return $this->executeUpdate($updateQuery);
 	}
 
@@ -1436,6 +1518,8 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		self::storeToPool($this);
+
+		$this->resetModifiedStatus();
 
 		return $result;
 	}

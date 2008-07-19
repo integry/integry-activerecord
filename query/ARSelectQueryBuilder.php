@@ -92,6 +92,21 @@ class ARSelectQueryBuilder
 		return false;
 	}
 
+	public function getJoinsByClassName($className)
+	{
+		$ret = array();
+
+		foreach ($this->joinList as $join)
+		{
+			if ($className == $join['tableName'])
+			{
+				$ret[] = $join;
+			}
+		}
+
+		return $ret;
+	}
+
 	/**
 	 * Includes table to a table list
 	 *
