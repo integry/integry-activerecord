@@ -33,6 +33,8 @@ class ARSchema
 
 	private $circularReferences = array();
 
+	private $autoReferences = array();
+
 	public function registerField(ARField $schemaField)
 	{
 		$name = $schemaField->getName();
@@ -229,6 +231,16 @@ class ARSchema
 		$refSchema = ActiveRecord::getSchemaInstance($refSchema);
 		$refSchema->getReferencedSchemas($this);
 		$this->circularReferences[$refName] = $refSchema;
+	}
+
+	public function registerAutoReference($fieldName)
+	{
+		$this->autoReferences[] = $this->getField($fieldName)->getForeignClassName();
+	}
+
+	public function getAutoReferences()
+	{
+		return $this->autoReferences;
 	}
 
 	/**

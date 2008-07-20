@@ -623,7 +623,7 @@ abstract class ActiveRecord implements Serializable
 	 * @param bool $loadReferencedRecords Join records on foreign keys?
 	 * @return string
 	 */
-	public static function createSelectQuery($className, $loadReferencedRecords = false)
+	public static function createSelectQuery($className, &$loadReferencedRecords = false)
 	{
 		$schema = self::getSchemaInstance($className);
 		$schemaName = $schema->getName();
@@ -635,6 +635,17 @@ abstract class ActiveRecord implements Serializable
 		foreach($schema->getFieldList() as $fieldName => $field)
 		{
 			$query->addField($fieldName, $schemaName);
+		}
+
+		// auto-referenced tables
+		if ($autoReferences = $schema->getAutoReferences())
+		{
+			if (!is_array($loadReferencedRecords))
+			{
+				$loadReferencedRecords = array();
+			}
+
+			$loadReferencedRecords = array_merge($loadReferencedRecords, $autoReferences);
 		}
 
 		if ($loadReferencedRecords)
