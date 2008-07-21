@@ -35,6 +35,10 @@ class ARSchema
 
 	private $autoReferences = array();
 
+	private $autoReferencedSchemas = array();
+
+	private $cachedRecursiveReferences = null;
+
 	public function registerField(ARField $schemaField)
 	{
 		$name = $schemaField->getName();
@@ -235,12 +239,30 @@ class ARSchema
 
 	public function registerAutoReference($fieldName)
 	{
-		$this->autoReferences[] = $this->getField($fieldName)->getForeignClassName();
+		$foreignClassName = $this->getField($fieldName)->getForeignClassName();
+		$this->autoReferences[] = $foreignClassName;
+		$this->autoReferencedSchemas[] = ActiveRecord::getSchemaInstance($foreignClassName);
 	}
 
 	public function getAutoReferences()
 	{
 		return $this->autoReferences;
+	}
+
+	public function getRecursiveAutoReferences()
+	{
+		if (is_null($this->cachedRecursiveReferences))
+		{
+			$autoReferences = $this->autoReferences;
+			foreach ($this->autoReferencedSchemas as $schema)
+			{
+				$autoReferences = array_merge($autoReferences, $schema->getAutoReferences());
+			}
+
+			$this->cachedRecursiveReferences = $autoReferences;
+		}
+
+		return $this->cachedRecursiveReferences;
 	}
 
 	/**
