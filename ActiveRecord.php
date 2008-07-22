@@ -641,8 +641,7 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
-			$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
-			self::joinReferencedTables($schema, $query, $tables);
+			self::joinReferencedTables($schema, $query, $loadReferencedRecords);
 		}
 
 		return $query;
@@ -656,6 +655,15 @@ abstract class ActiveRecord implements Serializable
 			if (!is_array($loadReferencedRecords))
 			{
 				$loadReferencedRecords = array();
+			}
+
+			// clear already included references
+			foreach ($autoReferences as $key => $ref)
+			{
+				if (is_numeric(array_search($ref, $loadReferencedRecords)) && is_numeric($key))
+				{
+					unset($autoReferences[$key]);
+				}
 			}
 
 			return array_merge($loadReferencedRecords, $autoReferences);
@@ -682,8 +690,11 @@ abstract class ActiveRecord implements Serializable
 		return $flipped;
 	}
 
-	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, &$tables = false)
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, &$loadReferencedRecords = false)
 	{
+		$loadReferencedRecords = self::addAutoReferences($schema, $loadReferencedRecords);
+		$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
+
 		$referenceList = $schema->getForeignKeyList();
 		$schemaName = $schema->getName();
 
@@ -732,7 +743,7 @@ abstract class ActiveRecord implements Serializable
 
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName);
 
-				self::joinReferencedTables($foreignSchema, $query, $tables);
+				self::joinReferencedTables($foreignSchema, $query, $loadReferencedRecords);
 			}
 		}
 	}
@@ -1168,7 +1179,7 @@ abstract class ActiveRecord implements Serializable
 		$counterFilter->setLimit(0, 0);
 
 		$query = new ARSelectQueryBuilder();
-		self::joinReferencedTables(self::getSchemaInstance($className), $query, array_flip($referencedTables));
+		self::joinReferencedTables(self::getSchemaInstance($className), $query, $referencedTables);
 		$query->removeFieldList();
 		$query->addField("COUNT(*)", null, "totalCount");
 		$query->includeTable($className);
