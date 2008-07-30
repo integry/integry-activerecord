@@ -44,7 +44,6 @@ class ARSerializableDateTime extends DateTime implements Serializable
 		if ($dateString instanceof ARValueMapper)
 		{
 			$dateString = $dateString->get();
-			//throw new ApplicationException();
 		}
 
 		$this->dateString = $dateString;
@@ -109,7 +108,7 @@ class ARSerializableDateTime extends DateTime implements Serializable
 		$dateArray = unserialize($serialized);
 		if($dateArray['isNull'] == 'true')
 		{
-			$dateString = "";
+			$dateString = null;
 		}
 		else
 		{
