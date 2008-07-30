@@ -623,7 +623,7 @@ abstract class ActiveRecord implements Serializable
 	 * @param bool $loadReferencedRecords Join records on foreign keys?
 	 * @return string
 	 */
-	public static function createSelectQuery($className, $loadReferencedRecords = false)
+	public static function createSelectQuery($className, &$loadReferencedRecords = false)
 	{
 		$schema = self::getSchemaInstance($className);
 		$schemaName = $schema->getName();
@@ -637,13 +637,39 @@ abstract class ActiveRecord implements Serializable
 			$query->addField($fieldName, $schemaName);
 		}
 
+		$loadReferencedRecords = self::addAutoReferences($schema, $loadReferencedRecords);
+
 		if ($loadReferencedRecords)
 		{
-			$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
-			self::joinReferencedTables($schema, $query, $tables);
+			self::joinReferencedTables($schema, $query, $loadReferencedRecords);
 		}
 
 		return $query;
+	}
+
+	private static function addAutoReferences(ARSchema $schema, $loadReferencedRecords)
+	{
+		// auto-referenced tables
+		if ($autoReferences = $schema->getRecursiveAutoReferences())
+		{
+			if (!is_array($loadReferencedRecords))
+			{
+				$loadReferencedRecords = array();
+			}
+
+			// clear already included references
+			foreach ($autoReferences as $key => $ref)
+			{
+				if (is_numeric(array_search($ref, $loadReferencedRecords)) && is_numeric($key))
+				{
+					unset($autoReferences[$key]);
+				}
+			}
+
+			return array_merge($loadReferencedRecords, $autoReferences);
+		}
+
+		return $loadReferencedRecords;
 	}
 
 	private function array_invert($arr)
@@ -664,8 +690,11 @@ abstract class ActiveRecord implements Serializable
 		return $flipped;
 	}
 
-	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, $tables = false)
+	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, &$loadReferencedRecords = false)
 	{
+		$loadReferencedRecords = self::addAutoReferences($schema, $loadReferencedRecords);
+		$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
+
 		$referenceList = $schema->getForeignKeyList();
 		$schemaName = $schema->getName();
 
@@ -714,7 +743,7 @@ abstract class ActiveRecord implements Serializable
 
 				self::getLogger()->logQuery('Joining ' . $foreignClassName . ' on ' . $schemaName);
 
-				self::joinReferencedTables($foreignSchema, $query, $tables);
+				self::joinReferencedTables($foreignSchema, $query, $loadReferencedRecords);
 			}
 		}
 	}
@@ -814,6 +843,96 @@ abstract class ActiveRecord implements Serializable
 		}
 	}
 
+	private function getUsedSchemas($schema, $referencedSchemaList)
+	{
+		$loadReferencedRecords = $referencedSchemaList;
+		$schemas = $schema->getReferencedSchemas();
+
+		// remove schemas that were not loaded with this query
+		if (is_array($loadReferencedRecords))
+		{
+			$loadReferencedRecords = self::array_invert($loadReferencedRecords);
+			$filteredSchemas = array();
+
+			foreach($loadReferencedRecords as $tableName => $tableAlias)
+			{
+				if (is_numeric($tableAlias))
+				{
+					if (!isset($schemas[$tableName]))
+					{
+						if (isset($schemas[$tableName . '_' . $tableName]))
+						{
+							$tableName .= '_' . $tableName;
+						}
+						else
+						{
+							$break = false;
+							foreach ($schemas as $name => $collection)
+							{
+								foreach ($collection as $schema)
+								{
+									if ($schema->getName() == $tableName)
+									{
+										$tableName = $name;
+										$break = true;
+										break;
+									}
+								}
+
+								if ($break)
+								{
+									break;
+								}
+							}
+						}
+					}
+
+					$filteredSchemas[$tableName] = $schemas[$tableName][0];
+				}
+				else
+				{
+					$aliases = !is_array($tableAlias) ? array($tableName . '_' . $tableAlias) : $tableAlias;
+
+					foreach ($aliases as $aliasIndex => $tableAlias)
+					{
+						// If the same table is referenced for two or more times an alias that consists of foreign key
+						// and referenced table name is used. However the first instance is always referenced using the
+						// table name only to avoid having to specify the full aliases in all WHERE conditions
+						if (!isset($schemas[$tableAlias]))
+						{
+							if (0 == $aliasIndex)
+							{
+								$tableAlias = $tableName;
+							}
+							else
+							{
+								$tableAlias = $tableName . '_' . $tableAlias;
+							}
+						}
+
+						foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
+						{
+							if ($unfilteredSchema->getName() == $tableName)
+							{
+								$filteredSchemas[$tableAlias] = $unfilteredSchema;
+							}
+						}
+					}
+				}
+			}
+			$schemas = $filteredSchemas;
+		}
+		else
+		{
+			foreach ($schemas as $referenceName => $foreignSchema)
+			{
+				$schemas[$referenceName] = $foreignSchema[0];
+			}
+		}
+
+		return $schemas;
+	}
+
 	/**
 	 * Parse raw record data and separate it in 3 different parts:
 	 * 1. record data
@@ -828,7 +947,7 @@ abstract class ActiveRecord implements Serializable
 		$referenceListData = array();
 		$recordData = array();
 		$miscData = array();
-		$recordKeys = array();
+		$usedColumns = array();
 
 		foreach($schema->getArrayFieldList() as $name => $field)
 		{
@@ -849,76 +968,10 @@ abstract class ActiveRecord implements Serializable
 
 		if ($loadReferencedRecords)
 		{
-			$schemas = $schema->getReferencedSchemas();
-
-			// remove schemas that were not loaded with this query
-			if (is_array($loadReferencedRecords))
-			{
-				$loadReferencedRecords = self::array_invert($loadReferencedRecords);
-				$filteredSchemas = array();
-
-				foreach($loadReferencedRecords as $tableName => $tableAlias)
-				{
-					if (is_numeric($tableAlias))
-					{
-						if (!isset($schemas[$tableName]))
-						{
-							if (isset($schemas[$tableName . '_' . $tableName]))
-							{
-								$tableName .= '_' . $tableName;
-							}
-							else
-							{
-								$break = false;
-								foreach ($schemas as $name => $collection)
-								{
-									foreach ($collection as $schema)
-									{
-										if ($schema->getName() == $tableName)
-										{
-											$tableName = $name;
-											$break = true;
-											break;
-										}
-									}
-
-									if ($break)
-									{
-										break;
-									}
-								}
-							}
-						}
-
-						$filteredSchemas[$tableName] = $schemas[$tableName][0];
-					}
-					else
-					{
-						$aliases = !is_array($tableAlias) ? array($tableName . '_' . $tableAlias) : $tableAlias;
-
-						foreach ($aliases as $tableAlias)
-						{
-							foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
-							{
-								if ($unfilteredSchema->getName() == $tableName)
-								{
-									$filteredSchemas[$tableAlias] = $unfilteredSchema;
-								}
-							}
-						}
-					}
-				}
-				$schemas = $filteredSchemas;
-			}
-			else
-			{
-				foreach ($schemas as $referenceName => $foreignSchema)
-				{
-					$schemas[$referenceName] = $foreignSchema[0];
-				}
-			}
-
+			$schemas = self::getUsedSchemas($schema, $loadReferencedRecords);
 			$referenceListData = array_fill_keys(array_keys($schemas), array());
+
+			// indicates if a schema has already been referenced
 			$usedSchemas = array();
 
 			foreach ($schemas as $referenceName => $foreignSchema)
@@ -935,6 +988,8 @@ abstract class ActiveRecord implements Serializable
 					$referenceName = $foreignSchemaName;
 				}
 
+				// get field aliases that were used in the database query
+				// for example, TableName_columnName
 				$fieldNames = array_keys($foreignSchema->getFieldList());
 				$referenceKeys = array();
 				foreach($fieldNames as $fieldName)
@@ -942,23 +997,23 @@ abstract class ActiveRecord implements Serializable
 					$referenceKeys[$fieldName] = $referenceName . '_' . $fieldName;
 				}
 
+				$usedColumns = array_merge($usedColumns, array_values($referenceKeys));
+
+				// unserialize array fields
 				foreach ($foreignSchema->getArrayFieldList() as $fieldName => $field)
 				{
 					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
 				}
 
-				$referenceName = $fieldReferenceName;
+				$referencedRecord = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
+				$referenceListData[$referenceName] = $referencedRecord;
 
-				$referenceListData[$referenceName] = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
-
-				$recordKeys = array_merge($recordKeys, array_values($referenceKeys));
-
+				// initialize complete data structure using references
 				foreach ($foreignSchema->getForeignKeyList() as $fieldName => $field)
 				{
-					$deeperForeignSchemaName = $field->getForeignTableName();
-					if ($foreignSchemaName != $deeperForeignSchemaName)
+					if ($foreignSchemaName != $field->getForeignTableName())
 					{
-						$referenceListData[$referenceName][$deeperForeignSchemaName] =& $referenceListData[$deeperForeignSchemaName];
+						$referenceListData[$referenceName][$field->getReferenceFieldName()] =& $referenceListData[$field->getForeignTableName()];
 					}
 				}
 
@@ -967,13 +1022,16 @@ abstract class ActiveRecord implements Serializable
 				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $foreignSchema));
 				}
 
-				$recordData[$referenceName] = $referenceListData[$referenceName];
+				if (!isset($recordData[$fieldReferenceName]))
+				{
+					$recordData[$fieldReferenceName] = $referenceListData[$referenceName];
+				}
 
 				$usedSchemas[$foreignSchemaName] = true;
 			}
 		}
 
-		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => array_diff_key($dataArray, array_flip($recordKeys)));
+		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => array_diff_key($dataArray, array_flip($usedColumns)));
 	}
 
 	protected function miscRecordDataHandler($miscRecordDataArray)
@@ -1136,7 +1194,7 @@ abstract class ActiveRecord implements Serializable
 		$counterFilter->setLimit(0, 0);
 
 		$query = new ARSelectQueryBuilder();
-		self::joinReferencedTables(self::getSchemaInstance($className), $query, array_flip($referencedTables));
+		self::joinReferencedTables(self::getSchemaInstance($className), $query, $referencedTables);
 		$query->removeFieldList();
 		$query->addField("COUNT(*)", null, "totalCount");
 		$query->includeTable($className);
