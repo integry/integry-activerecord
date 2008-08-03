@@ -649,6 +649,11 @@ abstract class ActiveRecord implements Serializable
 
 	private static function addAutoReferences(ARSchema $schema, $loadReferencedRecords)
 	{
+		if (true === $loadReferencedRecords)
+		{
+			return true;
+		}
+
 		// auto-referenced tables
 		if ($autoReferences = $schema->getRecursiveAutoReferences())
 		{
