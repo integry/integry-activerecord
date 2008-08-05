@@ -225,6 +225,11 @@ abstract class ActiveRecord implements Serializable
 			$this->isLoaded = true;
 		}
 
+		$this->createReferencedRecords($data, true);
+	}
+
+	private function createReferencedRecords($data, $initialState = true)
+	{
 		foreach ($this->schema->getForeignKeyList() as $name => $field)
 		{
 			$referenceName = $field->getReferenceName();
@@ -261,10 +266,13 @@ abstract class ActiveRecord implements Serializable
 				}
 			}
 
-			// Making first letter lowercase
-			$referenceName = $field->getReferenceFieldName();
-			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
-			$this->$referenceName = $this->data[$name];
+			if ($initialState)
+			{
+				// Making first letter lowercase
+				$referenceName = $field->getReferenceFieldName();
+				$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
+				$this->$referenceName = $this->data[$name];
+			}
 		}
 	}
 
@@ -481,9 +489,13 @@ abstract class ActiveRecord implements Serializable
 			$instance->setID($recordID, false);
 			self::storeToPool($instance);
 		}
-		else if(!$instance->isLoaded() && !empty($data))
+		else if (!$instance->isLoaded() && !empty($data))
 		{
 			$instance->createDataAccessVariables($data, $recordID);
+		}
+		else if ($instance->isLoaded() && !empty($data))
+		{
+			//$instance->createReferencedRecords($data, false);
 		}
 
 		if ($loadRecordData)
@@ -896,6 +908,7 @@ abstract class ActiveRecord implements Serializable
 				}
 				else
 				{
+					$originalAlias = $tableAlias;
 					$aliases = !is_array($tableAlias) ? array($tableName . '_' . $tableAlias) : $tableAlias;
 
 					foreach ($aliases as $aliasIndex => $tableAlias)
@@ -913,6 +926,11 @@ abstract class ActiveRecord implements Serializable
 							{
 								$tableAlias = $tableName . '_' . $tableAlias;
 							}
+						}
+
+						if (!isset($schemas[$tableAlias]))
+						{
+							$tableAlias = $originalAlias;
 						}
 
 						foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
@@ -983,7 +1001,22 @@ abstract class ActiveRecord implements Serializable
 			{
 				$foreignSchemaName = $foreignSchema->getName();
 
-				if (!isset($usedSchemas[$foreignSchemaName]))
+				$newRefFound = false;
+				if (is_array($loadReferencedRecords) && isset($loadReferencedRecords[$referenceName]))
+				{
+					$newRef = $loadReferencedRecords[$referenceName] . '_' . $referenceName;
+					foreach (array_keys($dataArray) as $key)
+					{
+						if (substr($key, 0, strlen($newRef)) == $newRef)
+						{
+							$fieldReferenceName = $referenceName = $newRef;
+							$newRefFound = true;
+							break;
+						}
+					}
+				}
+
+				if (!$newRefFound && !isset($usedSchemas[$foreignSchemaName]))
 				{
 					// if we have defaultImageID column linked to ProductImage table we need to have this data
 					// identified by DefaultImage (column) rather than ProductImage (referenced class name)
@@ -1032,7 +1065,10 @@ abstract class ActiveRecord implements Serializable
 					$recordData[$fieldReferenceName] = $referenceListData[$referenceName];
 				}
 
-				$usedSchemas[$foreignSchemaName] = true;
+				if (!$newRefFound)
+				{
+					$usedSchemas[$foreignSchemaName] = true;
+				}
 			}
 		}
 
@@ -1158,6 +1194,7 @@ abstract class ActiveRecord implements Serializable
 		$schema = self::getSchemaInstance($className);
 
 		$queryResultData = self::fetchDataFromDB($query);
+
 		$recordSet = new ARSet($query->getFilter());
 		$schema = self::getSchemaInstance($className);
 		foreach($queryResultData as $rowData)

@@ -76,6 +76,15 @@ class ARSelectQueryBuilder
 		  	$tableAliasName = $tableName;
 		}
 
+		// check if not already joined
+		foreach ($this->getJoinsByClassName($tableName) as $join)
+		{
+			if (($mainTableJoinFieldName == $join['mainTableJoinFieldName']) && ($tableJoinFieldName == $join['tableJoinFieldName']))
+			{
+				return false;
+			}
+		}
+
 		if(!(isset($this->joinList[$tableAliasName]) || isset($this->tableList[$tableAliasName])))
 		{
 			$this->joinList[$tableAliasName] = array(
