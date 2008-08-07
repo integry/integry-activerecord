@@ -2003,11 +2003,10 @@ abstract class ActiveRecord implements Serializable
 		$query = self::createSelectQuery($className, $loadReferencedRecords);
 		$query->getFilter()->merge($filter);
 
-		$queryResultData = self::fetchDataFromDB($query);
 		$resultDataArray = array();
 
 		$schema = self::getSchemaInstance($className);
-		foreach($queryResultData as $rowData)
+		foreach(self::fetchDataFromDB($query) as $rowData)
 		{
 			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
 			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
@@ -2017,7 +2016,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			$getRecordCount = self::getRecordCountByQuery($query);
 		}
-
+		//var_dump($className . ' | ' . round(memory_get_usage() / (1024*1024), 1));
 		return $resultDataArray;
 	}
 
