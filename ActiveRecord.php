@@ -514,16 +514,20 @@ abstract class ActiveRecord implements Serializable
 	 *
 	 * @return ActiveRecord
 	 */
-	public static function getInstanceByIdIfExists($className, $recordID)
+	public static function getInstanceByIdIfExists($className, $recordID, $returnNewIfNotExist = true)
 	{
 		if (self::objectExists($className, $recordID))
 		{
 			$instance = self::getInstanceByID($className, $recordID, self::LOAD_DATA);
 		}
-		else
+		else if ($returnNewIfNotExist)
 		{
 			$instance = self::getNewInstance($className);
 			$instance->setID($recordID);
+		}
+		else
+		{
+			return null;
 		}
 
 		return $instance;
@@ -1053,6 +1057,7 @@ abstract class ActiveRecord implements Serializable
 					{
 						$referenceListData[$referenceName][$field->getReferenceFieldName()] =& $referenceListData[$field->getForeignTableName()];
 					}
+					//var_dump($referenceName . ' / ' . $field->getReferenceFieldName() . ' / ' . $field->getForeignTableName());
 				}
 
 				if ($transformArray)
@@ -2016,7 +2021,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			$getRecordCount = self::getRecordCountByQuery($query);
 		}
-		//var_dump($className . ' | ' . round(memory_get_usage() / (1024*1024), 1));
+		//v_ar_dump($className . ' | ' . round(memory_get_usage() / (1024*1024), 1));
 		return $resultDataArray;
 	}
 
