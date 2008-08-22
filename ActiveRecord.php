@@ -993,7 +993,7 @@ abstract class ActiveRecord implements Serializable
 		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $schema));
 		}
 
-		if ($loadReferencedRecords)
+		if ($loadReferencedRecords && $dataArray)
 		{
 			$schemas = self::getUsedSchemas($schema, $loadReferencedRecords);
 			$referenceListData = array_fill_keys(array_keys($schemas), array());
