@@ -1269,7 +1269,7 @@ abstract class ActiveRecord implements Serializable
 		self::getLogger()->logQuery($counterQuery);
 
 		$db = self::getDBConnection();
-		$counterResult = $db->executeQuery($counterQuery);
+		$counterResult = $query->getPreparedStatement($db)->executeQuery();
 		$counterResult->next();
 
 		$resultData = $counterResult->getRow();
