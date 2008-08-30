@@ -12,7 +12,6 @@
  */
 abstract class Condition
 {
-
 	/**
 	 * Operator string
 	 *
@@ -141,15 +140,38 @@ abstract class Condition
 	 * @param array $array Array of Condition object instances
 	 * @return Condition
 	 */
-	public static function mergeFromArray($array)
+	public static function mergeFromArray($array, $or = false)
 	{
+		if (!$array)
+		{
+			return null;
+		}
+
 		$baseCond = array_shift($array);
 		foreach ($array as $cond)
 		{
-			$baseCond->addAND($cond);
+			if (!$or)
+			{
+				$baseCond->addAND($cond);
+			}
+			else
+			{
+				$baseCond->addOR($cond);
+			}
 		}
 
 		return $baseCond;
+	}
+
+	public function __clone()
+	{
+		foreach (array('ORCondList', 'ANDCondList') as $var)
+		{
+			foreach ($this->$var as $index => $cond)
+			{
+				$this->$var[$index] = clone $cond;
+			}
+		}
 	}
 
 	public function __destruct()

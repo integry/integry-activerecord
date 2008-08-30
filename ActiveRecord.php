@@ -2168,6 +2168,11 @@ abstract class ActiveRecord implements Serializable
 	public static function commit()
 	{
 		self::$transactionLevel--;
+		if (self::$transactionLevel < 0)
+		{
+			self::$transactionLevel = 0;
+		}
+
 		self::getLogger()->logAction("COMMIT transaction" . ((int)self::$transactionLevel + 1));
 		if (0 == self::$transactionLevel)
 		{

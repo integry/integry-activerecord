@@ -56,6 +56,10 @@ class ARSerializableDateTime extends DateTime implements Serializable
 		parent::__construct($dateString);
 	}
 
+	public static function createFromTimeStamp($timeStamp)
+	{
+		return new ARSerializableDateTime(date('Y-m-d H:i:s', $timeStamp));
+	}
 
 	public function isNull()
 	{
