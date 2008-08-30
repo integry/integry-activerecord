@@ -106,7 +106,7 @@ class ARValueMapper implements Serializable
 		}
 
 		// === also checks variable type, so we use == to compare values
-		if (!is_null($this->initialValue) && (!is_object($value) && ($value == $this->value)) )
+		if (!is_null($this->initialValue) && (!is_object($this->value) && !is_object($value) && ($value == $this->value)) )
 		{
 			return false;
 		}
@@ -129,10 +129,7 @@ class ARValueMapper implements Serializable
 		}
 		else if ($this->field)
 		{
-			if ($this->field->getDataType() instanceof ARNumeric)
-			{
-				$value = (float)$value;
-			}
+			$value = $this->field->getDataType()->getValidatedValue($value);
 		}
 
 		$this->isNull = false;

@@ -4,7 +4,7 @@
  * Abstract schema data type representing type of a table column
  *
  * @package activerecord.schema.datatype
- * @author Integry Systems 
+ * @author Integry Systems
  */
 abstract class ARSchemaDataType
 {
@@ -52,6 +52,11 @@ abstract class ARSchemaDataType
 	{
 		return $this->length;
 	}
+
+	public function getValidatedValue($value)
+	{
+		return $value;
+	}
 }
 
 /**
@@ -61,12 +66,16 @@ abstract class ARSchemaDataType
  */
 abstract class ARNumeric extends ARSchemaDataType
 {
+	public function getValidatedValue($value)
+	{
+		return (float)$value;
+	}
 }
 
 /**
  * Array data type
- * 
- * As many DBMS vendors does not support array data types, array data should be saved 
+ *
+ * As many DBMS vendors does not support array data types, array data should be saved
  * in a serialized form (string)
  *
  * @package activerecord.schema.datatype
@@ -185,6 +194,15 @@ class ARBinary extends ARSchemaDataType
  */
 abstract class ARPeriod extends ARSchemaDataType
 {
+	public function getValidatedValue($value)
+	{
+		if (is_numeric($value))
+		{
+			$value = ARSerializableDateTime::createFromTimeStamp($value);
+		}
+
+		return $value;
+	}
 }
 
 /**

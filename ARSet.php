@@ -91,8 +91,27 @@ class ARSet implements IteratorAggregate, Serializable
 	 */
 	public function remove($recordIndex)
 	{
+		if ($recordIndex instanceof ActiveRecord)
+		{
+			foreach ($this->data as $key => $record)
+			{
+				if ($record === $recordIndex)
+				{
+					$recordIndex = $key;
+					break;
+				}
+			}
+
+			if ($recordIndex instanceof ActiveRecord)
+			{
+				return null;
+			}
+		}
+
 		unset($this->data[$recordIndex]);
 		$this->data = array_values($this->data);
+
+		return true;
 	}
 
 	/**

@@ -146,6 +146,14 @@ abstract class ARFilter
 		return $this->createString()."\n<br/>";
 	}
 
+	public function __clone()
+	{
+		if ($this->condition)
+		{
+			$this->condition = clone $this->condition;
+		}
+	}
+
 	/*
 	public function __destruct()
 	{
