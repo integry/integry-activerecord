@@ -83,11 +83,17 @@ class ARForeignKeyField extends ARField implements ARForeignKey
 		$this->foreignClassName = !empty($foreignClassName) ? $foreignClassName : $foreignTableName;
 		$this->foreignTableName = $foreignTableName;
 		$this->foreignFieldName = $foreignFieldName;
+
 		$this->referenceFieldName = $this->referenceName = ucfirst(substr($this->name, 0, -2));
 
 		if (!$this->referenceName)
 		{
 			$this->referenceName = $this->foreignClassName;
+		}
+
+		if (!$this->referenceFieldName)
+		{
+			$this->referenceFieldName = $this->name;
 		}
 
 		if ($this->foreignClassName != $this->referenceName)
