@@ -31,6 +31,8 @@ class ARSchema
 	 */
 	private $referencedSchemaList = null;
 
+	private $directlyReferencedSchemaList = null;
+
 	private $circularReferences = array();
 
 	private $autoReferences = array();
@@ -202,6 +204,7 @@ class ARSchema
 				}
 
 				$ret[$refName][] = $refSchema;
+				$this->directlyReferencedSchemaList[$refName][] = $refSchema;
 
 				$sub = $refSchema->getReferencedSchemas($this);
 				$ret = array_merge($ret, $sub);
@@ -228,6 +231,12 @@ class ARSchema
 		}
 
 		return $this->referencedSchemaList;
+	}
+
+	public function getDirectlyReferencedSchemas()
+	{
+		$this->getReferencedSchemas();
+		return $this->directlyReferencedSchemaList;
 	}
 
 	public function registerCircularReference($refName, $refSchema)

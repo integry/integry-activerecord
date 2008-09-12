@@ -250,12 +250,19 @@ abstract class ActiveRecord implements Serializable
 
 				if (isset($data[$referenceName]))
 				{
+					/*
 					foreach($data as $referecedTableName => $referencedData)
 					{
 						if (($referenceName != $referecedTableName) && $referencedData && !isset($data[$referenceName][$referecedTableName]))
 						{
 							$data[$referenceName][$referecedTableName] = $referencedData;
 						}
+					}
+					*/
+
+					if (!self::extractRecordID(self::getSchemaInstance($foreignClassName), $data[$referenceName]))
+					{
+						$data[$referenceName] = null;
 					}
 
 					$this->data[$name]->set(self::getInstanceByID($foreignClassName, $data[$name], false, null, $data[$referenceName]), false);
@@ -713,7 +720,12 @@ abstract class ActiveRecord implements Serializable
 
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, &$loadReferencedRecords = false)
 	{
-		$loadReferencedRecords = self::addAutoReferences($schema, $loadReferencedRecords);
+		// do not use auto-references for single-table one level joins
+		if (!is_string($loadReferencedRecords))
+		{
+			$loadReferencedRecords = self::addAutoReferences($schema, $loadReferencedRecords);
+		}
+
 		$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
 
 		$referenceList = $schema->getForeignKeyList();
@@ -732,7 +744,7 @@ abstract class ActiveRecord implements Serializable
 
 			$isSameSchema = $schema === $foreignSchema;
 			$notRequiredForInclusion = is_array($tables) && !isset($tables[$foreignClassName]);
-			$isAliasSpecified = isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]);
+			$isAliasSpecified = is_array($tables) && isset($tables[$foreignClassName]) && !is_numeric($tables[$foreignClassName]);
 
 			if ($isAliasSpecified)
 			{
@@ -741,11 +753,15 @@ abstract class ActiveRecord implements Serializable
 				$notInReferencedArray = is_array($tables[$foreignClassName]) && !in_array($aliasName, $tables[$foreignClassName]);
 			}
 
-			if ($isSameSchema || $notRequiredForInclusion ||
-					($isAliasSpecified && $classNamesDoNotMatch && ($notReferencedAsArray || $notInReferencedArray))
-				)
+			if ($tables !== $schemaName)
 			{
-				continue;
+				if ($isSameSchema || $notRequiredForInclusion ||
+						($isAliasSpecified && $classNamesDoNotMatch && ($notReferencedAsArray || $notInReferencedArray))
+					 || (is_string($tables) && ($tables != $schemaName))
+					)
+				{
+					continue;
+				}
 			}
 
 			if (!$query->getJoinsByClassName($foreignTableName))
@@ -867,7 +883,7 @@ abstract class ActiveRecord implements Serializable
 	private function getUsedSchemas($schema, $referencedSchemaList)
 	{
 		$loadReferencedRecords = $referencedSchemaList;
-		$schemas = $schema->getReferencedSchemas();
+		$schemas = is_string($referencedSchemaList) ? $schema->getDirectlyReferencedSchemas() : $schema->getReferencedSchemas();
 
 		// remove schemas that were not loaded with this query
 		if (is_array($loadReferencedRecords))
@@ -935,6 +951,11 @@ abstract class ActiveRecord implements Serializable
 						if (!isset($schemas[$tableAlias]))
 						{
 							$tableAlias = $originalAlias;
+						}
+
+						if (is_array($tableAlias))
+						{
+							$tableAlias = $tableName . '_' . array_pop($tableAlias);
 						}
 
 						foreach($schemas[$tableAlias] as $key => $unfilteredSchema)
@@ -1033,6 +1054,7 @@ abstract class ActiveRecord implements Serializable
 				// get field aliases that were used in the database query
 				// for example, TableName_columnName
 				$fieldNames = array_keys($foreignSchema->getFieldList());
+
 				$referenceKeys = array();
 				foreach($fieldNames as $fieldName)
 				{
@@ -1057,7 +1079,6 @@ abstract class ActiveRecord implements Serializable
 					{
 						$referenceListData[$referenceName][$field->getReferenceFieldName()] =& $referenceListData[$field->getForeignTableName()];
 					}
-					//var_dump($referenceName . ' / ' . $field->getReferenceFieldName() . ' / ' . $field->getForeignTableName());
 				}
 
 				if ($transformArray)
@@ -1207,6 +1228,7 @@ abstract class ActiveRecord implements Serializable
 			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords);
 			$recordID = self::extractRecordID($schema, $rowData);
 			$instance = self::getInstanceByID($className, $recordID, null, null, $parsedRowData['recordData']);
+
 			$recordSet->add($instance);
 
 			if (!empty($parsedRowData['miscData']))
