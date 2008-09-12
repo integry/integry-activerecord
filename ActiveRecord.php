@@ -1733,6 +1733,7 @@ abstract class ActiveRecord implements Serializable
 				{
 					if (!$dataContainer->isNull() && !is_null($dataContainer->get()))
 					{
+						//print_r("\n" . get_class($dataContainer->get()) . $dataContainer->get()->getID());
 						$value = "'".$dataContainer->get()->getID()."'";
 					}
 				}
@@ -2331,6 +2332,9 @@ abstract class ActiveRecord implements Serializable
 
 	public function __clone()
 	{
+		$this->cachedId = null;
+		$this->originalRecord = self::getInstanceByID(get_class($this), $this->getID());
+
 		foreach ($this->data as $key => $valueMapper)
 		{
 			$this->data[$key] = clone $valueMapper;
@@ -2339,12 +2343,11 @@ abstract class ActiveRecord implements Serializable
 
 		foreach ($this->schema->getForeignKeyList() as $name => $field)
 		{
-			$referenceName = $field->getReferenceName();
+			$referenceName = $field->getReferenceFieldName();
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
 			$this->$referenceName = $this->data[$name];
+			//print_r(get_class($this) . ': '. $referenceName . ' - ' . $name . ' ' . (int) "\n");
 		}
-
-		$this->cachedId = null;
 	}
 
 	private function __get($name)
