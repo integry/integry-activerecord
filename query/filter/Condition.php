@@ -470,6 +470,11 @@ class AndChainCondition extends Condition
 		}
 	}
 
+	public function getOperator()
+	{
+		return ' AND ';
+	}
+
 	public function toString()
 	{
 
@@ -485,10 +490,10 @@ class AndChainCondition extends Condition
 		$conds = array();
 		foreach ($this->ANDCondList as $cond)
 		{
-			$conds[] = '(' . $cond->createChain() . ')';
+			$conds[] = $cond->createChain();
 		}
 
-		return '(' . implode(' AND ', $conds) . ')';
+		return '(' . implode($this->getOperator(), $conds) . ')';
 	}
 
 	public function createPreparedChain()
@@ -500,10 +505,18 @@ class AndChainCondition extends Condition
 		{
 			$sql = $andCond->createPreparedChain();
 			$values = array_merge($values, $sql['values']);
-			$conds[] = '(' . $sql['sql'] . ')';
+			$conds[] = $sql['sql'];
 		}
 
-		return array('sql' => '(' . implode(' AND ', $conds) . ')', 'values' => $values);
+		return array('sql' => '(' . implode($this->getOperator(), $conds) . ')', 'values' => $values);
+	}
+}
+
+class OrChainCondition extends AndChainCondition
+{
+	public function getOperator()
+	{
+		return ' OR ';
 	}
 }
 

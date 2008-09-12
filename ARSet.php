@@ -236,6 +236,28 @@ class ARSet implements IteratorAggregate, Serializable
 		return $this->data;
 	}
 
+	public function getRecordIDs()
+	{
+		$ids = array();
+		foreach ($this as $record)
+		{
+			$ids[] = $record->getID();
+		}
+
+		return $ids;
+	}
+
+	public function getIDMap()
+	{
+		$map = array();
+		foreach ($this as $record)
+		{
+			$map[$record->getID()] = $record;
+		}
+
+		return $map;
+	}
+
 	public function serialize()
 	{
 		$serialized = array('data' => $this->data);
