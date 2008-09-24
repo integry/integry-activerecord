@@ -258,6 +258,23 @@ class ARSet implements IteratorAggregate, Serializable
 		return $map;
 	}
 
+	/**
+	 *
+	 */
+	public function extractReferencedItemSet($key)
+	{
+		$set = new ARSet();
+		foreach ($this as $record)
+		{
+			if ($record->$key && $record->$key->get())
+			{
+				$set->add($record->$key->get());
+			}
+		}
+
+		return $set;
+	}
+
 	public function serialize()
 	{
 		$serialized = array('data' => $this->data);
