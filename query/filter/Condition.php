@@ -63,7 +63,6 @@ abstract class Condition
 
 		$condStr .= ")";
 
-
 		return array('sql' => $condStr, 'values' => $values);
 	}
 
@@ -242,7 +241,11 @@ abstract class BinaryCondition extends Condition
 				$field = $field->getDataType();
 			}
 
-			if ($field instanceof ARNumeric)
+			if ($field instanceof ARFloat)
+			{
+				$type = 'float';
+			}
+			elseif ($field instanceof ARNumeric)
 			{
 				$type = 'int';
 			}
