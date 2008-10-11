@@ -1335,7 +1335,7 @@ abstract class ActiveRecord implements Serializable
 		return $this->getRecordCountByQuery($query);
 	}
 
-	private function appendRelatedRecordJoinCond($foreignClassName, ARSelectFilter $filter)
+	private function appendRelatedRecordJoinCond($foreignClassName, ARFilter $filter)
 	{
 		$foreignSchema = self::getSchemaInstance($foreignClassName);
 		$callerClassName = get_class($this);
@@ -1401,6 +1401,18 @@ abstract class ActiveRecord implements Serializable
 
 		self::getLogger()->logQuery($deleteQuery);
 		return $db->executeUpdate($deleteQuery);
+	}
+
+	public function deleteRelatedRecordSet($className, ARDeleteFilter $filter = null)
+	{
+		if (!$filter)
+		{
+			$filter = new ARDeleteFilter();
+		}
+
+		$this->appendRelatedRecordJoinCond($className, $filter);
+
+		return self::deleteRecordSet($className, $filter);
 	}
 
 	/**
