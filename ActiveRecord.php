@@ -333,6 +333,7 @@ abstract class ActiveRecord implements Serializable
 
 			self::$dbConnection = Creole::getConnection(self::$dsn);
 			self::$dbConnection->executeUpdate("SET NAMES 'utf8'");
+			self::$dbConnection->executeUpdate("SET @@session.sql_mode=''");
 
 			self::getLogger()->logAction("Creating a database connection");
 		}
@@ -1221,7 +1222,13 @@ abstract class ActiveRecord implements Serializable
 
 		$queryResultData = self::fetchDataFromDB($query);
 
-		$recordSet = new ARSet($query->getFilter());
+		$setClassName = class_exists($className . 'Set', false) ? $className . 'Set' : 'ARSet';
+		if (!is_a($setClassName, 'ARSet'))
+		{
+			$setClassName = 'ARSet';
+		}
+
+		$recordSet = new $setClassName($query->getFilter());
 		$schema = self::getSchemaInstance($className);
 		foreach($queryResultData as $rowData)
 		{

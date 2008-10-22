@@ -275,6 +275,11 @@ class ARSet implements IteratorAggregate, Serializable
 		return $set;
 	}
 
+	protected function getRecordClass()
+	{
+		return substr(get_class($this), -3);
+	}
+
 	public function serialize()
 	{
 		$serialized = array('data' => $this->data);
