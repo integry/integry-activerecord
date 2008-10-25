@@ -1223,7 +1223,8 @@ abstract class ActiveRecord implements Serializable
 		$queryResultData = self::fetchDataFromDB($query);
 
 		$setClassName = class_exists($className . 'Set', false) ? $className . 'Set' : 'ARSet';
-		if (!is_a($setClassName, 'ARSet'))
+
+		if (!is_subclass_of($setClassName, 'ARSet'))
 		{
 			$setClassName = 'ARSet';
 		}
