@@ -1379,7 +1379,7 @@ abstract class ActiveRecord implements Serializable
 	 * @param string $className
 	 * @param ARDeleteFilter $filter
 	 */
-	public static function deleteRecordSet($className, ARDeleteFilter $filter, $cleanUp = true, $joinReferencedTables = false)
+	public static function deleteRecordSet($className, ARDeleteFilter $filter, $cleanUp = false, $joinReferencedTables = false)
 	{
 		$schema = self::getSchemaInstance($className);
 		$db = self::getDBConnection();

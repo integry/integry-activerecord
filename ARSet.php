@@ -261,9 +261,9 @@ class ARSet implements IteratorAggregate, Serializable
 	/**
 	 *
 	 */
-	public function extractReferencedItemSet($key)
+	public function extractReferencedItemSet($key, $class = 'ARSet')
 	{
-		$set = new ARSet();
+		$set = new $class();
 		foreach ($this as $record)
 		{
 			if ($record->$key && $record->$key->get())
