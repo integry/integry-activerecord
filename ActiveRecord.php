@@ -1389,8 +1389,7 @@ abstract class ActiveRecord implements Serializable
 
 		if ($joinReferencedTables)
 		{
-			$tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
-			self::joinReferencedTables($schema, $query, $tables);
+			self::joinReferencedTables($schema, $query, $joinReferencedTables);
 		}
 
 		$query->setFilter($filter);
@@ -1411,7 +1410,7 @@ abstract class ActiveRecord implements Serializable
 		return $db->executeUpdate($deleteQuery);
 	}
 
-	public function deleteRelatedRecordSet($className, ARDeleteFilter $filter = null)
+	public function deleteRelatedRecordSet($className, ARDeleteFilter $filter = null, $joinReferencedTables = false)
 	{
 		if (!$filter)
 		{
@@ -1420,7 +1419,7 @@ abstract class ActiveRecord implements Serializable
 
 		$this->appendRelatedRecordJoinCond($className, $filter);
 
-		return self::deleteRecordSet($className, $filter);
+		return self::deleteRecordSet($className, $filter, null, $joinReferencedTables);
 	}
 
 	/**
