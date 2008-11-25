@@ -6,7 +6,7 @@
  * @package activerecord
  * @author Integry Systems
  */
-class ARSet implements IteratorAggregate, Serializable
+class ARSet implements IteratorAggregate, Serializable, Countable
 {
 	/**
 	 * Record list
@@ -122,6 +122,16 @@ class ARSet implements IteratorAggregate, Serializable
 	public function getIterator()
 	{
 		return new ArrayIterator($this->data);
+	}
+
+	/**
+	 * Required definition of interface Countable
+	 *
+	 * @return int
+	 */
+	public function count()
+	{
+		return $this->size();
 	}
 
 	/**
