@@ -268,6 +268,17 @@ class ARSet implements IteratorAggregate, Serializable, Countable
 		return $map;
 	}
 
+	public function extractField($field)
+	{
+		$extract = array();
+		foreach ($this as $record)
+		{
+			$extract[$record->getID()] = $record->getFieldValue($field);
+		}
+
+		return $extract;
+	}
+
 	/**
 	 *
 	 */
