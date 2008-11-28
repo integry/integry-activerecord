@@ -1774,7 +1774,6 @@ abstract class ActiveRecord implements Serializable
 				{
 					if (!$dataContainer->isNull() && !is_null($dataContainer->get()))
 					{
-						//print_r("\n" . get_class($dataContainer->get()) . $dataContainer->get()->getID());
 						$value = "'".$dataContainer->get()->getID()."'";
 					}
 				}
@@ -2387,7 +2386,6 @@ abstract class ActiveRecord implements Serializable
 			$referenceName = $field->getReferenceFieldName();
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
 			$this->$referenceName = $this->data[$name];
-			//print_r(get_class($this) . ': '. $referenceName . ' - ' . $name . ' ' . (int) "\n");
 		}
 	}
 
