@@ -104,6 +104,11 @@ class ARSchema
 		}
 	}
 
+	public function getHandle($field)
+	{
+		return new ARFieldHandle($this->getName(), $field);
+	}
+
 	/**
 	 * Gets a list of all schema fields
 	 *
