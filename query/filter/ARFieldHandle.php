@@ -29,6 +29,11 @@ class ARFieldHandle implements ARFieldHandleInterface
 		}
 	}
 
+	public function setTable($tableOrAlias)
+	{
+		$this->tableName = $tableOrAlias;
+	}
+
 	public function toString()
 	{
 		return $this->tableName . "." . $this->field->getName();

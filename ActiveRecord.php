@@ -345,6 +345,19 @@ abstract class ActiveRecord implements Serializable
 		self::$dbConnection = null;
 	}
 
+	public function resetID()
+	{
+		$PKList = $this->schema->getPrimaryKeyList();
+
+		foreach ($PKList as $fieldName => $field)
+		{
+			if (!($field instanceof ARForeignKey))
+			{
+				$this->data[$fieldName]->setNull();
+			}
+		}
+	}
+
 	/**
 	 * Sets a primary key value for a record
 	 *
@@ -372,7 +385,6 @@ abstract class ActiveRecord implements Serializable
 			}
 			else
 			{
-				debug_print_backtrace();
 				throw new ARException("Primary key consists of more than one field (recordID parameter must be an associative array)");
 			}
 		}
@@ -1899,6 +1911,11 @@ abstract class ActiveRecord implements Serializable
 		return $this->data[$fieldName];
 	}
 
+	public function getSchema()
+	{
+		return $this->schema;
+	}
+
 	/**
 	 * Creates an array representing record data
 	 *
@@ -2387,6 +2404,8 @@ abstract class ActiveRecord implements Serializable
 			$referenceName = strtolower(substr($referenceName, 0, 1)).substr($referenceName, 1);
 			$this->$referenceName = $this->data[$name];
 		}
+
+		$this->resetID();
 	}
 
 	private function __get($name)
