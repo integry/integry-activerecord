@@ -1141,6 +1141,13 @@ abstract class ActiveRecord implements Serializable
 		return self::createRecordSet($className, $query, $loadReferencedRecords);
 	}
 
+	public function initSet()
+	{
+		$set = $this->getEmptySet();
+		$set->add($this);
+		return $set;
+	}
+
 	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
 	{
 		$db = self::getDBConnection();
@@ -1179,6 +1186,11 @@ abstract class ActiveRecord implements Serializable
 			$dataArray[] = $resultSet->getRow();
 		}
 		return $dataArray;
+	}
+
+	public static function getDataByQuery(ARSelectQueryBuilder $query)
+	{
+		return self::getDataBySQL($query->getPreparedStatement(self::getDBConnection()));
 	}
 
 	/**
@@ -1234,14 +1246,7 @@ abstract class ActiveRecord implements Serializable
 
 		$queryResultData = self::fetchDataFromDB($query);
 
-		$setClassName = class_exists($className . 'Set', false) ? $className . 'Set' : 'ARSet';
-
-		if (!is_subclass_of($setClassName, 'ARSet'))
-		{
-			$setClassName = 'ARSet';
-		}
-
-		$recordSet = new $setClassName($query->getFilter());
+		$recordSet = self::getEmptySet($className, $query->getFilter());
 		$schema = self::getSchemaInstance($className);
 		foreach($queryResultData as $rowData)
 		{
@@ -1273,6 +1278,19 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		return $recordSet;
+	}
+
+	private function getEmptySet($className = null, ARSelectFilter $filter = null)
+	{
+		$className = is_null($className) ? get_class($this) : $className;
+		$setClassName = class_exists($className . 'Set', false) ? $className . 'Set' : 'ARSet';
+
+		if (!is_subclass_of($setClassName, 'ARSet'))
+		{
+			$setClassName = 'ARSet';
+		}
+
+		return new $setClassName($filter);
 	}
 
 	public static function getRecordCount($className, ARSelectFilter $filter, $referencedTables = array())
