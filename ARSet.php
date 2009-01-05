@@ -301,6 +301,11 @@ class ARSet implements IteratorAggregate, Serializable, Countable
 		return substr(get_class($this), -3);
 	}
 
+	public function saveToFile($filePath)
+	{
+		file_put_contents($filePath, '<?php return unserialize(' . var_export(serialize($this), true) . '); ?>');
+	}
+
 	public function serialize()
 	{
 		$serialized = array('data' => $this->data);

@@ -136,6 +136,8 @@ abstract class ActiveRecord implements Serializable
 	 */
 	protected $data = array();
 
+	public static $queryTimes = array();
+
 	/**
 	 * A helper const which should be used as a "magick number" to load referenced records
 	 *
@@ -1083,6 +1085,7 @@ abstract class ActiveRecord implements Serializable
 				}
 
 				$referencedRecord = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
+
 				$referenceListData[$referenceName] = $referencedRecord;
 
 				// initialize complete data structure using references
@@ -1154,7 +1157,10 @@ abstract class ActiveRecord implements Serializable
 		$queryStr = $query->createString();
 		self::getLogger()->logQuery($queryStr);
 
+		$initialTime = microtime(true);
+		$e = new Exception();
 		$resultSet = $query->getPreparedStatement($db)->executeQuery();
+		self::$queryTimes[] = array($queryStr, microtime(true) - $initialTime, ApplicationException::getFileTrace($e->getTrace()));
 
 		self::getLogger()->logQueryExecutionTime();
 		$dataArray = array();
@@ -1686,7 +1692,7 @@ abstract class ActiveRecord implements Serializable
 		{
 			$PKList = $this->schema->getPrimaryKeyList();
 			$PKField = $PKList[key($PKList)];
-			if ($PKField->getDataType() instanceof ARInteger )
+			if (($PKField->getDataType() instanceof ARInteger) && !$this->getID())
 			{
 				$IDG = $this->db->getIdGenerator();
 				$this->setID($IDG->getId(), false);

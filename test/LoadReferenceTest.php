@@ -57,6 +57,7 @@ class LoadReferenceTest extends UnitTest
 	{
 		$child =  ActiveRecordModel::getNewInstance('LoadReferenceChild');
 		$child->name->set('child');
+		$child->setID(4);
 		$child->save();
 
 		$parent = ActiveRecordModel::getNewInstance('LoadReferenceParent');
@@ -64,8 +65,6 @@ class LoadReferenceTest extends UnitTest
 		$parent->name->set('parent');
 		$parent->reference->set($child);
 		$parent->save();
-		$parent->setID(4);
-		$parent->reload();
 
 		$super = ActiveRecordModel::getNewInstance('LoadReferenceSuper');
 		$super->setID(1);
@@ -79,6 +78,7 @@ class LoadReferenceTest extends UnitTest
 
 		$this->assertNotSame($child, $newSuper->reference->get()->reference->get());
 		$this->assertNotSame($newSuper->reference->get(), $newSuper->reference->get()->reference->get());
+
 		$this->assertEqual('child', $newSuper->reference->get()->reference->get()->name->get());
 	}
 
@@ -86,6 +86,7 @@ class LoadReferenceTest extends UnitTest
 	{
 		$child =  ActiveRecordModel::getNewInstance('LoadReferenceChild');
 		$child->name->set('child');
+		$child->setID(4);
 		$child->save();
 
 		$parent = ActiveRecordModel::getNewInstance('LoadReferenceParent');
@@ -93,8 +94,6 @@ class LoadReferenceTest extends UnitTest
 		$parent->name->set('parent');
 		$parent->reference->set($child);
 		$parent->save();
-		$parent->setID(4);
-		$parent->reload();
 
 		$super = ActiveRecordModel::getNewInstance('LoadReferenceSuper');
 		$super->setID(1);
