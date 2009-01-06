@@ -41,12 +41,14 @@ class ARSchema
 
 	private $cachedRecursiveReferences = null;
 
-	public function registerField(ARField $schemaField)
+	private $skippedReferences = array();
+
+	public function registerField(ARField $schemaField, $reference = true)
 	{
 		$name = $schemaField->getName();
 		$this->fieldList[$name] = $schemaField;
 
-		if ($schemaField instanceof ARForeignKey)
+		if (($schemaField instanceof ARForeignKey))
 		{
 			$this->foreignKeyList[$name] = $schemaField;
 		}
@@ -54,6 +56,11 @@ class ARSchema
 		if ($schemaField instanceof ARPrimaryKey)
 		{
 			$this->primaryKeyList[$name] = $schemaField;
+		}
+
+		if (!$reference)
+		{
+			$this->skippedReferences[$name] = true;
 		}
 
 		$this->fieldsByType[get_class($schemaField->getDataType())][$name] = $schemaField;
@@ -130,6 +137,11 @@ class ARSchema
 		return $this->foreignKeyList;
 	}
 
+	public function getReferencedForeignKeyList()
+	{
+		return array_diff_key($this->foreignKeyList, $this->skippedReferences);
+	}
+
 	/**
 	 * Gets a list of primary key fields defined for this schema
 	 *
@@ -197,7 +209,7 @@ class ARSchema
 			{
 				$refSchema = ActiveRecord::getSchemaInstance($refField->getForeignClassName());
 
-				if (($this === $refSchema || $refSchema === $circularReference))
+				if (($this === $refSchema) || ($refSchema === $circularReference) || isset($this->skippedReferences[$name]))
 				{
 					continue;
 				}

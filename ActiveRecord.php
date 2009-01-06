@@ -743,7 +743,7 @@ abstract class ActiveRecord implements Serializable
 
 		$tables = is_array($loadReferencedRecords) ? self::array_invert($loadReferencedRecords) : $loadReferencedRecords;
 
-		$referenceList = $schema->getForeignKeyList();
+		$referenceList = $schema->getReferencedForeignKeyList();
 		$schemaName = $schema->getName();
 
 		foreach($referenceList as $name => $field)
