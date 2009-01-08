@@ -1099,7 +1099,11 @@ abstract class ActiveRecord implements Serializable
 
 				if ($transformArray)
 				{
-				  	$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $foreignSchema));
+					// extract non-null ID values to determine if the record has data that needs to be transformed
+					if (array_diff(array_intersect_key($referenceListData[$referenceName], $foreignSchema->getPrimaryKeyList()), array(null)))
+					{
+						$referenceListData[$referenceName] = call_user_func_array(array($foreignSchemaName, 'transformArray'), array($referenceListData[$referenceName], $foreignSchema));
+					}
 				}
 
 				if (!isset($recordData[$fieldReferenceName]))
