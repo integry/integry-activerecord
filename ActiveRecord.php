@@ -136,8 +136,6 @@ abstract class ActiveRecord implements Serializable
 	 */
 	protected $data = array();
 
-	public static $queryTimes = array();
-
 	/**
 	 * A helper const which should be used as a "magick number" to load referenced records
 	 *
@@ -996,6 +994,24 @@ abstract class ActiveRecord implements Serializable
 		return $schemas;
 	}
 
+	private static function extractSchemaData(ARSchema $schema, &$dataArray, $transformArray)
+	{
+		foreach($schema->getArrayFieldList() as $name)
+		{
+			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
+		}
+
+		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
+		$dataArray = array_diff_key($dataArray, $recordData);
+
+		if ($transformArray)
+		{
+			$recordData = call_user_func_array(array($schema->getName(), 'transformArray'), array($recordData, $schema));
+		}
+
+		return $recordData;
+	}
+
 	/**
 	 * Parse raw record data and separate it in 3 different parts:
 	 * 1. record data
@@ -1012,22 +1028,7 @@ abstract class ActiveRecord implements Serializable
 		$miscData = array();
 		$usedColumns = array();
 
-		foreach($schema->getArrayFieldList() as $name => $field)
-		{
-			if (!@unserialize($dataArray[$name]))
-			{
-				$dataArray[$name] = '';
-			}
-			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
-		}
-
-		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
-		$dataArray = array_diff_key($dataArray, $recordData);
-
-		if ($transformArray)
-		{
-		  	$recordData = call_user_func_array(array($className, 'transformArray'), array($recordData, $schema));
-		}
+		$recordData = self::extractSchemaData($schema, $dataArray, $transformArray);
 
 		if ($loadReferencedRecords && $dataArray)
 		{
@@ -1079,7 +1080,7 @@ abstract class ActiveRecord implements Serializable
 				$usedColumns = array_merge($usedColumns, array_values($referenceKeys));
 
 				// unserialize array fields
-				foreach ($foreignSchema->getArrayFieldList() as $fieldName => $field)
+				foreach ($foreignSchema->getArrayFieldList() as $fieldName)
 				{
 					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
 				}
@@ -1158,15 +1159,12 @@ abstract class ActiveRecord implements Serializable
 	public static function fetchDataFromDB(ARSelectQueryBuilder $query)
 	{
 		$db = self::getDBConnection();
+
 		$queryStr = $query->createString();
 		self::getLogger()->logQuery($queryStr);
-
-		$initialTime = microtime(true);
-		$e = new Exception();
 		$resultSet = $query->getPreparedStatement($db)->executeQuery();
-		self::$queryTimes[] = array($queryStr, microtime(true) - $initialTime, ApplicationException::getFileTrace($e->getTrace()));
-
 		self::getLogger()->logQueryExecutionTime();
+
 		$dataArray = array();
 		while ($resultSet->next())
 		{
@@ -1178,17 +1176,19 @@ abstract class ActiveRecord implements Serializable
 
 	public static function getDataBySQL($sqlSelectQuery)
 	{
+		self::getLogger()->logQuery($sqlSelectQuery);
+
 		if ($sqlSelectQuery instanceof PreparedStatementCommon)
 		{
 			$resultSet = $sqlSelectQuery->executeQuery();
-			self::getLogger()->logQuery($sqlSelectQuery);
 		}
 		else
 		{
 			$db = self::getDBConnection();
-			self::getLogger()->logQuery($sqlSelectQuery);
 			$resultSet = $db->executeQuery($sqlSelectQuery);
 		}
+
+		self::getLogger()->logQueryExecutionTime();
 
 		$dataArray = array();
 		while ($resultSet->next())

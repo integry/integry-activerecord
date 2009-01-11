@@ -26,6 +26,8 @@ class ARSchema
 
 	private $fieldsByType = array();
 
+	private $arrayFieldList = null;
+
 	/**
 	 *	Cache array of referenced schema instances for faster lookups
 	 */
@@ -163,14 +165,19 @@ class ARSchema
 	}
 
 	/**
-	 * Returns a list of ARArray schema fields
+	 * Returns a list of ARArray schema field names
 	 *
 	 * @return ARField[]
 	 * @todo remove
 	 */
 	public function getArrayFieldList()
 	{
-		return $this->getFieldsByType('ARArray');
+		if (is_null($this->arrayFieldList))
+		{
+			$this->arrayFieldList = array_keys($this->getFieldsByType('ARArray'));
+		}
+
+		return $this->arrayFieldList;
 	}
 
 	/**

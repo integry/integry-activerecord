@@ -22,6 +22,8 @@ class ARLogger
 	const LOG_OBJECT = 2;
 	const LOG_QUERY = 3;
 
+	public static $queryTimes = array();
+
 	public function __construct()
 	{
 		$this->startTime = microtime(true);
@@ -70,7 +72,14 @@ class ARLogger
 
 	public function logQueryExecutionTime()
 	{
-		file_put_contents($this->logFileName, '( ' . (microtime(true) - $this->lastQueryTime) . ' sec)' . "\n\n", FILE_APPEND);
+		if (!$this->logFileName)
+		{
+			return null;
+		}
+
+		$time = microtime(true) - $this->lastQueryTime;
+		self::$queryTimes[] = array($this->lastQuery, $time, $this->lastTrace);
+		file_put_contents($this->logFileName, '( ' . $time . ' sec)' . "\n\n", FILE_APPEND);
 	}
 
 	private function addLogItem($msg, $logType)
@@ -81,6 +90,10 @@ class ARLogger
 		$logData = /*$this->startTime.*/ microtime(true) . " | " . $this->createLogItemStr($logItem);
 
 		file_put_contents($this->logFileName, $logData, FILE_APPEND);
+
+		$e = new Exception();
+		$this->lastTrace = ApplicationException::getFileTrace($e->getTrace());
+		$this->lastQuery = $msg;
 	}
 
 	private function createLogItemStr($itemArray)
