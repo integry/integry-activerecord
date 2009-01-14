@@ -292,6 +292,11 @@ class ARSelectFilter extends ARFilter
 		$this->fieldListForOrder = array();
 	}
 
+	public function resetGrouping()
+	{
+		$this->fieldListForGroup = array();
+	}
+
 	/**
 	 * Sets a "bulk" ordering by passing an array of field to order by
 	 *
