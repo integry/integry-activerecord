@@ -1814,7 +1814,8 @@ abstract class ActiveRecord implements Serializable
 				{
 					if (!$dataContainer->isNull() && !is_null($dataContainer->get()))
 					{
-						$value = "'".$dataContainer->get()->getID()."'";
+						$id = $dataContainer->get()->getID();
+						$value = !is_null($id) ? "'" . $id . "'" : 'NULL';
 					}
 				}
 				else
