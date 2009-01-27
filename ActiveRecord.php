@@ -43,6 +43,7 @@ include_once($dir . 'query/filter/ARExpressionHandle.php');
 include_once($dir . 'query/filter/ARSelectFilter.php');
 include_once($dir . 'query/filter/Condition.php');
 include_once($dir . 'query/ARSelectQueryBuilder.php');
+include_once($dir . 'ARShortHand.php');
 
 /**
  *
