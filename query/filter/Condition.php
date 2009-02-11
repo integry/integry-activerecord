@@ -166,9 +166,13 @@ abstract class Condition
 	{
 		foreach (array('ORCondList', 'ANDCondList') as $var)
 		{
-			foreach ($this->$var as $index => $cond)
+			$vars =& $this->$var;
+			if (is_array($vars))
 			{
-				$this->$var[$index] = clone $cond;
+				foreach ($vars as $index => $cond)
+				{
+					$vars[$index] = clone $cond;
+				}
 			}
 		}
 	}
