@@ -19,6 +19,11 @@ function f($field)
 		return $field;
 	}
 
+	if (!strpos($field, '.'))
+	{
+		return new ARExpressionHandle($field);
+	}
+
 	list($tableName, $fieldName) = explode('.', $field);
 	return new ARFieldHandle($tableName, $fieldName);
 }
@@ -26,6 +31,11 @@ function f($field)
 function select()
 {
 	return new ARSelectFilter(Condition::mergeFromArray(func_get_args()));
+}
+
+function lt($field, $secondField)
+{
+	return new LessThanCond(f($field), f($secondField));
 }
 
 function IN($field, $array)

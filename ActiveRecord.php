@@ -1384,6 +1384,32 @@ abstract class ActiveRecord implements Serializable
 		return $this->getRecordCountByQuery($query);
 	}
 
+	public static function getAggregate($className, $function, ARFieldHandleInterface $handle, ARSelectFilter $filter, $loadReferencedRecords = null)
+	{
+		$query = self::createSelectQuery($className, $loadReferencedRecords);
+		$query->getFilter()->merge($filter);
+		$query->removeFieldList();
+		$query->addField($function . '(' . $handle->toString() . ')', null, 'result');
+
+		$res = self::getDataByQuery($query);
+
+		return $res[0]['result'];
+	}
+
+	public function getRelatedAggregate($className, $function, ARFieldHandleInterface $handle, ARSelectFilter $filter = null, $loadReferencedRecords = array())
+	{
+		if (!$filter)
+		{
+			$filter = new ARSelectFilter();
+		}
+
+		$loadReferencedRecords[] = get_class($this);
+
+		$this->appendRelatedRecordJoinCond($className, $filter);
+
+		return self::getAggregate($className, $function, $handle, $filter, $loadReferencedRecords);
+	}
+
 	private function appendRelatedRecordJoinCond($foreignClassName, ARFilter $filter)
 	{
 		$foreignSchema = self::getSchemaInstance($foreignClassName);
