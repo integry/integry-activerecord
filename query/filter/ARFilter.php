@@ -96,6 +96,11 @@ abstract class ARFilter
 	{
 		if ($this->condition != null)
 		{
+			if (!($this->condition instanceof AndChainCondition))
+			{
+				$this->condition = new AndChainCondition(array($this->condition));
+			}
+
 			$this->condition->addAND($cond);
 		}
 		else

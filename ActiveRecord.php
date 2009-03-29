@@ -749,7 +749,6 @@ abstract class ActiveRecord implements Serializable
 		{
 			$foreignClassName = $field->getForeignClassName();
 			$tableAlias = $field->getReferenceName();
-
 			$foreignSchema = self::getSchemaInstance($foreignClassName);
 			$foreignTableName = $foreignSchema->getName();
 

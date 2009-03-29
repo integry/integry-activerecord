@@ -38,6 +38,16 @@ function lt($field, $secondField)
 	return new LessThanCond(f($field), f($secondField));
 }
 
+function gt($field, $secondField)
+{
+	return new MoreThanCond(f($field), f($secondField));
+}
+
+function eq($field, $secondField)
+{
+	return new EqualsCond(f($field), f($secondField));
+}
+
 function IN($field, $array)
 {
 	return new INCond(f($field), $array);
