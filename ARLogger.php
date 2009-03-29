@@ -84,7 +84,11 @@ class ARLogger
 
 	private function addLogItem($msg, $logType)
 	{
-//		return false;
+		if (!$this->logFileName)
+		{
+			return null;
+		}
+
 		$logItem = array("type" => $logType, "msg" => $msg);
 
 		$logData = /*$this->startTime.*/ microtime(true) . " | " . $this->createLogItemStr($logItem);
