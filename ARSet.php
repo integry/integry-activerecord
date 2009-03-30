@@ -228,8 +228,8 @@ class ARSet implements IteratorAggregate, Serializable, Countable
 
 	public function removeRecord(ActiveRecord $removeRecord)
 	{
-		$i = $this->getRecordIndex($record);
-		if(!is_null($i))
+		$i = $this->getRecordIndex($removeRecord);
+		if (!is_null($i))
 		{
 			$this->remove($i);
 			return true;
@@ -246,9 +246,9 @@ class ARSet implements IteratorAggregate, Serializable, Countable
 	public function getRecordIndex(ActiveRecord $search)
 	{
 		$i = 0;
-		foreach($this as $record)
+		foreach ($this as $record)
 		{
-			if($record === $search)
+			if ($record === $search)
 			{
 				return $i;
 			}
