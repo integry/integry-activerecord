@@ -35,17 +35,17 @@ function select()
 
 function lt($field, $secondField)
 {
-	return new LessThanCond(f($field), f($secondField));
+	return new LessThanCond(f($field), $secondField);
 }
 
 function gt($field, $secondField)
 {
-	return new MoreThanCond(f($field), f($secondField));
+	return new MoreThanCond(f($field), $secondField);
 }
 
 function eq($field, $secondField)
 {
-	return new EqualsCond(f($field), f($secondField));
+	return new EqualsCond(f($field), $secondField);
 }
 
 function IN($field, $array)
