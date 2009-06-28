@@ -109,9 +109,19 @@ abstract class ARFilter
 		}
 	}
 
-	public function removeCondition(Condition $condition)
+	public function removeCondition(Condition $condition = null)
 	{
-		$this->condition->removeCondition($condition);
+		if ($condition)
+		{
+			if ($this->condition)
+			{
+				$this->condition->removeCondition($condition);
+			}
+		}
+		else
+		{
+			$this->condition = null;
+		}
 	}
 
 	/**
