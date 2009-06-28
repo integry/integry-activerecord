@@ -311,6 +311,21 @@ class ARSet implements IteratorAggregate, Serializable, Countable
 		return $set;
 	}
 
+	public function filter($field, $value)
+	{
+		$class = get_class($this);
+		$set = new $class();
+		foreach ($this as $record)
+		{
+			if ($record->$field && ($value instanceof ActiveRecord ? ($record->$field->get() === $value) : ($record->$field->get() == $value)))
+			{
+				$set->add($record);
+			}
+		}
+
+		return $set;
+	}
+
 	protected function getRecordClass()
 	{
 		return substr(get_class($this), -3);
