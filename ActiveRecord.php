@@ -584,6 +584,9 @@ abstract class ActiveRecord implements Serializable
 	{
 		self::$recordPool = null;
 		self::$recordPool = array();
+
+		self::$toArrayData = null;
+		self::$toArrayData = array();
 	}
 
 	/**
@@ -2124,10 +2127,12 @@ abstract class ActiveRecord implements Serializable
 		$resultDataArray = array();
 
 		$schema = self::getSchemaInstance($className);
-		foreach(self::fetchDataFromDB($query) as $rowData)
+
+		$data = self::fetchDataFromDB($query);
+		foreach($data as $rowData)
 		{
 			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
-			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData']);
+			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData'], $parsedRowData['miscData']);
 		}
 
 		if (!is_null($getRecordCount))
