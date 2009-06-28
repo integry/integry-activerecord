@@ -18,11 +18,13 @@ class ARFeed implements Iterator, Countable
 {
 	protected $position = 0;
 	protected $size = 0;
-	protected $records = array();
+	protected $data = array();
 	protected $from = -1;
 	protected $to = -1;
 
 	protected $filter, $table, $referencedRecords;
+
+	protected $flush = false;
 
 	const CHUNK_SIZE = 100;
 
@@ -65,19 +67,34 @@ class ARFeed implements Iterator, Countable
 		return $this->size;
 	}
 
-	protected function fetch($pos)
+	public function setFlush($flush = true)
+	{
+		$this->flush = $flush;
+	}
+
+	protected function &fetch($pos)
 	{
 		if (!(($pos >= $this->from) && ($pos < $this->to)))
 		{
 			$this->from = $pos;
 			$this->to = $pos + self::CHUNK_SIZE;
 
+			ActiveRecord::clearPool();
 			$this->filter->setLimit(self::CHUNK_SIZE, $this->from);
 			$this->data = ActiveRecord::getRecordSetArray($this->table, $this->filter, $this->referencedRecords);
+
 			$this->postProcessData();
 		}
 
+		if ($this->flush)
+		{
+			//echo '|' . round(memory_get_usage() / (1024*1024), 1) . "\n";
+			flush();
+			ob_flush();
+		}
+
 		$offset = $pos - $this->from;
+
 		return $this->data[$offset];
 	}
 
