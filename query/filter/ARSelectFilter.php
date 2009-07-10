@@ -209,9 +209,9 @@ class ARSelectFilter extends ARFilter
 		return $this->fieldListForOrder;
 	}
 
-	public function getOrderType()
+	public function isSortedBy(ARFieldHandleInterface $fieldHandle, $orderType = self::ORDER_ASC)
 	{
-		return $this->orderType;
+		return !empty($this->fieldListForOrder[$fieldHandle->toString()]);
 	}
 
 	/**
