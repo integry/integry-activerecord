@@ -181,6 +181,8 @@ abstract class ActiveRecord implements Serializable
 	 */
 	protected static $toArrayData = array();
 
+	protected $customSerializeData = array();
+
 	protected $cachedId = null;
 
 	private $isDestructing = false;
@@ -1704,9 +1706,11 @@ abstract class ActiveRecord implements Serializable
 
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
 
+		$result = $this->executeUpdate($updateQuery);
+
 		$this->resetModifiedStatus();
 
-		return $this->executeUpdate($updateQuery);
+		return $result;
 	}
 
 	/**
@@ -2011,6 +2015,7 @@ abstract class ActiveRecord implements Serializable
 				if ($fieldValue != null)
 				{
 					$foreignKeys[$name] = $value;
+					$data[$name] = $fieldValue->getID();
 				}
 			}
 			else
@@ -2331,6 +2336,19 @@ abstract class ActiveRecord implements Serializable
 		return get_object_vars($this);
 	}
 
+	public function setCustomSerializeData($key, $value)
+	{
+		$this->customSerializeData[$key] = $value;
+	}
+
+	public function getCustomSerializeData($key)
+	{
+		if (isset($this->customSerializeData[$key]))
+		{
+			return $this->customSerializeData[$key];
+		}
+	}
+
 	public function serialize($skippedRelations = array(), $properties = array())
 	{
 		if (!is_array($skippedRelations))
@@ -2360,6 +2378,7 @@ abstract class ActiveRecord implements Serializable
 
 		// serialize custom variables
 		$properties[] = 'isLoaded';
+		$properties[] = 'customSerializeData';
 		foreach ($properties as $key)
 		{
 			$serialized[$key] = $this->$key;

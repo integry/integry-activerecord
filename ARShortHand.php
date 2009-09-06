@@ -48,6 +48,21 @@ function eq($field, $secondField)
 	return new EqualsCond(f($field), $secondField);
 }
 
+function neq($field, $secondField)
+{
+	return new NotEqualsCond(f($field), $secondField);
+}
+
+function isnull($field)
+{
+	return new IsNullCond(f($field));
+}
+
+function isnotnull($field)
+{
+	return new IsNotNullCond(f($field));
+}
+
 function IN($field, $array)
 {
 	return new INCond(f($field), $array);
