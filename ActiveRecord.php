@@ -685,7 +685,6 @@ abstract class ActiveRecord implements Serializable
 		{
 			self::joinReferencedTables($schema, $query, $loadReferencedRecords);
 		}
-
 		return $query;
 	}
 
@@ -1003,7 +1002,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		foreach($schema->getArrayFieldList() as $name)
 		{
-			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
+			$dataArray[$name] = is_string($dataArray[$name]) ? @unserialize($dataArray[$name]) : '';
 		}
 
 		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
@@ -1087,7 +1086,7 @@ abstract class ActiveRecord implements Serializable
 				// unserialize array fields
 				foreach ($foreignSchema->getArrayFieldList() as $fieldName)
 				{
-					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
+					$dataArray[$referenceKeys[$fieldName]] = is_string($dataArray[$referenceKeys[$fieldName]]) ? @unserialize($dataArray[$referenceKeys[$fieldName]]) : '';
 				}
 
 				$referencedRecord = array_combine($fieldNames, array_intersect_key($dataArray, array_flip($referenceKeys)));
@@ -2487,7 +2486,7 @@ abstract class ActiveRecord implements Serializable
 		$this->resetID();
 	}
 
-	private function __get($name)
+	public function __get($name)
 	{
 		switch ($name)
 	  	{
