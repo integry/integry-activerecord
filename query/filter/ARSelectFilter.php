@@ -262,7 +262,7 @@ class ARSelectFilter extends ARFilter
 		$this->havingCondition = $cond;
 	}
 
-	public function getHavingCondition(Condition $cond)
+	public function getHavingCondition()
 	{
 		return $this->havingCondition;
 	}

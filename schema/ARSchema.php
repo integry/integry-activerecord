@@ -68,6 +68,18 @@ class ARSchema
 		$this->fieldsByType[get_class($schemaField->getDataType())][$name] = $schemaField;
 	}
 
+	public function unregisterField($name)
+	{
+		if (isset($this->fieldList[$name]))
+		{
+			unset($this->fieldsByType[get_class($this->fieldList[$name]->getDataType())][$name]);
+			unset($this->foreignKeyList[$name]);
+			unset($this->primaryKeyList[$name]);
+			unset($this->skippedReferences[$name]);
+			unset($this->fieldList[$name]);
+		}
+	}
+
 	/**
 	 * Checks if a given field exists in schema
 	 *

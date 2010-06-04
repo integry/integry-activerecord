@@ -736,6 +736,7 @@ abstract class ActiveRecord implements Serializable
 		return $flipped;
 	}
 
+	/* @todo: document possible loadReferenceRecords values */
 	protected static function joinReferencedTables(ARSchema $schema, ARSelectQueryBuilder $query, &$loadReferencedRecords = false)
 	{
 		// do not use auto-references for single-table one level joins
@@ -1338,6 +1339,20 @@ abstract class ActiveRecord implements Serializable
 		$query->removeFieldList();
 		$query->addField("COUNT(*)", null, "totalCount");
 
+		// in case there is a HAVING condition, we need to add GROUP BY to get the correct count
+		$filter = $query->getFilter();
+		if ($filter)
+		{
+			if ($filter->isHavingConditionSet())
+			{
+				$filter->setGrouping(new ARExpressionHandle('2'));
+			}
+			else
+			{
+				$filter->setGrouping(new ARExpressionHandle('NULL'));
+			}
+		}
+
 		$counterQuery = $query->createString();
 
 		self::getLogger()->logQuery($counterQuery);
@@ -1347,6 +1362,7 @@ abstract class ActiveRecord implements Serializable
 		$counterResult->next();
 
 		$resultData = $counterResult->getRow();
+
 		return $resultData['totalCount'];
 	}
 
@@ -1556,8 +1572,8 @@ abstract class ActiveRecord implements Serializable
 
 		if ($joinReferencedTables)
 		{
-			$tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
-			self::joinReferencedTables($schema, $query, $tables);
+			//$tables = is_array($joinReferencedTables) ? array_flip($joinReferencedTables) : $joinReferencedTables;
+			self::joinReferencedTables($schema, $query, $joinReferencedTables);
 		}
 
 		$query->setFilter($filter);
@@ -2072,6 +2088,11 @@ abstract class ActiveRecord implements Serializable
 		self::$toArrayData[$this->getRecordIdentifier($this)] = $array;
 	}
 
+	protected function resetArrayData()
+	{
+		unset(self::$toArrayData[$this->getRecordIdentifier($this)]);
+	}
+
 	/**
 	 * Creates an array representing record data (without referenced records)
 	 *
@@ -2133,6 +2154,40 @@ abstract class ActiveRecord implements Serializable
 		$schema = self::getSchemaInstance($className);
 
 		$data = self::fetchDataFromDB($query);
+
+		foreach($data as $rowData)
+		{
+			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);
+			$resultDataArray[] = array_merge($parsedRowData['recordData'], $parsedRowData['referenceData'], $parsedRowData['miscData']);
+		}
+
+		if (!is_null($getRecordCount))
+		{
+			$getRecordCount = self::getRecordCountByQuery($query);
+		}
+		//v_ar_dump($className . ' | ' . round(memory_get_usage() / (1024*1024), 1));
+		return $resultDataArray;
+	}
+
+	public static function getRecordSetFields($className, ARSelectFilter $filter, $fields, $loadReferencedRecords = false)
+	{
+		$query = self::createSelectQuery($className, $loadReferencedRecords);
+		$query->getFilter()->merge($filter);
+
+		$query->removeFieldList();
+		foreach ($fields as $field)
+		{
+			$query->addField($field);
+		}
+
+		return self::fetchDataFromDB($query);
+
+		$resultDataArray = array();
+
+		$schema = self::getSchemaInstance($className);
+
+		$data = self::fetchDataFromDB($query);
+
 		foreach($data as $rowData)
 		{
 			$parsedRowData = self::prepareDataArray($className, $schema, $rowData, $loadReferencedRecords, self::TRANSFORM_ARRAY);

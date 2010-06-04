@@ -1,9 +1,5 @@
 <?php
 
-ClassLoader::import('application.model.category.Category');
-ClassLoader::import('application.model.product.Product');
-ClassLoader::import('application.model.product.ProductFilter');
-
 /**
  * Sequentially read and iterate over records from database
  *
@@ -77,11 +73,11 @@ class ARFeed implements Iterator, Countable
 		if (!(($pos >= $this->from) && ($pos < $this->to)))
 		{
 			$this->from = $pos;
-			$this->to = $pos + self::CHUNK_SIZE;
+			$this->to = $pos + $this->getChunkSize();
 
 			ActiveRecord::clearPool();
-			$this->filter->setLimit(self::CHUNK_SIZE, $this->from);
-			$this->data = ActiveRecord::getRecordSetArray($this->table, $this->filter, $this->referencedRecords);
+			$this->filter->setLimit($this->getChunkSize(), $this->from);
+			$this->loadData();
 
 			$this->postProcessData();
 		}
@@ -96,6 +92,16 @@ class ARFeed implements Iterator, Countable
 		$offset = $pos - $this->from;
 
 		return $this->data[$offset];
+	}
+
+	protected function loadData()
+	{
+		$this->data = ActiveRecord::getRecordSetArray($this->table, $this->filter, $this->referencedRecords);
+	}
+
+	protected function getChunkSize()
+	{
+		return self::CHUNK_SIZE;
 	}
 
 	protected function postProcessData()
