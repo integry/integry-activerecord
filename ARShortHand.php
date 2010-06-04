@@ -43,6 +43,16 @@ function gt($field, $secondField)
 	return new MoreThanCond(f($field), $secondField);
 }
 
+function lte($field, $secondField)
+{
+	return new OperatorCond(f($field), $secondField, '<=');
+}
+
+function gte($field, $secondField)
+{
+	return new OperatorCond(f($field), $secondField, '>=');
+}
+
 function eq($field, $secondField)
 {
 	return new EqualsCond(f($field), $secondField);

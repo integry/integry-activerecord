@@ -68,7 +68,14 @@ abstract class ARNumeric extends ARSchemaDataType
 {
 	public function getValidatedValue($value)
 	{
-		return (float)$value;
+		if ($value instanceof ActiveRecord)
+		{
+			$value = $value->getID();
+		}
+
+		$value = (float)$value;
+
+		return $value;
 	}
 }
 
