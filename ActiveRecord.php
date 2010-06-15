@@ -2091,7 +2091,14 @@ abstract class ActiveRecord implements Serializable
 	
 	public static function getArrayData($identifier)
 	{
-		return self::$toArrayData[$identifier];
+		if (isset(self::$toArrayData[$identifier]))
+		{
+			return self::$toArrayData[$identifier];
+		}
+		else if (isset(self::$toArrayData['raw-' . $identifier]))
+		{
+			return self::$toArrayData['raw-' . $identifier];
+		}
 	}
 
 	protected function resetArrayData()
@@ -2132,11 +2139,11 @@ abstract class ActiveRecord implements Serializable
 	/**
 	 *	Perform model specific array transformation
 	 */
-	protected static function transformArray($array, ARSchema $schema)
+	protected static function &transformArray($array, ARSchema $schema)
 	{
 		if (!empty($array['ID']))
 		{
-			$id = $schema->getName() . '-' . self::getRecordHash($array['ID']);
+			$id = 'raw-' . $schema->getName() . '-' . self::getRecordHash($array['ID']);
 			self::$toArrayData[$id] =& $array;
 			
 			return self::$toArrayData[$id];
