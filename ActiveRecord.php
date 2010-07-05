@@ -334,11 +334,12 @@ abstract class ActiveRecord implements Serializable
 			set_include_path(get_include_path().PATH_SEPARATOR.self::$creolePath);
 			include_once("creole".DIRECTORY_SEPARATOR."Creole.php");
 
+			self::getLogger()->logQuery("Creating a database connection");
 			self::$dbConnection = Creole::getConnection(self::$dsn);
+			self::getLogger()->logQueryExecutionTime();
+
 			self::$dbConnection->executeUpdate("SET NAMES 'utf8'");
 			self::$dbConnection->executeUpdate("SET @@session.sql_mode=''");
-
-			self::getLogger()->logAction("Creating a database connection");
 		}
 		return self::$dbConnection;
 	}
@@ -1233,7 +1234,9 @@ abstract class ActiveRecord implements Serializable
 		try
 		{
 			self::getLogger()->logQuery($sql);
-			return self::getDBConnection()->executeQuery($sql);
+			$res = self::getDBConnection()->executeQuery($sql);
+			self::getLogger()->logQueryExecutionTime();
+			return $res;
 		}
 		catch (Exception $e)
 		{
@@ -1494,7 +1497,9 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		self::getLogger()->logQuery($deleteQuery);
-		return $db->executeUpdate($deleteQuery);
+		$res = $db->executeUpdate($deleteQuery);
+		self::getLogger()->logQueryExecutionTime();
+		return $res;
 	}
 
 	public function deleteRelatedRecordSet($className, ARDeleteFilter $filter = null, $joinReferencedTables = false)
@@ -1718,6 +1723,12 @@ abstract class ActiveRecord implements Serializable
 			}
 			$cond = new EqualsCond(new ARFieldHandle($className, $PKField->getName()), $recordID);
 			$filter->mergeCondition($cond);
+		}
+
+		$modified = $this->enumerateModifiedFields();
+		if (!$modified)
+		{
+			return;
 		}
 
 		$updateQuery = "UPDATE " . $this->schema->getName() . " SET " . $this->enumerateModifiedFields() . " " . $filter->createString();
@@ -2088,7 +2099,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		self::$toArrayData[$this->getRecordIdentifier($this)] = $array;
 	}
-	
+
 	public static function getArrayData($identifier)
 	{
 		if (isset(self::$toArrayData[$identifier]))
@@ -2104,6 +2115,11 @@ abstract class ActiveRecord implements Serializable
 	protected function resetArrayData()
 	{
 		unset(self::$toArrayData[$this->getRecordIdentifier($this)]);
+	}
+
+	public function clearArrayData()
+	{
+		self::$toArrayData = array();
 	}
 
 	/**
@@ -2145,10 +2161,10 @@ abstract class ActiveRecord implements Serializable
 		{
 			$id = 'raw-' . $schema->getName() . '-' . self::getRecordHash($array['ID']);
 			self::$toArrayData[$id] =& $array;
-			
+
 			return self::$toArrayData[$id];
 		}
-		
+
 		return $array;
 	}
 
@@ -2454,6 +2470,7 @@ abstract class ActiveRecord implements Serializable
 		// serialize custom variables
 		$properties[] = 'isLoaded';
 		$properties[] = 'customSerializeData';
+		//var_dump($properties);
 		foreach ($properties as $key)
 		{
 			$serialized[$key] = $this->$key;
