@@ -71,7 +71,7 @@ abstract class Condition
 		$this->operatorString = $str;
 	}
 
-	public function getOperatorString($str)
+	public function getOperatorString()
 	{
 		return $this->operatorString;
 	}
@@ -94,6 +94,16 @@ abstract class Condition
 	public function addOR(Condition $cond)
 	{
 		$this->ORCondList[] = $cond;
+	}
+
+	public function getANDCondList()
+	{
+		return $this->ANDCondList;
+	}
+
+	public function getORCondList()
+	{
+		return $this->ORCondList;
 	}
 
 	/**
@@ -285,6 +295,16 @@ abstract class BinaryCondition extends Condition
 			$condStr .= $this->leftSide->escapeValue($this->rightSide);
 		}
 		return $condStr;
+	}
+
+	public function getLeftSide()
+	{
+		return $this->leftSide;
+	}
+
+	public function getRightSide()
+	{
+		return $this->rightSide;
 	}
 }
 

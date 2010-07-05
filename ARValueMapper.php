@@ -121,6 +121,10 @@ class ARValueMapper implements Serializable
 			{
 				throw new ARException("Invalid value parameter: must be an instance of " . $this->field->getForeignClassName());
 			}
+			else if ($this->value && ($this->value === $value))
+			{
+				return false;
+			}
 
 			if ($this->value && !$this->initialID)
 			{
