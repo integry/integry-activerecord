@@ -218,16 +218,19 @@ class ARValueMapper implements Serializable
 	/**
 	 * Marks the field as not modified (after saving, etc.)
 	 */
-	public function resetModifiedStatus()
+	public function resetModifiedStatus($isModified = false)
 	{
-		$this->isModified = false;
+		$this->isModified = $isModified;
 
-		if ($this->field instanceof ARForeignKey && !is_null($this->value))
+		if (!$isModified && $this->field instanceof ARForeignKey && !is_null($this->value))
 		{
 			$this->initialID = $this->value->getID();
 		}
 
-		$this->initialValue = $this->value;
+		if (!$isModified)
+		{
+			$this->initialValue = $this->value;
+		}
 	}
 
 	/**
