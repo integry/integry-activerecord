@@ -1689,11 +1689,11 @@ abstract class ActiveRecord implements Serializable
 		return $res;
 	}
 
-	public function resetModifiedStatus()
+	public function resetModifiedStatus($isModified = false)
 	{
 		foreach($this->data as $dataContainer)
 		{
-			$dataContainer->resetModifiedStatus();
+			$dataContainer->resetModifiedStatus($isModified);
 		}
 	}
 
@@ -2111,7 +2111,7 @@ abstract class ActiveRecord implements Serializable
 		}
 	}
 
-	protected function resetArrayData()
+	public function resetArrayData()
 	{
 		unset(self::$toArrayData[$this->getRecordIdentifier($this)]);
 	}
