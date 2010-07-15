@@ -1661,6 +1661,11 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function save($forceOperation = 0)
 	{
+		if (!$this->isExistingRecord() && !$this->isModified())
+		{
+			$this->resetModifiedStatus(true);
+		}
+
 		if (!$this->isModified() || $this->isDeleted())
 		{
 			return false;
