@@ -96,6 +96,7 @@ class ARFeed implements Iterator, Countable
 
 	protected function loadData()
 	{
+		ActiveRecord::clearArrayData();
 		$this->data = ActiveRecord::getRecordSetArray($this->table, $this->filter, $this->referencedRecords);
 	}
 
