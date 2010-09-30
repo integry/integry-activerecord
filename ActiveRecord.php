@@ -295,8 +295,30 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function getSchemaInstance($className)
 	{
+		static $cache;
+
 		if (!isset(self::$schemaMap[$className]))
 		{
+			/********
+			+++ UGLY UGLY UGLY +++ :(
+			@todo: add generic schema caching interface
+			*********/
+			if (!$cache)
+			{
+				$cache = ClassLoader::getRealPath('cache.schema.');
+				if (!file_exists($cache))
+				{
+					mkdir($cache, 0777);
+				}
+			}
+
+			$cacheFile = $cache . $className . '.php';
+			if (file_exists($cacheFile))
+			{
+				self::$schemaMap[$className] = include $cacheFile;
+				return self::$schemaMap[$className];
+			}
+
 			self::$schemaMap[$className] = new ARSchema();
 
 			call_user_func(array($className, 'defineSchema'));
@@ -305,6 +327,8 @@ abstract class ActiveRecord implements Serializable
 			{
 				throw new ARException("Invalid schema (".$className.") definition! Make sure it has a name assigned and fields defined (record structure)");
 			}
+
+			file_put_contents($cacheFile, '<?php return unserialize(' . var_export(serialize(self::$schemaMap[$className]), true) . '); ?>');
 		}
 
 		return self::$schemaMap[$className];
@@ -517,10 +541,6 @@ abstract class ActiveRecord implements Serializable
 		{
 			$instance->createDataAccessVariables($data, $recordID);
 		}
-		else if ($instance->isLoaded() && !empty($data))
-		{
-			//$instance->createReferencedRecords($data, false);
-		}
 
 		if ($loadRecordData)
 		{
@@ -636,7 +656,7 @@ abstract class ActiveRecord implements Serializable
 	}
 
 	/**
-	 * Gets a unique string representinh concrete record
+	 * Gets a unique string representing concrete record
 	 *
 	 * @param mixed $recordID
 	 * @return string
@@ -650,12 +670,7 @@ abstract class ActiveRecord implements Serializable
 		else
 		{
 			ksort($recordID);
-			$hashElements = array();
-			foreach($recordID as $key => $value)
-			{
-				$hashElements[] = $value;
-			}
-			return implode("-", $hashElements);
+			return implode("-", $recordID);
 		}
 	}
 
@@ -1660,6 +1675,11 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public function save($forceOperation = 0)
 	{
+		if (!$this->isExistingRecord() && !$this->isModified())
+		{
+			$this->resetModifiedStatus(true);
+		}
+
 		if (!$this->isModified() || $this->isDeleted())
 		{
 			return false;

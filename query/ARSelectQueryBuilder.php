@@ -175,6 +175,7 @@ class ARSelectQueryBuilder
 				$preparedFieldList[] = $field;
 			}
 		}
+
 		$fieldListStr = implode(", ", $preparedFieldList);
 
 		$tableListStr = implode(", ", array_keys($this->tableList));
