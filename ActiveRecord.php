@@ -1,10 +1,6 @@
 <?php
 
-if (strpos(get_include_path(), dirname(__FILE__)) === false)
-{
-	set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__));
-}
-
+set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR);
 set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "schema" . DIRECTORY_SEPARATOR);
 set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "query" . DIRECTORY_SEPARATOR);
 set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "query" . DIRECTORY_SEPARATOR . "filter" . DIRECTORY_SEPARATOR);
@@ -350,7 +346,6 @@ abstract class ActiveRecord implements Serializable
 	{
 		if (!self::$dbConnection)
 		{
-			set_include_path(get_include_path().PATH_SEPARATOR.self::$creolePath);
 			include_once("creole".DIRECTORY_SEPARATOR."Creole.php");
 
 			self::getLogger()->logQuery("Creating a database connection");
