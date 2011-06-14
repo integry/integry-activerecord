@@ -116,6 +116,19 @@ class ARSelectQueryBuilder
 		return $ret;
 	}
 
+	public function removeJoinsByClassName($className)
+	{
+		$ret = array();
+
+		foreach ($this->joinList as $key => $join)
+		{
+			if ($className == $join['tableName'])
+			{
+				unset($this->joinList[$key]);
+			}
+		}
+	}
+
 	/**
 	 * Includes table to a table list
 	 *

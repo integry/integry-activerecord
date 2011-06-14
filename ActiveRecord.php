@@ -10,14 +10,6 @@ set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTO
 set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "query" . DIRECTORY_SEPARATOR . "filter" . DIRECTORY_SEPARATOR);
 set_include_path(get_include_path() . PATH_SEPARATOR.dirname(__FILE__) . DIRECTORY_SEPARATOR . "schema" . DIRECTORY_SEPARATOR . "datatype" . DIRECTORY_SEPARATOR);
 
-if (!function_exists("__autoload"))
-{
-	function __autoload($className)
-	{
-		@include_once $className.'.php';
-	}
-}
-
 if (!function_exists('array_fill_keys'))
 {
 	function array_fill_keys($array, $values)
@@ -220,7 +212,7 @@ abstract class ActiveRecord implements Serializable
 		if ($recordID)
 		{
 			$this->setID($recordID, false);
-			self::storeToPool($this);
+			$this->storeToPool();
 		}
 
 		if ($data)
@@ -303,12 +295,14 @@ abstract class ActiveRecord implements Serializable
 			+++ UGLY UGLY UGLY +++ :(
 			@todo: add generic schema caching interface
 			*********/
+/*
 			if (!$cache)
 			{
 				$cache = ClassLoader::getRealPath('cache.schema.');
 				if (!file_exists($cache))
 				{
 					mkdir($cache, 0777);
+					chmod($cache, 0777);
 				}
 			}
 
@@ -318,7 +312,7 @@ abstract class ActiveRecord implements Serializable
 				self::$schemaMap[$className] = include $cacheFile;
 				return self::$schemaMap[$className];
 			}
-
+*/
 			self::$schemaMap[$className] = new ARSchema();
 
 			call_user_func(array($className, 'defineSchema'));
@@ -328,7 +322,8 @@ abstract class ActiveRecord implements Serializable
 				throw new ARException("Invalid schema (".$className.") definition! Make sure it has a name assigned and fields defined (record structure)");
 			}
 
-			file_put_contents($cacheFile, '<?php return unserialize(' . var_export(serialize(self::$schemaMap[$className]), true) . '); ?>');
+			/*file_put_contents($cacheFile, '<?php return unserialize(' . var_export(serialize(self::$schemaMap[$className]), true) . '); ?>');*/
+			//chmod($cacheFile, 0777);
 		}
 
 		return self::$schemaMap[$className];
@@ -529,13 +524,13 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
 	{
-		$instance = self::retrieveFromPool($className, $recordID);
+		$instance = $className::retrieveFromPool($className, $recordID);
 
 		if ($instance == null || !is_object($instance))
 		{
 			$instance = self::getNewInstance($className, $data, $recordID);
 			$instance->setID($recordID, false);
-			self::storeToPool($instance);
+			$instance->storeToPool();
 		}
 		else if (!$instance->isLoaded() && !empty($data))
 		{
@@ -617,9 +612,9 @@ abstract class ActiveRecord implements Serializable
 	 *
 	 * @param ActiveRecord $instance
 	 */
-	private static function storeToPool(ActiveRecord $instance)
+	protected function storeToPool()
 	{
-		self::$recordPool[get_class($instance)][self::getRecordHash($instance->getID())] = $instance;
+		self::$recordPool[get_class($this)][self::getRecordHash($this->getID())] = $this;
 	}
 
 	/**
@@ -642,7 +637,10 @@ abstract class ActiveRecord implements Serializable
 
 			if (!empty(self::$recordPool[$className][$hash]))
 			{
-				return self::$recordPool[$className][$hash];
+				if (self::$recordPool[$className][$hash] instanceof $className)
+				{
+					return self::$recordPool[$className][$hash];
+				}
 			}
 
 			return null;
@@ -661,7 +659,7 @@ abstract class ActiveRecord implements Serializable
 	 * @param mixed $recordID
 	 * @return string
 	 */
-	private static function getRecordHash($recordID)
+	protected static function getRecordHash($recordID)
 	{
 		if (!is_array($recordID))
 		{
@@ -1782,7 +1780,7 @@ abstract class ActiveRecord implements Serializable
 			}
 		}
 
-		self::storeToPool($this);
+		$this->storeToPool();
 
 		$this->resetModifiedStatus();
 
@@ -2109,7 +2107,7 @@ abstract class ActiveRecord implements Serializable
 		return $data;
 	}
 
-	private function getRecordIdentifier(ActiveRecord $record)
+	protected function getRecordIdentifier(ActiveRecord $record)
 	{
 		return get_class($record) . '-' . self::getRecordHash($record->getID());
 	}
@@ -2286,7 +2284,7 @@ abstract class ActiveRecord implements Serializable
 
 		foreach ($recordIDs as $id)
 		{
-			$instance = self::retrieveFromPool($className, $id);
+			$instance = $className::retrieveFromPool($className, $id);
 
 			if (null == $instance || !$instance->isLoaded())
 			{
@@ -2475,7 +2473,7 @@ abstract class ActiveRecord implements Serializable
 			if (isset($skippedRelations[$key]))
 			{
 				$value = $value->get();
-				if (!$value || !$value->getID())
+				if (!$value || !is_object($value) || !$value->getID())
 				{
 					continue;
 				}
@@ -2489,7 +2487,7 @@ abstract class ActiveRecord implements Serializable
 		// serialize custom variables
 		$properties[] = 'isLoaded';
 		$properties[] = 'customSerializeData';
-		//var_dump($properties);
+
 		foreach ($properties as $key)
 		{
 			$serialized[$key] = $this->$key;
@@ -2531,6 +2529,7 @@ abstract class ActiveRecord implements Serializable
 			$variables[$key] = $valueMapper instanceof ARValueMapper ? $valueMapper->get() : $valueMapper;
 		}
 
+		//var_dump($variables);
 		$this->createDataAccessVariables($variables);
 		unset($array['data']);
 
@@ -2541,7 +2540,7 @@ abstract class ActiveRecord implements Serializable
 
 		if ($this->isLoaded())
 		{
-			self::storeToPool($this);
+			$this->storeToPool();
 		}
 	}
 

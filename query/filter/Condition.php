@@ -136,10 +136,7 @@ abstract class Condition
 
 		foreach (($this->ANDCondList + $this->ORCondList) as $cond)
 		{
-			if ($cond instanceof BinaryCondition)
-			{
-				$cond->removeCondition($condition);
-			}
+			$cond->removeCondition($condition);
 		}
 	}
 
