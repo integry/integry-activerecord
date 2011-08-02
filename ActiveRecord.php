@@ -60,8 +60,6 @@ include_once($dir . 'ARShortHand.php');
  * @package activerecord
  * @author Integry Systems
  *
- * @todo methods for setting self::$creolePath
- *
  */
 abstract class ActiveRecord implements Serializable
 {
@@ -88,13 +86,6 @@ abstract class ActiveRecord implements Serializable
 	protected static $schemaMap = null;
 
 	public static $recordPool = null;
-
-	/**
-	 * Path to a Creole library
-	 *
-	 * @var string
-	 */
-	public static $creolePath = "";
 
 	/**
 	 * Indicates if the record is deleted from database
@@ -346,7 +337,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		if (!self::$dbConnection)
 		{
-			include_once("creole".DIRECTORY_SEPARATOR."Creole.php");
+			include_once(dirname(__file__) . DIRECTORY_SEPARATOR . "creole" . DIRECTORY_SEPARATOR . "Creole.php");
 
 			self::getLogger()->logQuery("Creating a database connection");
 			self::$dbConnection = Creole::getConnection(self::$dsn);
@@ -519,7 +510,7 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
 	{
-		$instance = $className::retrieveFromPool($className, $recordID);
+		$instance = call_user_func_array(array($className, 'retrieveFromPool'), array($className, $recordID));
 
 		if ($instance == null || !is_object($instance))
 		{
@@ -2279,7 +2270,7 @@ abstract class ActiveRecord implements Serializable
 
 		foreach ($recordIDs as $id)
 		{
-			$instance = $className::retrieveFromPool($className, $id);
+			$instance = call_user_func_array(array($className, 'retrieveFromPool'), array($className, $id));
 
 			if (null == $instance || !$instance->isLoaded())
 			{
