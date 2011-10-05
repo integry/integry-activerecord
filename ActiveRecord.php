@@ -1033,7 +1033,7 @@ abstract class ActiveRecord implements Serializable
 		$miscData = array();
 		$usedColumns = array();
 
-		$recordData = self::extractSchemaData($schema, $dataArray, $transformArray);
+		$recordData = self::extractSchemaData($schema, $dataArray, false);
 
 		if ($loadReferencedRecords && $dataArray)
 		{
@@ -1122,6 +1122,11 @@ abstract class ActiveRecord implements Serializable
 					$usedSchemas[$foreignSchemaName] = true;
 				}
 			}
+		}
+
+		if ($transformArray)
+		{
+			$recordData = call_user_func_array(array($schema->getName(), 'transformArray'), array($recordData, $schema));
 		}
 
 		return array("recordData" => $recordData, "referenceData" => $referenceListData, "miscData" => array_diff_key($dataArray, array_flip($usedColumns)));
