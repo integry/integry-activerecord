@@ -228,6 +228,7 @@ class ARSelectQueryBuilder
 			$joinListStr = implode(" ", $preparedJoinList);
 		}
 
+
 		return "SELECT ".$fieldListStr." FROM ".$tableListStr." ".$joinListStr;
 	}
 
@@ -243,40 +244,33 @@ class ARSelectQueryBuilder
 		return $sql;
 	}
 
-	public function getPreparedStatement(ConnectionCommon $conn)
+	public function getPreparedStatement(PDO $conn)
 	{
 		$body = $this->createStatementBody();
-		$values = array();
 
 		if (is_null($this->filter))
 		{
-			return $conn->prepareStatement($body);
+			return $conn->prepare($body);
 		}
 
 		$prepared = $this->filter->createPreparedStatement();
+		$statement = $conn->prepare($body . $prepared['sql']);
 
-		preg_match_all('/\?\?\?([a-z0-9]*)@@@/', $prepared['sql'], $matches);
-		$values = $matches[1];
-
-		$statement = $conn->prepareStatement($body . preg_replace('/\?\?\?([a-z0-9]*)@@@/', '?', $prepared['sql']));
-
-		foreach ($values as $key => $id)
+		foreach ($prepared['values'] as $id => $value)
 		{
-			$key++;
-			$value = $prepared['values'][$id];
+			switch ($value['type'])
+			{
+				case 'int':
+					$type = PDO::PARAM_INT;
+					break;
 
-			if ('int' == $value['type'])
-			{
-				$statement->setInt($key, $value['value']);
+				// @todo: timestamp, string, bool
+				default:
+					$type = null;
+					break;
 			}
-			else if ('timestamp' == $value['type'])
-			{
-				$statement->setTimestamp($key, $value['value']);
-			}
-			else
-			{
-				$statement->setString($key, $value['value']);
-			}
+
+			$statement->bindValue($id, $value['value']);
 		}
 
 		return $statement;

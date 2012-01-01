@@ -2,6 +2,7 @@
 
 /**
  * Abstract condition element used in WHERE clause
+ * Abstract condition element used in WHERE clause
  *
  * It allows programmer to create schema independent conditional statems and use it
  * with a filter (ARFilter subclass) that is applied to a record set (deletion,
@@ -270,11 +271,11 @@ abstract class BinaryCondition extends Condition
 			}
 
 			$value = $this->leftSide->prepareValue($this->rightSide);
-			$id = md5($value);
+			$id = 'v' . md5($value);
 			$values[$id] = array('value' => $value,
 								 'type' => $type);
 
-			$condStr .= '???' . $id . '@@@';
+			$condStr .= ':' . $id;
 		}
 
 		return array('sql' => $condStr, 'values' => $values);

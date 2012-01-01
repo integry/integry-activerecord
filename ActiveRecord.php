@@ -66,7 +66,7 @@ abstract class ActiveRecord implements Serializable
 	/**
 	 * Database connection object
 	 *
-	 * @var Creole
+	 * @var PDO
 	 */
 	private static $dbConnection = null;
 
@@ -98,7 +98,7 @@ abstract class ActiveRecord implements Serializable
 	 * Database connection instance (refererences to self::$dbConnection)
 	 *
 	 * @see self::$dbConnection
-	 * @var Creole
+	 * @var PDO
 	 */
 	private $db = null;
 
@@ -331,21 +331,37 @@ abstract class ActiveRecord implements Serializable
 	/**
 	 * Return a database connection object
 	 *
-	 * @return Creole db object
+	 * @return PDO db object
 	 */
 	public static function getDBConnection()
 	{
 		if (!self::$dbConnection)
 		{
-			include_once(dirname(__file__) . DIRECTORY_SEPARATOR . "creole" . DIRECTORY_SEPARATOR . "Creole.php");
-
 			self::getLogger()->logQuery("Creating a database connection");
-			self::$dbConnection = Creole::getConnection(self::$dsn);
-			self::getLogger()->logQueryExecutionTime();
+			$dsn = parse_url(self::$dsn);
 
-			self::$dbConnection->executeUpdate("SET NAMES 'utf8'");
-			self::$dbConnection->executeUpdate("SET @@session.sql_mode=''");
+			$params = array();
+			if ('mysql' == $dsn['scheme'])
+			{
+				$params = array(
+					PDO::MYSQL_ATTR_FOUND_ROWS => true,
+					PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\';' //@@session.sql_mode='';
+				);
+			}
+
+			try
+			{
+				self::$dbConnection = new PDO($dsn['scheme'] . ':dbname=' . substr($dsn['path'], 1) . ';host=' . $dsn['host'], $dsn['user'], !empty($dsn['password']) ? $dsn['password'] : '', $params);
+				self::$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			}
+			catch (PDOException $e)
+			{
+				throw new SQLException($e->getMessage());
+			}
+
+			self::getLogger()->logQueryExecutionTime();
 		}
+
 		return self::$dbConnection;
 	}
 
@@ -1003,7 +1019,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		foreach($schema->getArrayFieldList() as $name)
 		{
-			$dataArray[$name] = is_string($dataArray[$name]) ? @unserialize($dataArray[$name]) : '';
+			$dataArray[$name] = is_string($dataArray[$name]) ? unserialize($dataArray[$name]) : '';
 		}
 
 		$recordData = array_intersect_key($dataArray, $schema->getFieldList());
@@ -1171,40 +1187,31 @@ abstract class ActiveRecord implements Serializable
 		$db = self::getDBConnection();
 
 		$queryStr = $query->createString();
+
 		self::getLogger()->logQuery($queryStr);
-		$resultSet = $query->getPreparedStatement($db)->executeQuery();
+		$statement = $query->getPreparedStatement($db);
+		$resultSet = $statement->execute();
 		self::getLogger()->logQueryExecutionTime();
 
-		$dataArray = array();
-		while ($resultSet->next())
-		{
-			$dataArray[] = $resultSet->getRow();
-		}
-
-		return $dataArray;
+		return $statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 
 	public static function getDataBySQL($sqlSelectQuery)
 	{
 		self::getLogger()->logQuery($sqlSelectQuery);
 
-		if ($sqlSelectQuery instanceof PreparedStatementCommon)
+		if ($sqlSelectQuery instanceof PDOStatement)
 		{
-			$resultSet = $sqlSelectQuery->executeQuery();
+			$sqlSelectQuery->execute();
+			$resultSet = $sqlSelectQuery->fetchAll(PDO::FETCH_ASSOC);
 		}
 		else
 		{
-			$db = self::getDBConnection();
-			$resultSet = $db->executeQuery($sqlSelectQuery);
+			$dataArray = self::getDBConnection()->query($sqlSelectQuery)->fetchAll(PDO::FETCH_ASSOC);
 		}
 
 		self::getLogger()->logQueryExecutionTime();
 
-		$dataArray = array();
-		while ($resultSet->next())
-		{
-			$dataArray[] = $resultSet->getRow();
-		}
 		return $dataArray;
 	}
 
@@ -1237,8 +1244,15 @@ abstract class ActiveRecord implements Serializable
 		try
 		{
 			self::getLogger()->logQuery($sql);
-			$res = self::getDBConnection()->executeQuery($sql);
+			$res = self::getDBConnection()->exec($sql);
+
+			if (false === $res)
+			{
+				throw new SQLException(self::getDBConnection()->errorInfo());
+			}
+
 			self::getLogger()->logQueryExecutionTime();
+
 			return $res;
 		}
 		catch (Exception $e)
@@ -1333,10 +1347,11 @@ abstract class ActiveRecord implements Serializable
 
 		self::getLogger()->logQuery($counterQuery);
 
-		$counterResult = $query->getPreparedStatement($db)->executeQuery();
-		$counterResult->next();
+		$statement = $query->getPreparedStatement($db);
+		$statement->execute();
 
-		$resultData = $counterResult->getRow();
+		$resultData = $statement->fetch(PDO::FETCH_ASSOC);
+		$statement->closeCursor();
 		return $resultData['totalCount'];
 	}
 
@@ -1365,10 +1380,10 @@ abstract class ActiveRecord implements Serializable
 		self::getLogger()->logQuery($counterQuery);
 
 		$db = self::getDBConnection();
-		$counterResult = $query->getPreparedStatement($db)->executeQuery();
-		$counterResult->next();
-
-		$resultData = $counterResult->getRow();
+		$statement = $query->getPreparedStatement($db);
+		$statement->execute();
+		$resultData = $statement->fetch(PDO::FETCH_ASSOC);
+		$statement->closeCursor();
 
 		return $resultData['totalCount'];
 	}
@@ -1500,7 +1515,7 @@ abstract class ActiveRecord implements Serializable
 		}
 
 		self::getLogger()->logQuery($deleteQuery);
-		$res = $db->executeUpdate($deleteQuery);
+		$res = self::executeUpdate($deleteQuery);
 		self::getLogger()->logQueryExecutionTime();
 		return $res;
 	}
@@ -1591,7 +1606,7 @@ abstract class ActiveRecord implements Serializable
 		$sql = preg_replace('/^SELECT[ ]*FROM/', 'UPDATE', $query->createString());
 
 		self::getLogger()->logQuery($sql);
-		return $db->executeUpdate($sql);
+		return self::executeUpdate($sql);
 	}
 
 	/**
@@ -1766,8 +1781,7 @@ abstract class ActiveRecord implements Serializable
 			$PKField = $PKList[key($PKList)];
 			if (($PKField->getDataType() instanceof ARInteger) && !$this->getID())
 			{
-				$IDG = $this->db->getIdGenerator();
-				$this->setID($IDG->getId(), false);
+				$this->setID($this->db->lastInsertId(), false);
 			}
 		}
 
@@ -2378,8 +2392,7 @@ abstract class ActiveRecord implements Serializable
 		self::$transactionLevel++;
 		if (1 == self::$transactionLevel)
 		{
-			$db = self::getDBConnection();
-			$db->setAutoCommit(false);
+			self::getDBConnection()->beginTransaction();
 		}
 	}
 
@@ -2393,13 +2406,13 @@ abstract class ActiveRecord implements Serializable
 		if (self::$transactionLevel < 0)
 		{
 			self::$transactionLevel = 0;
+			return;
 		}
 
 		self::getLogger()->logAction("COMMIT transaction" . ((int)self::$transactionLevel + 1));
 		if (0 == self::$transactionLevel)
 		{
-			$db = self::getDBConnection();
-			$db->commit();
+			self::getDBConnection()->commit();
 		}
 	}
 
@@ -2411,8 +2424,7 @@ abstract class ActiveRecord implements Serializable
 	{
 		self::$transactionLevel = 0;
 		self::getLogger()->logAction("ROLLBACK transaction");
-		$db = self::getDBConnection();
-		$db->rollback();
+		self::getDBConnection()->rollback();
 	}
 
 	/**
@@ -2520,7 +2532,6 @@ abstract class ActiveRecord implements Serializable
 			$variables[$key] = $valueMapper instanceof ARValueMapper ? $valueMapper->get() : $valueMapper;
 		}
 
-		//var_dump($variables);
 		$this->createDataAccessVariables($variables);
 		unset($array['data']);
 
@@ -2602,6 +2613,8 @@ abstract class ActiveRecord implements Serializable
 		}
 	}
 }
+
+class SQLException extends Exception {}
 
 register_shutdown_function(array('ActiveRecord', 'clearPool'));
 
