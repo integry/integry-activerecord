@@ -351,7 +351,7 @@ abstract class ActiveRecord implements Serializable
 
 			try
 			{
-				self::$dbConnection = new PDO($dsn['scheme'] . ':dbname=' . substr($dsn['path'], 1) . ';host=' . $dsn['host'], $dsn['user'], !empty($dsn['password']) ? $dsn['password'] : '', $params);
+				self::$dbConnection = new PDO($dsn['scheme'] . ':dbname=' . substr($dsn['path'], 1) . ';host=' . $dsn['host'], $dsn['user'], !empty($dsn['pass']) ? $dsn['pass'] : '', $params);
 				self::$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			}
 			catch (PDOException $e)
