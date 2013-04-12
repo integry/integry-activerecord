@@ -1,33 +1,5 @@
 <?php
 
-// pre-PHP 5.2
-if (!class_exists('DateTime', false))
-{
-	class DateTime
-	{
-		public function __construct($dateString)
-		{
-			$this->modify($dateString);
-		}
-
-		public function format($format)
-		{
-			return date($format, $this->timeStamp);
-		}
-
-		public function modify($dateString)
-		{
-			$this->dateString = $dateString;
-			$this->timeStamp = strtotime($dateString);
-		}
-
-		public function __toString()
-		{
-			return $this->format('Y-m-d H:i:s');
-		}
-	}
-}
-
 /**
  *
  * @package activerecord
@@ -81,6 +53,11 @@ class ARSerializableDateTime extends DateTime implements Serializable
 	public function getTimeStamp()
 	{
 		return $this->format("U");
+	}
+
+	public function getTime()
+	{
+		return (int)$this->format("U");
 	}
 
 	/**

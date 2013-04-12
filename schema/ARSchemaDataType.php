@@ -73,6 +73,11 @@ abstract class ARNumeric extends ARSchemaDataType
 			$value = $value->getID();
 		}
 
+		if (!$value)
+		{
+			$value = 0;
+		}
+
 		$value = (float)$value;
 
 		return $value;
