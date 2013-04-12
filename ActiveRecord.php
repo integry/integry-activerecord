@@ -466,7 +466,10 @@ abstract class ActiveRecord implements Serializable
 				}
 				else
 				{
-					$PK[$name] = $this->data[$name]->get();
+					if (!empty($this->data[$name]))
+					{
+						$PK[$name] = $this->data[$name]->get();
+					}
 				}
 			}
 
@@ -526,6 +529,15 @@ abstract class ActiveRecord implements Serializable
 	 */
 	public static function getInstanceByID($className, $recordID, $loadRecordData = false, $loadReferencedRecords = false, $data = array())
 	{
+		if (is_numeric($className) && (get_called_class() != __CLASS__) && (get_called_class() != 'ActiveRecordModel'))
+		{
+			$data = $loadReferencedRecords;
+			$loadReferencedRecords = $loadRecordData;
+			$loadRecordData = $recordID;
+			$recordID = $className;
+			$className = get_called_class();
+		}
+
 		$instance = call_user_func_array(array($className, 'retrieveFromPool'), array($className, $recordID));
 
 		if ($instance == null || !is_object($instance))
@@ -637,7 +649,7 @@ abstract class ActiveRecord implements Serializable
 
 			$hash = self::getRecordHash($recordID);
 
-			if (!empty(self::$recordPool[$className][$hash]))
+			if ($hash && !empty(self::$recordPool[$className][$hash]))
 			{
 				if (self::$recordPool[$className][$hash] instanceof $className)
 				{
@@ -1198,15 +1210,15 @@ abstract class ActiveRecord implements Serializable
 
 	public static function getDataBySQL($sqlSelectQuery)
 	{
-		self::getLogger()->logQuery($sqlSelectQuery);
-
 		if ($sqlSelectQuery instanceof PDOStatement)
 		{
+			self::getLogger()->logQuery($sqlSelectQuery->queryString . 'test');
 			$sqlSelectQuery->execute();
-			$resultSet = $sqlSelectQuery->fetchAll(PDO::FETCH_ASSOC);
+			$dataArray = $sqlSelectQuery->fetchAll(PDO::FETCH_ASSOC);
 		}
 		else
 		{
+			self::getLogger()->logQuery($sqlSelectQuery);
 			$dataArray = self::getDBConnection()->query($sqlSelectQuery)->fetchAll(PDO::FETCH_ASSOC);
 		}
 
